@@ -249,3 +249,51 @@ footer p { margin: 0 }
 .error-text { color: var(--no); margin: 6px 0 0 }
 .undobar { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--brand-deep); color: var(--on-brand); padding: 8px 8px 8px 16px; border-radius: 12px; display: flex; gap: 12px; align-items: center; z-index: 21; font-size: 14px; max-width: calc(100% - 32px) }
 .undobar .btn { min-height: 36px; background: var(--brand); border-color: var(--brand); color: var(--on-brand) }
+
+/* ---------- Saving to the school's account ---------- */
+.badges { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.sync-badge { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; border-radius: 999px; padding: 6px 12px; white-space: nowrap; color: var(--accent); background: var(--accent-soft) }
+.sync-badge[data-s="offline"], .sync-badge[data-s="localonly"] { color: var(--part); background: var(--part-soft) }
+.sync-badge[data-s="error"], .sync-badge[data-s="signedout"] { color: var(--no); background: var(--no-soft) }
+.sync-badge a { color: inherit }
+.panel.legacy { border-color: var(--accent); background: var(--accent-soft); margin-top: 14px }
+
+/* ---------- Progress tab ---------- */
+.prog-head { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 14px }
+.prog-intro { display: flex; gap: 12px; align-items: flex-start }
+.prog-intro h2 { margin: 0 0 4px; font-size: 20px }
+.prog-intro p { margin: 0; color: var(--muted); max-width: 70ch }
+.snap-form { display: grid; gap: 6px }
+.snap-form .row { display: flex; flex-wrap: wrap; gap: 8px }
+.snap-form input { flex: 1 1 220px; min-width: 0; min-height: 44px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink); font: inherit }
+.snap-form .err { color: var(--no); margin: 0; font-size: 14px }
+.snap-form .err:empty { display: none }
+.snaps { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 8px }
+.snap { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center }
+.snap .snap-name { flex: 1 1 200px; min-width: 0 }
+.snap .snap-name b { display: block; font-size: 16px }
+.snap .snap-name span { color: var(--muted); font-size: 13.5px }
+.snap .snap-pct { font: 700 22px var(--display); color: var(--accent) }
+.snap .row { display: flex; gap: 6px; flex-wrap: wrap }
+.snap[aria-current="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft) }
+.cmp { margin-top: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 16px }
+.cmp h3 { margin: 0; font-size: 18px }
+.cmp-pick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.cmp-pick select { min-height: 44px; border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; background: var(--bg); color: var(--ink); font: inherit; max-width: 100% }
+.cmp-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px }
+.cmp-stat { background: var(--bg); border-radius: 12px; padding: 12px; display: grid; gap: 2px }
+.cmp-stat b { font-size: 24px }
+.cmp-stat span { color: var(--muted); font-size: 13px }
+.cmp-stat.up b { color: var(--met) }
+.cmp-stat.down b { color: var(--no) }
+.cmp-table { width: 100%; border-collapse: collapse; font-size: 14px }
+.cmp-table th, .cmp-table td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top }
+.cmp-table td.num, .cmp-table th.num { text-align: right; white-space: nowrap }
+.cmp-wrap { overflow-x: auto }
+.delta { font-weight: 700; white-space: nowrap }
+.delta.up { color: var(--met) } .delta.down { color: var(--no) } .delta.same { color: var(--muted) }
+.moves { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px }
+.moves li { display: grid; gap: 2px; padding: 8px 10px; border-radius: 10px; background: var(--bg) }
+.moves li small { color: var(--muted) }
+.moves .chg { font-weight: 700; font-size: 13px }
+.moves.up .chg { color: var(--met) } .moves.down .chg { color: var(--no) }

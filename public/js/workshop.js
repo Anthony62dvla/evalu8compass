@@ -437,8 +437,7 @@
   }
 
   /* ----- Export ----- */
-  $("fExportChecklist").addEventListener("click", () => {
-    if (!results) return toast("No findings yet.");
+  function checklistData() {
     const answers = {}, notes = {};
     results.areas.forEach(a => a.items.forEach(i => {
       if (!i.agreed || !i.agreed.s) return;
@@ -446,7 +445,6 @@
       const c = i.counts;
       notes[i.id] = [i.agreed.note, `Workshop ${code}: ${c.met} met, ${c.part} partly, ${c.no} not yet (${c.n} staff)`].filter(Boolean).join(" · ");
     }));
-    if (!Object.keys(answers).length) return toast("Agree some ratings first on the Live findings tab.");
     // The workshop's improvement plan comes across as actions in the checklist's action plan
     const actions = [];
     ((aiState.plan && aiState.plan.priorities) || []).forEach(pr => (pr.actions || []).forEach(x => actions.push({
@@ -454,8 +452,42 @@
       detail: [pr.title ? "Priority: " + pr.title : "", x.by ? "By: " + x.by : "", x.evidence ? "Evidence: " + x.evidence : ""].filter(Boolean).join("\n"),
       itemId: (pr.lines || [])[0] || "", owner: x.lead || "", due: "", success: pr.successCriteria || "", status: "todo", source: "workshop", createdAt: new Date().toISOString(),
     })));
+    return { answers, notes, actions };
+  }
+  $("fExportChecklist").addEventListener("click", () => {
+    if (!results) return toast("No findings yet.");
+    const { answers, notes, actions } = checklistData();
+    if (!Object.keys(answers).length) return toast("Agree some ratings first on the Live findings tab.");
     const data = { version: 2, profile: { ...info.profile, by: `Staff workshop ${code}`, date: new Date().toISOString().slice(0, 10) }, answers, notes, ai: {}, review: null, collapsed: {}, actions };
     copy(JSON.stringify(data), $("fExportBox"));
+  });
+  // Straight into the school's saved self-evaluation (needs the school's access code on this device)
+  $("fSendChecklist").addEventListener("click", async () => {
+    if (!results) return toast("No findings yet.");
+    const { answers, notes, actions } = checklistData();
+    if (!Object.keys(answers).length) return toast("Agree some ratings first on the Live findings tab.");
+    const b = $("fSendChecklist"); b.disabled = true;
+    try {
+      const r = await fetch(BASE_PATH + "api/school", { credentials: "same-origin" });
+      if (r.status === 401) throw new Error("Sign in with your school access code on this device first (open the checklist), or use Copy as data instead.");
+      const cur = await r.json();
+      if (!r.ok) throw new Error(cur.error || "Couldn't reach your school's checklist.");
+      const st = cur.state || { notes: {}, actions: [] };
+      const set = {};
+      for (const [id, v] of Object.entries(answers)) {
+        set["answers." + id] = v;
+        const old = (st.notes || {})[id] || "";
+        set["notes." + id] = old && !old.includes(`Workshop ${code}`) ? old + "\n" + notes[id] : old.includes(`Workshop ${code}`) ? old : notes[id];
+      }
+      const have = new Set((st.actions || []).filter(a => a.source === "workshop").map(a => a.title));
+      const fresh = actions.filter(a => !have.has(a.title));
+      const res = await fetch(BASE_PATH + "api/school", { method: "PATCH", credentials: "same-origin", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ baseRev: cur.rev, patch: { set, ...(fresh.length ? { actions: { upsert: fresh, del: [] } } : {}) } }) });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || "Couldn't save to your checklist.");
+      toast(`Sent ${Object.keys(answers).length} agreed rating${Object.keys(answers).length === 1 ? "" : "s"}${fresh.length ? ` and ${fresh.length} action${fresh.length === 1 ? "" : "s"}` : ""} to your checklist`);
+    } catch (err) { toast(err.message); }
+    b.disabled = false;
   });
   $("fExportAll").addEventListener("click", async () => {
     try { const d = await api("GET", `/${code}/export`, null, key); copy(JSON.stringify(d, null, 1), $("fExportBox")); }

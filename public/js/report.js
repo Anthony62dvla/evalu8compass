@@ -3,7 +3,7 @@
  * Builds one document model, then renders it two ways:
  *   renderHTML → the on-screen A4 page (saved as PDF through the browser)
  *   toDocx     → a Word file, using the bundled docx library (vendor/)
- * Modes: report.html               → the self-evaluation checklist (from this browser)
+ * Modes: report.html[?since=ID]    → the school's self-evaluation (optionally with progress since a snapshot)
  *        report.html?workshop=CODE → a staff workshop (facilitator's device only)
  */
 (function () {
@@ -19,7 +19,8 @@
     ? [["comments", "Staff comments", true], ["themes", "Comment themes (AI)", true], ["ofsted", "Ofsted report summary (AI)", true], ["plan", "Improvement plan (AI)", true]]
     : [["met", "Lines rated Met", true], ["todo", "Lines not yet assessed", false], ["notes", "Evidence notes", true], ["plan", "Action plan", true], ["ai", "AI inspector review", true]];
   const opts = Object.fromEntries(OPTS.map(o => [o[0], o[2]]));
-  let data = null, model = null;
+  let data = null, model = null, since = null, snapList = [];
+  const SINCE = params.get("since") || "";
 
   const longDate = d => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
   const shortDate = d => d ? new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "";
@@ -54,6 +55,19 @@
     };
     B.push({ t: "table", widths: [34, 9, 9, 9, 8, 12, 19], head: ["Evaluation area", "Met", "Partly", "Not yet", "N/A", "Not assessed", "Status"],
       rows: view.map(a => { const ac = cnt(a.items); return [a.name, num(ac.met), num(ac.part), num(ac.no), num(ac.na), num(ac.todo), status(a, ac)]; }) });
+
+    if (since && since.state && window.HWWD.progress) {
+      const g = window.HWWD.progress.compare(view, since.state, st);
+      const signed = n => (n > 0 ? "+" : "") + n + " pts";
+      B.push({ t: "h2", text: `Progress since ${since.name} (${shortDate(since.at)})` });
+      B.push({ t: "stats", items: [[`${g.from.pct}% → ${g.to.pct}%`, "Met"], [g.improved.length, "Lines improved"], [g.slipped.length, "Lines slipped"], [g.newly.length, "Newly assessed"], [g.actionsDone.length, "Actions completed"]] });
+      B.push({ t: "table", widths: [46, 18, 18, 18], head: ["Evaluation area", since.name, "Now", "Change"],
+        rows: g.areas.map(a => [a.name, num(a.from.assessed ? a.from.pct + "%" : "–"), num(a.to.assessed ? a.to.pct + "%" : "–"),
+          a.from.assessed && a.to.assessed ? tone(signed(a.change), a.change > 0 ? "met" : a.change < 0 ? "no" : "na") : ""]) });
+      if (g.improved.length) { B.push({ t: "p", text: "Lines that improved", strong: true }); B.push({ t: "list", items: g.improved.map(m => `${m.text} (${m.fromLabel} → ${m.toLabel})`) }); }
+      if (g.slipped.length) { B.push({ t: "p", text: "Lines that slipped", strong: true }); B.push({ t: "list", items: g.slipped.map(m => `${m.text} (${m.fromLabel} → ${m.toLabel})`) }); }
+      if (g.actionsDone.length) { B.push({ t: "p", text: "Actions completed", strong: true }); B.push({ t: "list", items: g.actionsDone.map(a => a.title + (a.owner ? ` (${a.owner})` : "")) }); }
+    }
 
     const r = st.review;
     if (opts.ai && r && Array.isArray(r.areas)) {
@@ -270,7 +284,12 @@
 
   /* ================= Page ================= */
   function renderOpts() {
-    $("opts").innerHTML = OPTS.map(([k, l]) => `<label><input type="checkbox" data-opt="${k}" ${opts[k] ? "checked" : ""}> ${esc(l)}</label>`).join("");
+    $("opts").innerHTML = OPTS.map(([k, l]) => `<label><input type="checkbox" data-opt="${k}" ${opts[k] ? "checked" : ""}> ${esc(l)}</label>`).join("") +
+      (snapList.length ? `<label>Show progress since <select id="since"><option value="">No comparison</option>${snapList.map(x => `<option value="${esc(x.id)}"${since && since.id === x.id ? " selected" : ""}>${esc(x.name)} (${shortDate(x.at)})</option>`).join("")}</select></label>` : "");
+  }
+  async function pickSince(id) {
+    if (!id) { since = null; return; }
+    try { since = await window.HWWD.sync.snapshots.get(id); } catch (e) { since = null; toast(e.message); }
   }
   function build() {
     model = WCODE ? workshopModel(data) : checklistModel(data);
@@ -290,7 +309,13 @@
       data = d;
     } else {
       $("rtTitle").textContent = "Self-evaluation report";
-      data = S.load();
+      const got = await window.HWWD.sync.read();
+      data = got.state;
+      if (got.mode === "server" && !got.offline) {
+        try { snapList = await window.HWWD.sync.snapshots.list(); } catch (e) { snapList = []; }
+        if (SINCE && snapList.some(x => x.id === SINCE)) await pickSince(SINCE);
+        renderOpts();
+      }
       if (!Object.keys(data.answers || {}).length && !(data.actions || []).length) {
         $("doc").innerHTML = `<p>Nothing to report yet. Rate some lines in the <a href="checklist.html">checklist</a> first, then come back here.</p>`;
         $("pdfBtn").disabled = $("wordBtn").disabled = true; return;
@@ -300,7 +325,9 @@
   }
   function fail(msg) { $("rErr").textContent = msg; $("doc").innerHTML = `<p>${esc(msg)}</p>`; $("pdfBtn").disabled = $("wordBtn").disabled = true; }
 
-  $("opts").addEventListener("change", e => { const k = e.target.dataset.opt; if (!k) return; opts[k] = e.target.checked; if (data) build(); });
+  $("opts").addEventListener("change", async e => {
+    if (e.target.id === "since") { await pickSince(e.target.value); if (data) build(); return; }
+    const k = e.target.dataset.opt; if (!k) return; opts[k] = e.target.checked; if (data) build(); });
   $("pdfBtn").addEventListener("click", () => window.print());
   $("wordBtn").addEventListener("click", async () => {
     const b = $("wordBtn"); b.disabled = true; $("rErr").textContent = "";

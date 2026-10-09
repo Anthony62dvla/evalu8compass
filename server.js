@@ -5,6 +5,7 @@
  *
  *   GET  /api/health                → { ok, ai }
  *   POST /api/inspector             → single-user AI inspector (self-assessment page)
+ *   /api/school...                  → each school's saved checklist, action plan and snapshots
  *   /api/w/...                      → staff workshops (see lib/workshop.js)
  *
  * The Anthropic API key stays on the server and is never sent to browsers.
@@ -21,6 +22,7 @@ const workshop = require("./lib/workshop");
 const store = require("./lib/store");
 const access = require("./lib/access");
 const admin = require("./lib/admin");
+const schools = require("./lib/schools");
 access.setAdminCheck(req => admin.who(req));
 
 const PORT = Number(process.env.PORT || 3000);
@@ -72,6 +74,7 @@ const server = http.createServer(async (req, res) => {
         return inspector(req, res);
       }
       if (p.startsWith("/api/admin")) return adminRoute(req, res, p);
+      if (p === "/api/school" || p.startsWith("/api/school/")) return schoolRoute(req, res, p, url);
       if (p === "/api/w" && req.method === "POST") {
         req.hwwdWho = access.who(req);
         if (!req.hwwdWho) return json(res, 401, { code: "access_required", error: "Enter your school access code to start a workshop." });
@@ -132,13 +135,55 @@ async function accessRoute(req, res) {
   return json(res, 200, { ok: true, school: c.name });
 }
 
+/* Each school's saved self-evaluation (see lib/schools.js) */
+async function schoolRoute(req, res, p, url) {
+  const w = access.who(req);
+  if (!w) return json(res, 401, { code: "access_required", error: "Your sign-in has ended. Enter your school access code again." });
+  const id = w.open ? "open" : w.id;
+  if (req.method !== "GET" && !sameSite(req)) return json(res, 403, { error: "Cross-site request refused." });
+  const body = async () => JSON.parse((await readBody(req, schools.MAX_BYTES + 64 * 1024)) || "{}");
+  try {
+    if (p === "/api/school" && req.method === "GET") {
+      const cur = schools.get(id);
+      // Quick check used for polling: ?rev=N answers {same:true} when nothing has changed
+      if (url.searchParams.has("rev") && Number(url.searchParams.get("rev")) === cur.rev) return json(res, 200, { rev: cur.rev, same: true });
+      return json(res, 200, { ...cur, owner: id, school: w.name || "" });
+    }
+    if (p === "/api/school" && req.method === "PATCH") {
+      const b = await body();
+      return json(res, 200, schools.patch(id, b.baseRev, b.patch));
+    }
+    if (p === "/api/school" && req.method === "PUT") {
+      const b = await body();
+      if (!b.state || typeof b.state !== "object") return json(res, 400, { error: "Nothing to save" });
+      return json(res, 200, schools.replace(id, b.state));
+    }
+    if (p === "/api/school/snapshots" && req.method === "GET") return json(res, 200, { snapshots: schools.snapshots(id) });
+    if (p === "/api/school/snapshots" && req.method === "POST") {
+      const b = await body();
+      return json(res, 201, schools.addSnapshot(id, b.name));
+    }
+    const m = p.match(/^\/api\/school\/snapshots\/([a-f0-9]{8})$/);
+    if (m && req.method === "GET") { const s = schools.snapshot(id, m[1]); return s ? json(res, 200, s) : json(res, 404, { error: "That snapshot no longer exists." }); }
+    if (m && req.method === "DELETE") return schools.deleteSnapshot(id, m[1]) ? json(res, 200, { ok: true }) : json(res, 404, { error: "That snapshot no longer exists." });
+    return json(res, 404, { error: "Not found" });
+  } catch (e) {
+    if (e instanceof schools.SchoolError) return json(res, e.status, { error: e.message });
+    if (e instanceof SyntaxError) return json(res, 400, { error: "Invalid request" });
+    if (e && e.message === "too large") return json(res, 413, { error: "This self-evaluation is too large to save." });
+    throw e;
+  }
+}
+function sameSite(req) {
+  if (!req.headers.origin) return true;
+  try { return new URL(req.headers.origin).host === req.headers.host; } catch { return false; }
+}
+
 /* Superadmin console API (see lib/admin.js) */
 async function adminRoute(req, res, p) {
   const body = async () => { try { return JSON.parse((await readBody(req, 8192)) || "{}"); } catch { return null; } };
   // Same-site requests only for anything that changes state
-  if (req.method === "POST" && req.headers.origin) {
-    try { if (new URL(req.headers.origin).host !== req.headers.host) return json(res, 403, { error: "Cross-site request refused." }); } catch { return json(res, 403, { error: "Bad origin." }); }
-  }
+  if (req.method === "POST" && !sameSite(req)) return json(res, 403, { error: "Cross-site request refused." });
   if (p === "/api/admin/me") return json(res, 200, { configured: admin.configured(), signedIn: !!admin.who(req) });
   if (p === "/api/admin/login" && req.method === "POST") {
     if (limited(req, "admin")) return json(res, 429, { error: "Too many attempts. Wait a minute and try again." });
@@ -151,11 +196,11 @@ async function adminRoute(req, res, p) {
   if (!admin.who(req)) return json(res, 401, { error: "Sign in as superadmin." });
 
   if (p === "/api/admin/overview" && req.method === "GET") {
-    const ws = store.summaries(), now = Date.now();
+    const ws = store.summaries(), saved = schools.summaries(), now = Date.now();
     const codes = access.list().map(c => {
       const mine = ws.filter(w => w.createdBy === c.id);
       const state = c.revoked ? "revoked" : c.expiresAt && Date.parse(c.expiresAt) < now ? "expired" : "active";
-      return { ...c, state, workshops: mine.length, participants: mine.reduce((t, w) => t + w.participants, 0), lastWorkshop: mine.map(w => w.updatedAt).sort().pop() || null };
+      return { ...c, state, workshops: mine.length, participants: mine.reduce((t, w) => t + w.participants, 0), lastWorkshop: mine.map(w => w.updatedAt).sort().pop() || null, saved: saved[c.id] || null };
     });
     const recent = ws.filter(w => now - Date.parse(w.createdAt) < 30 * 864e5);
     return json(res, 200, {
@@ -163,7 +208,7 @@ async function adminRoute(req, res, p) {
       stats: {
         activeCodes: codes.filter(c => c.state === "active").length,
         schoolsSignedIn30: codes.filter(c => c.lastUsedAt && now - Date.parse(c.lastUsedAt) < 30 * 864e5).length,
-        workshops: ws.length, workshops30: recent.length, participants: ws.reduce((t, w) => t + w.participants, 0),
+        workshops: ws.length, workshops30: recent.length, schoolsSaving: Object.keys(saved).filter(k => k !== "admin" && k !== "open").length, participants: ws.reduce((t, w) => t + w.participants, 0),
       },
       system: { ai: ai.hasKey(), model: ai.hasKey() ? ai.model() : null, accessRequired: access.required(), node: process.version, uptimeHours: Math.round(process.uptime() / 360) / 10 },
     });
@@ -213,9 +258,10 @@ function serveStatic(pathname, res) {
 
 function readBody(req, max = 200 * 1024) {
   return new Promise((resolve, reject) => {
-    let size = 0; const chunks = [];
-    req.on("data", c => { size += c.length; if (size > max) { reject(new Error("too large")); req.destroy(); } else chunks.push(c); });
-    req.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+    let size = 0, over = false; const chunks = [];
+    // Past the limit, keep reading but discard, so the browser gets a clear "too large" answer
+    req.on("data", c => { size += c.length; if (size > max) { over = true; chunks.length = 0; } else if (!over) chunks.push(c); if (size > 30 * 1024 * 1024) req.destroy(); });
+    req.on("end", () => over ? reject(new Error("too large")) : resolve(Buffer.concat(chunks).toString("utf8")));
     req.on("error", reject);
   });
 }

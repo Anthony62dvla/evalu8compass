@@ -18,11 +18,12 @@
     "needs attention": "var(--g-att)", "urgent improvement": "var(--g-urg)", "met": "var(--met)", "not met": "var(--no)",
   };
 
-  let state = S.load();
+  const Y = window.HWWD.sync, G = window.HWWD.progress;
+  let state = S.DEFAULT();
   let view = [];
   let filter = "all";
   const busy = new Set();
-  const save = () => S.save(state);
+  const save = () => Y.changed(state);
   const aiOn = () => state.profile.ai !== false;
   const P = window.HWWD.plan;
   function applyAI() { document.body.classList.toggle("no-ai", !aiOn()); $("pAI").checked = aiOn(); }
@@ -264,10 +265,137 @@
     undo.t = setTimeout(() => bar.classList.add("hide"), 6000);
   }
   function showView(id) {
-    ["evalView", "planView"].forEach(v => $(v).classList.toggle("hide", v !== id));
+    ["evalView", "planView", "progressView"].forEach(v => $(v).classList.toggle("hide", v !== id));
     document.querySelectorAll("[data-view]").forEach(b => b.setAttribute("aria-selected", b.dataset.view === id));
     if (id === "planView") P.render();
-    history.replaceState(null, "", id === "planView" ? "#plan" : location.pathname);
+    if (id === "progressView") renderProgress();
+    history.replaceState(null, "", id === "planView" ? "#plan" : id === "progressView" ? "#progress" : location.pathname);
+  }
+
+  /* ---------- Progress: termly snapshots ---------- */
+  let snaps = null, cmpFrom = "", cmpTo = "now";
+  const snapCache = {};
+  const fmtDate = d => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  async function renderProgress() {
+    if (!$("snapName").value) $("snapName").value = G.termName();
+    if (Y.mode() !== "server") {
+      $("snapForm").classList.add("hide");
+      $("snapList").innerHTML = `<div class="plan-empty"><p>Snapshots are saved to your school's account, so they need a connection to evalu8compass.app. They aren't available in an offline copy.</p></div>`;
+      return;
+    }
+    try { snaps = await Y.snapshots.list(); }
+    catch (e) { $("snapList").innerHTML = `<div class="plan-empty"><p>${esc(e.message)}</p></div>`; return; }
+    renderSnapList();
+    if (snaps.length && (!cmpFrom || !snaps.some(x => x.id === cmpFrom))) cmpFrom = snaps[0].id;
+    renderCompare();
+  }
+  function renderSnapList() {
+    if (!snaps.length) {
+      $("snapList").innerHTML = `<div class="plan-empty" style="margin-top:14px"><span class="tile">${I("history", 26)}</span><h3>No snapshots yet</h3>
+        <p>Save your first snapshot when this round of self-evaluation is complete. Next term, save another and compare the two.</p></div>`;
+      $("compare").innerHTML = ""; return;
+    }
+    $("snapList").innerHTML = `<ul class="snaps">${snaps.map(x => {
+      const c = x.counts;
+      return `<li class="snap" data-sid="${x.id}"${x.id === cmpFrom ? ' aria-current="true"' : ""}>
+        <div class="snap-name"><b>${esc(x.name)}</b><span>Saved ${fmtDate(x.at)} · ${c.met} met, ${c.part} partly, ${c.no} not yet${c.actions ? ` · ${c.done} of ${c.actions} actions done` : ""}</span></div>
+        <div class="row"><button class="btn" data-cmp="${x.id}">${I("arrows-diff", 18)}Compare with now</button>
+        <button class="btn" data-snapdel="${x.id}" aria-label="Delete snapshot ${esc(x.name)}">${I("trash", 18)}Delete</button></div></li>`;
+    }).join("")}</ul>`;
+  }
+  async function snapState(id) {
+    if (id === "now") return state;
+    if (!snapCache[id]) snapCache[id] = (await Y.snapshots.get(id)).state;
+    return snapCache[id];
+  }
+  async function renderCompare() {
+    if (!snaps || !snaps.length || !cmpFrom) { $("compare").innerHTML = ""; return; }
+    let from, to;
+    try { [from, to] = await Promise.all([snapState(cmpFrom), snapState(cmpTo)]); }
+    catch (e) { $("compare").innerHTML = `<div class="cmp"><p>${esc(e.message)}</p></div>`; return; }
+    const r = G.compare(view, from, to);
+    const nameOf = id => id === "now" ? "now" : esc((snaps.find(x => x.id === id) || {}).name || "");
+    const d = r.to.pct - r.from.pct;
+    const deltaHTML = n => `<span class="delta ${n > 0 ? "up" : n < 0 ? "down" : "same"}">${n > 0 ? "+" : ""}${n} pts</span>`;
+    const moves = (list, cls) => `<ul class="moves ${cls}">${list.map(m => `<li><span class="chg">${esc(m.fromLabel)} → ${esc(m.toLabel)}</span><span>${esc(m.text)}</span><small>${esc(m.area)}</small></li>`).join("")}</ul>`;
+    const opt = (id, label, sel) => `<option value="${id}"${id === sel ? " selected" : ""}>${esc(label)}</option>`;
+    $("compare").innerHTML = `<section class="cmp" aria-labelledby="cmpTitle">
+      <h3 id="cmpTitle">What's changed</h3>
+      <div class="cmp-pick">
+        <label for="cmpFrom">From</label><select id="cmpFrom">${snaps.map(x => opt(x.id, `${x.name} (${fmtDate(x.at)})`, cmpFrom)).join("")}</select>
+        <label for="cmpTo">to</label><select id="cmpTo">${opt("now", "Now", cmpTo)}${snaps.filter(x => x.id !== cmpFrom).map(x => opt(x.id, `${x.name} (${fmtDate(x.at)})`, cmpTo)).join("")}</select>
+        <a class="btn" href="report.html?since=${encodeURIComponent(cmpFrom)}">${I("file-export", 18)}Report with this comparison</a>
+      </div>
+      <p class="small muted" style="margin:0">Compared across the ${r.to.total} lines that apply to your school's current settings.</p>
+      <div class="cmp-stats">
+        <div class="cmp-stat ${d > 0 ? "up" : d < 0 ? "down" : ""}"><b>${r.from.pct}% → ${r.to.pct}%</b><span>Lines met</span></div>
+        <div class="cmp-stat up"><b>${r.improved.length}</b><span>Lines improved</span></div>
+        <div class="cmp-stat ${r.slipped.length ? "down" : ""}"><b>${r.slipped.length}</b><span>Lines slipped</span></div>
+        <div class="cmp-stat"><b>${r.newly.length}</b><span>Newly assessed</span></div>
+        <div class="cmp-stat up"><b>${r.actionsDone.length}</b><span>Actions completed</span></div>
+      </div>
+      <div class="cmp-wrap"><table class="cmp-table"><thead><tr><th>Evaluation area</th><th class="num">${nameOf(cmpFrom)}</th><th class="num">${cmpTo === "now" ? "Now" : nameOf(cmpTo)}</th><th class="num">Change</th></tr></thead>
+        <tbody>${r.areas.map(a => `<tr><td>${esc(a.name)}</td><td class="num">${a.from.assessed ? a.from.pct + "%" : "–"}</td><td class="num">${a.to.assessed ? a.to.pct + "%" : "–"}</td><td class="num">${a.from.assessed && a.to.assessed ? deltaHTML(a.change) : ""}</td></tr>`).join("")}</tbody></table></div>
+      ${r.improved.length ? `<div><h3 style="margin-bottom:8px">${I("trending-up", 20)} Improved</h3>${moves(r.improved, "up")}</div>` : ""}
+      ${r.slipped.length ? `<div><h3 style="margin-bottom:8px">${I("trending-down", 20)} Slipped</h3>${moves(r.slipped, "down")}</div>` : ""}
+      ${r.actionsDone.length ? `<div><h3 style="margin-bottom:8px">${I("circle-check", 20)} Actions completed</h3><ul class="moves up">${r.actionsDone.map(a => `<li><span>${esc(a.title || "Untitled action")}</span>${a.owner ? `<small>${esc(a.owner)}</small>` : ""}</li>`).join("")}</ul></div>` : ""}
+      ${!r.improved.length && !r.slipped.length && !r.newly.length && !r.actionsDone.length ? `<p class="muted" style="margin:0">No ratings or actions have changed between these two points.</p>` : ""}
+    </section>`;
+  }
+  $("snapForm").addEventListener("submit", async e => {
+    e.preventDefault(); $("snapErr").textContent = "";
+    const name = $("snapName").value.trim() || G.termName();
+    if (!Object.keys(state.answers).length) { $("snapErr").textContent = "Rate some lines first, then save a snapshot."; return; }
+    if (snaps && snaps.some(x => x.name.toLowerCase() === name.toLowerCase())) { $("snapErr").textContent = `You already have a snapshot called "${name}". Choose another name.`; return; }
+    $("snapSave").disabled = true;
+    try { const x = await Y.snapshots.create(name); cmpFrom = x.id; cmpTo = "now"; toast(`Snapshot "${x.name}" saved`); $("snapName").value = ""; await renderProgress(); }
+    catch (err) { $("snapErr").textContent = err.message; }
+    $("snapSave").disabled = false;
+  });
+  $("progressView").addEventListener("change", e => {
+    if (e.target.id === "cmpFrom") { cmpFrom = e.target.value; if (cmpTo === cmpFrom) cmpTo = "now"; renderSnapList(); renderCompare(); }
+    if (e.target.id === "cmpTo") { cmpTo = e.target.value; renderCompare(); }
+  });
+  $("progressView").addEventListener("click", async e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.cmp) { cmpFrom = b.dataset.cmp; cmpTo = "now"; renderSnapList(); await renderCompare(); $("compare").scrollIntoView && $("compare").scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+    if (b.dataset.snapdel) {
+      if (!b.dataset.confirm) {
+        b.dataset.confirm = "1"; b.innerHTML = `${I("alert-triangle", 18)}Click again to delete`;
+        setTimeout(() => { if (b.isConnected) { delete b.dataset.confirm; b.innerHTML = `${I("trash", 18)}Delete`; } }, 4000); return;
+      }
+      b.disabled = true;
+      try { await Y.snapshots.remove(b.dataset.snapdel); delete snapCache[b.dataset.snapdel]; if (cmpFrom === b.dataset.snapdel) cmpFrom = ""; if (cmpTo === b.dataset.snapdel) cmpTo = "now"; toast("Snapshot deleted"); renderProgress(); }
+      catch (err) { toast(err.message); b.disabled = false; }
+    }
+  });
+
+  /* ---------- Saving status ---------- */
+  const SYNC = {
+    idle: ["cloud-check", "Loading…"], saved: ["cloud-check", "Saved to your school's account"], pending: ["cloud-upload", "Saving…"], saving: ["cloud-upload", "Saving…"],
+    offline: ["cloud-off", "Offline: saved on this device, will sync"], localonly: ["cloud-off", "Not connected: saved on this device only"],
+    signedout: ["cloud-off", "Signed out: changes kept on this device."], error: ["alert-triangle", "Not saved"],
+  };
+  function showSync(st, detail) {
+    const b = $("syncBadge"); if (!b) return;
+    const [ic, text] = SYNC[st] || SYNC.idle;
+    b.hidden = Y.mode() !== "server" && st !== "localonly";
+    b.dataset.s = st;
+    $("syncIcon").innerHTML = I(ic, 18);
+    $("syncText").innerHTML = esc(text) + (st === "signedout" ? ` <a href="enter.html?next=${encodeURIComponent("/checklist.html" + location.hash)}">Sign in again</a>` : "");
+    b.title = detail || text;
+    if (st === "error" && detail) toast(detail);
+  }
+  /** Colleagues' changes arrived: redraw without losing the cursor */
+  function applyRemote(next) {
+    const a = document.activeElement, id = a && a.id;
+    const sel = a && typeof a.selectionStart === "number" ? [a.selectionStart, a.selectionEnd] : null;
+    const y = window.scrollY;
+    state = next;
+    renderSetup(); renderAreas(); renderReview(); P.render();
+    if (!$("progressView").classList.contains("hide") && cmpTo === "now") renderCompare();
+    if (id && $(id)) { const el = $(id); el.focus({ preventScroll: true }); if (sel && el.setSelectionRange) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) {} }
+    window.scrollTo(0, y);
   }
   function toast(m) { const t = $("toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("on"), 2000); }
 
@@ -338,12 +466,32 @@
   };
 
   /* ---------- Start ---------- */
+  Y.onStatus(showSync);
+  Y.onRemote(applyRemote);
   P.init({
     state: () => state, save, view: () => view, ctx, toast, undo, aiOn, icon: I, esc,
     ai: (task, data) => AI.ask(task, data), errorText: e => AI.errorText(e),
   });
-  renderSetup(); renderAreas(); renderReview();
-  if (location.hash === "#plan") showView("planView");
+  const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+  async function boot() {
+    const r = await Y.start({ canApply: () => !document.querySelector(".thinking") });
+    state = r.state;
+    renderSetup(); renderAreas(); renderReview(); P.render();
+    if (location.hash === "#plan") showView("planView");
+    if (location.hash === "#progress") showView("progressView");
+    if (r.mode !== "server") { $("saveNote").textContent = "This copy isn't connected to your school's account, so your answers are saved in this browser only. Use Save / load to keep a copy."; $("progressTab").hidden = true; }
+    if (r.legacy) {
+      const n = Object.keys(r.legacy.answers || {}).length, m = Object.keys(state.answers || {}).length;
+      $("legacyInfo").textContent = `This device: ${plural(n, "line")} rated, ${plural((r.legacy.actions || []).length, "action")}. Shared copy: ${plural(m, "line")} rated, ${plural((state.actions || []).length, "action")}.`;
+      $("legacyPanel").classList.remove("hide");
+      $("legacyKeep").onclick = () => { Y.keepShared(); $("legacyPanel").classList.add("hide"); toast("Keeping the shared copy"); };
+      $("legacyUse").onclick = async () => {
+        try { applyRemote(await Y.useLegacy(r.legacy)); $("legacyPanel").classList.add("hide"); toast("The shared copy now matches this device"); }
+        catch (e) { toast(e.message); }
+      };
+    }
+  }
+  boot();
   // The workshop needs the server; hide its link in single-file or artifact copies
   if (location.protocol === "file:" || !document.querySelector('link[href="css/styles.css"]')) { ["workshopLink", "homeLink", "reportLink"].forEach(id => { const w = $(id); if (w) w.hidden = true; }); }
   // School access: show sign-out, and use the school's name if none is set yet
@@ -353,7 +501,6 @@
         const so = $("signOut"); so.hidden = false;
         so.onclick = e => { e.preventDefault(); fetch("api/access/logout", { method: "POST" }).finally(() => { location.href = "index.html"; }); };
       }
-      if (a.school && !state.profile.name) { state.profile.name = a.school; save(); renderSetup(); }
     }).catch(() => {});
   }
   AI.provider().then(p => {

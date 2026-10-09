@@ -32,8 +32,17 @@
       <h1>How well are we doing?</h1>
       <p>Rate each expectation as Met, Partly or Not yet and record your evidence. For any gap, ask the AI inspector for improvement activities, or run a full readiness review.</p>
     </div>
-    <span class="ai-badge off" id="aiBadge"><i data-icon="sparkles" data-size="18"></i><span>Checking AI inspector…</span></span>
+    <div class="badges">
+      <span class="ai-badge off" id="aiBadge"><i data-icon="sparkles" data-size="18"></i><span>Checking AI inspector…</span></span>
+      <span class="sync-badge" id="syncBadge" hidden><span id="syncIcon"></span><span id="syncText">Loading…</span></span>
+    </div>
   </header>
+
+  <div class="panel legacy hide" id="legacyPanel" role="region" aria-label="Earlier copy on this device">
+    <span><b>This device has an earlier copy of your self-evaluation.</b> It was saved only in this browser before your school's work was saved to your account, and it's different from the shared copy your team is using.</span>
+    <span id="legacyInfo" class="small"></span>
+    <div class="row"><button class="btn primary" id="legacyKeep"><i data-icon="cloud-check"></i>Keep the shared copy</button><button class="btn" id="legacyUse"><i data-icon="cloud-upload"></i>Replace it with this device's copy</button></div>
+  </div>
 
   <section class="setup" aria-labelledby="setupTitle">
     <div class="setup-head"><div class="tile"><i data-icon="building" data-size="24"></i></div><h2 id="setupTitle">Your school</h2></div>
@@ -57,6 +66,7 @@
   <nav class="tabs pagetabs" role="tablist" aria-label="Checklist sections">
     <button role="tab" class="tab" data-view="evalView" aria-selected="true"><i data-icon="list-check"></i>Evaluate</button>
     <button role="tab" class="tab" data-view="planView" aria-selected="false"><i data-icon="target"></i>Action plan<span id="planTabCount"></span></button>
+    <button role="tab" class="tab" data-view="progressView" aria-selected="false" id="progressTab"><i data-icon="history"></i>Progress</button>
     <a class="tab tablink" href="report.html" id="reportLink"><i data-icon="file-export"></i>Report</a>
   </nav>
 
@@ -125,10 +135,28 @@
     <div id="planList"></div>
   </section>
 
+  <section id="progressView" class="hide" aria-labelledby="progTitle">
+    <div class="prog-head">
+      <div class="prog-intro">
+        <span class="tile"><i data-icon="camera" data-size="24"></i></span>
+        <div><h2 id="progTitle">Termly snapshots</h2>
+        <p>Save a snapshot of your ratings and action plan at the end of each term. Then compare any snapshot with now to see what's moved, from Not yet to Met, and what has slipped.</p></div>
+      </div>
+      <form class="snap-form" id="snapForm">
+        <label class="field" for="snapName"><span class="lbl">Snapshot name</span></label>
+        <div class="row"><input type="text" id="snapName" maxlength="80" placeholder="e.g. Autumn 2026"><button class="btn primary" type="submit" id="snapSave"><i data-icon="camera"></i>Save snapshot</button></div>
+        <p class="err" id="snapErr" role="alert"></p>
+      </form>
+    </div>
+    <div id="snapList"></div>
+    <div id="compare"></div>
+  </section>
+
   <footer>
     <p>Criteria reflect Ofsted's renewed school inspection framework evaluation areas, the independent school standards and DfE statutory guidance. Check current guidance before inspection: requirements change.</p>
     <p>AI inspector suggestions are advisory. They are not an Ofsted judgement.</p>
-    <p>Your answers are saved in this browser only. Icons by Tabler Icons (MIT licence).</p>
+    <p id="saveNote">Your answers are saved to your school's account, so everyone using your school's code sees the same copy. A copy is also kept on this device in case the connection drops.</p>
+    <p><a href="privacy.html">Privacy</a> · <a href="accessibility.html">Accessibility</a> · <a href="terms.html">Terms</a> · Icons by Tabler Icons (MIT licence).</p>
   </footer>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -139,6 +167,9 @@
 <script src="js/prompts.js"></script>
 <script src="js/inspector.js"></script>
 <script src="js/store.js"></script>
+<script src="js/statediff.js"></script>
+<script src="js/sync.js"></script>
+<script src="js/progress.js"></script>
 <script src="js/plan.js"></script>
 <script src="js/app.js"></script>
 <!-- /build:body -->

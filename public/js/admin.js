@@ -38,23 +38,25 @@
     $("stats").innerHTML = [
       ["building", s.activeCodes, "Active school codes"], ["login", s.schoolsSignedIn30, "Schools signed in (30 days)"],
       ["users-group", s.workshops30, `Workshops (30 days) · ${s.workshops} in total`], ["users", s.participants, "Staff responses (all workshops)"],
+      ["device-floppy", s.schoolsSaving || 0, "Schools with saved self-evaluations"],
     ].map(([ic, n, l]) => `<div class="stat"><span class="tile">${I(ic, 24)}</span><div><b>${esc(n)}</b><span>${esc(l)}</span></div></div>`).join("");
     $("sys").innerHTML = `<span><i class="dot" style="background:${y.ai ? "var(--met)" : "var(--no)"}"></i>AI ${y.ai ? "connected (" + esc(y.model) + ")" : "not connected: add ANTHROPIC_API_KEY to .env"}</span>
       <span><i class="dot" style="background:${y.accessRequired ? "var(--met)" : "var(--part)"}"></i>${y.accessRequired ? "Access codes required" : "Site open: no codes created yet"}</span>
       <span>Node ${esc(y.node)} · up ${esc(y.uptimeHours)} h</span>`;
     const codes = d.codes.slice().sort((a, b) => (a.state === "active" ? 0 : 1) - (b.state === "active" ? 0 : 1) || a.name.localeCompare(b.name));
-    $("codes").innerHTML = `<thead><tr><th>School</th><th>Status</th><th>Created</th><th>Expires</th><th>Last signed in</th><th>Workshops</th><th>Actions</th></tr></thead><tbody>${
+    $("codes").innerHTML = `<thead><tr><th>School</th><th>Status</th><th>Created</th><th>Expires</th><th>Last signed in</th><th>Saved work</th><th>Workshops</th><th>Actions</th></tr></thead><tbody>${
       codes.length ? codes.map(c => `<tr>
         <td><b>${esc(c.name)}</b>${c.email ? `<span class="sub">${esc(c.email)}</span>` : ""}${c.notes ? `<span class="sub">${esc(c.notes)}</span>` : ""}<span class="sub">id ${esc(c.id)}</span></td>
         <td><span class="state state-${c.state}">${c.state[0].toUpperCase() + c.state.slice(1)}</span></td>
         <td>${day(c.createdAt)}</td><td>${c.expiresAt ? day(c.expiresAt) : "Never"}</td><td>${c.lastUsedAt ? day(c.lastUsedAt) : "Never"}</td>
+        <td>${c.saved ? `${day(c.saved.updatedAt)}<span class="sub">${c.saved.assessed} lines · ${c.saved.actions} actions · ${c.saved.snapshots} snapshots</span>` : `<span class="sub">None yet</span>`}</td>
         <td class="num">${c.workshops}${c.participants ? `<span class="sub">${c.participants} staff</span>` : ""}</td>
         <td><div class="acts">${c.state === "revoked"
           ? `<button class="btn" data-act="reactivate" data-id="${c.id}">${I("refresh", 16)}Reactivate</button>`
           : `<button class="btn" data-act="revoke" data-id="${c.id}" data-name="${esc(c.name)}">${I("x", 16)}Revoke</button>`}
           <button class="btn" data-act="extend" data-id="${c.id}" data-days="365">${I("calendar-check", 16)}+1 year</button>
           ${c.expiresAt ? `<button class="btn" data-act="extend" data-id="${c.id}" data-days="0">No expiry</button>` : ""}</div></td>
-      </tr>`).join("") : `<tr class="empty-row"><td colspan="7">No school codes yet. Create the first one above.</td></tr>`
+      </tr>`).join("") : `<tr class="empty-row"><td colspan="8">No school codes yet. Create the first one above.</td></tr>`
     }</tbody>`;
     $("audit").innerHTML = d.audit.length ? d.audit.map(a => `<li><time datetime="${esc(a.at)}">${esc(when(a.at))}</time><span class="${a.action === "admin.login_failed" ? "fail" : ""}">${esc(ACTION[a.action] || a.action)}${a.detail ? ": " + esc(a.detail) : ""} <span class="muted small">(${esc(a.ip)})</span></span></li>`).join("") : `<li><span class="muted">Nothing yet.</span></li>`;
   }

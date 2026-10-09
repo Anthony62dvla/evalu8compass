@@ -9,7 +9,8 @@ const NAMES = ["shield-check","users","book","trending-up","calendar-check","hea
   "circle-check","circle-half-2","circle-x","help-circle","circle-minus","sparkles","copy","device-floppy","refresh","layout-navbar-collapse",
   "filter","list-check","broadcast","lock","presentation","link","logout","file-upload","file-text","message-circle","target","file-export",
   "qrcode","user","login","arrow-right","alert-triangle","scale","eye","checks","building","chevron-down","chalkboard","user-heart","tool",
-  "briefcase","building-community","clipboard-list","arrows-diff","photo","x","player-play","bulb","home","users-group","list-details"];
+  "briefcase","building-community","clipboard-list","arrows-diff","photo","x","player-play","bulb","home","users-group","list-details",
+  "cloud-check","cloud-upload","cloud-off","history","camera","trending-down","trash","arrow-up-right","accessible","file-certificate"];
 const dir = path.join(process.argv[2] || "package", "icons", "outline");
 const out = {};
 for (const n of NAMES) {
