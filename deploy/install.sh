@@ -125,7 +125,7 @@ ok "App and Node runtime in place"
 say "Configuring settings"
 if [ -f "$APP_DIR/.env" ]; then
   ok "Keeping existing $APP_DIR/.env"
-  run "sed -i -E 's/^PORT=.*/PORT=$PORT/; s/^HOST=[^ ]*/HOST=127.0.0.1/; s/^TRUST_PROXY=[^ ]*/TRUST_PROXY=1/' '$APP_DIR/.env'"
+  run "sed -i -E 's/^PORT=.*/PORT=$PORT/; s/^TRUST_PROXY=[^ ]*/TRUST_PROXY=1/' '$APP_DIR/.env'"   # HOST is kept as you set it
 else
   KEY="${ANTHROPIC_API_KEY:-}"
   if [ -z "$KEY" ] && [ -t 0 ] && [ "$DRY" = 0 ]; then
@@ -145,7 +145,7 @@ say "Installing the $APP service"
 write_file "/etc/systemd/system/$APP.service" 644 <<EOF
 [Unit]
 Description=How Well Are We Doing? (Ofsted self-assessment and staff workshops)
-After=network-online.target
+After=network-online.target$(systemctl list-unit-files docker.service >/dev/null 2>&1 && echo " docker.service")
 Wants=network-online.target
 
 [Service]
@@ -177,12 +177,14 @@ run "systemctl daemon-reload"
 run "systemctl enable $APP >/dev/null 2>&1"
 run "systemctl restart $APP"
 
+APP_HOST="$(grep -E '^HOST=' "$APP_DIR/.env" 2>/dev/null | head -1 | sed -E 's/^HOST=([^ ]*).*/\1/')"
+case "$APP_HOST" in ""|0.0.0.0) APP_HOST=127.0.0.1 ;; esac
 if [ "$DRY" = 0 ]; then
   for _ in 1 2 3 4 5 6 7 8 9 10; do
-    if curl -fsS "http://127.0.0.1:$PORT/api/health" >/dev/null 2>&1; then break; fi; sleep 1
+    if curl -fsS "http://$APP_HOST:$PORT/api/health" >/dev/null 2>&1; then break; fi; sleep 1
   done
-  if curl -fsS "http://127.0.0.1:$PORT/api/health" >/dev/null 2>&1; then
-    ok "Service running: $(curl -fsS "http://127.0.0.1:$PORT/api/health")"
+  if curl -fsS "http://$APP_HOST:$PORT/api/health" >/dev/null 2>&1; then
+    ok "Service running on $APP_HOST:$PORT: $(curl -fsS "http://$APP_HOST:$PORT/api/health")"
   else
     journalctl -u "$APP" -n 30 --no-pager || true
     die "The service didn't start. The log is above."
@@ -215,7 +217,13 @@ if [ -z "$WEB" ]; then
     warn "Something else is already using port 80 or 443, so nothing has been changed:"
     printf '%s\n' "$BUSY" | sed 's/^/      /'
     command -v docker >/dev/null && docker ps --format '      docker: {{.Names}} ({{.Image}}) {{.Ports}}' 2>/dev/null | grep -E ':(80|443)->' || true
-    warn "That's probably how your other project is served. Add evalu8compass's site to that proxy, pointing at 127.0.0.1:$PORT (see README section 4.3), or ask for help with the output above."
+    CADDY_CT="$(command -v docker >/dev/null && docker ps --format '{{.Names}} {{.Image}} {{.Ports}}' 2>/dev/null | awk '$2 ~ /caddy/ && /:443->/ {print $1; exit}' || true)"
+    if [ -n "$CADDY_CT" ]; then
+      warn "That's a Caddy container ($CADDY_CT). To add this site to it, run:
+      bash $SRC_DIR/deploy/connect-docker-caddy.sh $CADDY_CT $DOMAIN"
+    else
+      warn "That's probably how your other project is served. Add this site to that proxy, pointing at this app (see README section 4.3)."
+    fi
   elif ! command -v apt-get >/dev/null; then
     warn "Ports 80 and 443 are free, but this isn't a Debian/Ubuntu server, so install Caddy yourself (caddyserver.com/docs/install) and re-run."
   else
