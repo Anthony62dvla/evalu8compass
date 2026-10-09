@@ -88,7 +88,11 @@ how-well-are-we-doing/
 │   ├── test-admin.js          End-to-end superadmin test
 │   ├── access.js              Access code admin (hwwd-access on the server)
 │   └── build-icons.js         Regenerates icons.js from Tabler Icons
-├── deploy/install.sh          One-command VPS installer and updater (see deploy/DEPLOY.md)
+├── deploy/
+│   ├── install.sh             One-command VPS installer and updater (see deploy/DEPLOY.md)
+│   ├── connect-docker-caddy.sh  Add the site to another project's Caddy container
+│   ├── backup.sh              Encrypted backups, off-site copy, restore
+│   └── guard.sh               Self-healing checks every 5 minutes
 ├── build.js                   Single-file checklist in dist/ (no workshop: that needs the server)
 ├── .env.example
 └── package.json
@@ -196,8 +200,8 @@ Staff then join at `review.yourdomain.co.uk/join/ABC123`, or by scanning the QR 
 ### 4.4 Hosting under a sub-path
 If the app lives at `yourdomain.co.uk/review/`, proxy that path to the server with the prefix stripped. Join links then use `workshop.html?code=…` automatically.
 
-### 4.5 Back-ups
-Workshops are JSON files in `data/sessions/`. Back up that folder (a nightly `rsync` or your host's snapshots are enough).
+### 4.5 Backups, monitoring and the guard
+The installer sets up nightly **encrypted** backups (`deploy/backup.sh`), optionally copied off-site with rclone, and a **self-healing guard** (`deploy/guard.sh`, every 5 minutes) that restarts the app if it stops answering and repairs the shared Caddy configuration if another project's deploy removes it. Add an outside uptime monitor on `/api/health`. Full steps: `deploy/DEPLOY.md`.
 
 ### 4.6 Scaling note
 One small server comfortably handles several simultaneous workshops of a few hundred staff. Running **more than one server instance** needs a shared database and message bus (replace `lib/store.js` and the SSE hub in `lib/workshop.js`, e.g. with Postgres + Redis or Supabase).

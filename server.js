@@ -36,12 +36,29 @@ const LIMITS = {
 const PROTECTED_PAGES = new Set(["/checklist.html", "/report.html"]);
 const AI_TASKS = ["item", "review", "action", "draft"];
 const hits = new Map();
+// Browser security headers for every response. Scripts may only come from this site
+// (no inline scripts, no third-party scripts); fonts come from Google Fonts.
+const CSP = [
+  "default-src 'self'", "script-src 'self'", "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com", "img-src 'self' data: blob:", "connect-src 'self'",
+  "object-src 'none'", "base-uri 'self'", "form-action 'self'", "frame-ancestors 'none'",
+].join("; ");
+function securityHeaders(req, res) {
+  res.setHeader("content-security-policy", CSP);
+  res.setHeader("x-frame-options", "DENY");
+  res.setHeader("x-content-type-options", "nosniff");
+  res.setHeader("referrer-policy", "same-origin");
+  res.setHeader("permissions-policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()");
+  res.setHeader("cross-origin-opener-policy", "same-origin");
+  if (req.headers["x-forwarded-proto"] === "https") res.setHeader("strict-transport-security", "max-age=31536000; includeSubDomains");
+}
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".ico": "image/x-icon", ".webmanifest": "application/manifest+json" };
 
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, "http://localhost");
     const p = url.pathname;
+    securityHeaders(req, res);
 
     if (p === "/api/health") return json(res, 200, { ok: true, ai: ai.hasKey(), model: ai.hasKey() ? ai.model() : null });
 

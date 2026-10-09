@@ -27,24 +27,29 @@ die()  { printf '\033[1;31mERR\033[0m %s\n' "$*" >&2; exit 1; }
 [ "$(id -u)" = 0 ] || die "Run as root."
 [ -f "$APP_DIR/.env" ] || die "$APP_DIR/.env not found. Run deploy/install.sh first."
 docker inspect "$CONTAINER" >/dev/null 2>&1 || die "No container called $CONTAINER. See: docker ps"
-PORT="$(grep -E '^PORT=' "$APP_DIR/.env" | head -1 | sed -E 's/^PORT=([0-9]+).*/\1/')"; PORT="${PORT:-3100}"
+PORT="$(grep -E '^PORT=' "$APP_DIR/.env" | head -1 | sed -E 's/^PORT=([0-9]+).*/\1/' || true)"; PORT="${PORT:-3100}"
 
 # ---------- 1. listen on the Docker bridge ----------
 say "Finding Docker's bridge address"
-BRIDGE_IP="$(ip -4 -o addr show docker0 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | head -1)"
+BRIDGE_IP="$(ip -4 -o addr show docker0 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | head -1 || true)"
 [ -n "$BRIDGE_IP" ] || die "Couldn't find the docker0 bridge address."
 ok "docker0 is $BRIDGE_IP (private, not reachable from the internet)"
 
 say "Pointing the app at $BRIDGE_IP:$PORT"
-if grep -q '^HOST=' "$APP_DIR/.env"; then sed -i -E "s/^HOST=[^ ]*/HOST=$BRIDGE_IP/" "$APP_DIR/.env"
-else echo "HOST=$BRIDGE_IP" >> "$APP_DIR/.env"; fi
+CHANGED=0
+if grep -q "^HOST=$BRIDGE_IP\b" "$APP_DIR/.env"; then ok "Already set"
+elif grep -q '^HOST=' "$APP_DIR/.env"; then sed -i -E "s/^HOST=[^ ]*/HOST=$BRIDGE_IP/" "$APP_DIR/.env"; CHANGED=1
+else echo "HOST=$BRIDGE_IP" >> "$APP_DIR/.env"; CHANGED=1; fi
 UNIT=/etc/systemd/system/hwwd.service
 if [ -f "$UNIT" ] && ! grep -q '^After=.*docker.service' "$UNIT"; then
   sed -i -E 's/^After=(.*)$/After=\1 docker.service/' "$UNIT"
   sed -i -E 's/^Wants=(.*)$/Wants=\1 docker.service/' "$UNIT"
+  CHANGED=1
 fi
-systemctl daemon-reload
-systemctl restart hwwd
+if [ "$CHANGED" = 1 ] || ! curl -fsS "http://$BRIDGE_IP:$PORT/api/health" >/dev/null 2>&1; then
+  systemctl daemon-reload
+  systemctl restart hwwd
+fi
 for _ in 1 2 3 4 5 6 7 8 9 10; do curl -fsS "http://$BRIDGE_IP:$PORT/api/health" >/dev/null 2>&1 && break; sleep 1; done
 curl -fsS "http://$BRIDGE_IP:$PORT/api/health" >/dev/null 2>&1 || { journalctl -u hwwd -n 20 --no-pager; die "The app didn't start on $BRIDGE_IP:$PORT."; }
 ok "App answering on $BRIDGE_IP:$PORT"
@@ -56,6 +61,10 @@ if command -v ufw >/dev/null && ufw status 2>/dev/null | grep -q "Status: active
 fi
 if docker exec "$CONTAINER" wget -qO- -T 5 "http://$BRIDGE_IP:$PORT/api/health" >/dev/null 2>&1; then ok "Reachable from $CONTAINER"
 else die "$CONTAINER can't reach http://$BRIDGE_IP:$PORT. Nothing in Caddy has been changed."; fi
+
+# Remember this setup so the guard (deploy/guard.sh) can repair it if it's ever undone
+mkdir -p /etc/hwwd
+printf 'CONTAINER=%q\nDOMAIN=%q\n' "$CONTAINER" "$DOMAIN" > /etc/hwwd/proxy.conf
 
 # ---------- 3. Caddyfile ----------
 say "Finding $CONTAINER's Caddyfile"

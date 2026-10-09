@@ -137,8 +137,11 @@ else
       "$SRC_DIR/.env.example" | write_file "$APP_DIR/.env" 600
   [ -n "$KEY" ] && ok "API key saved" || warn "No API key yet. Add it later to $APP_DIR/.env, then: systemctl restart $APP"
 fi
-run "chown -R $APP_USER:$APP_USER $APP_DIR"
-run "chmod 750 $APP_DIR"
+# Code is owned by root (the app can read but not change it); only data/ belongs to the app user.
+# The guard and backup scripts run as root, so the app must never be able to edit them.
+run "chown -R root:$APP_USER $APP_DIR && chmod -R g-w,o-rwx $APP_DIR && chmod 750 $APP_DIR"
+run "chown -R $APP_USER:$APP_USER $APP_DIR/data && chmod 750 $APP_DIR/data"
+run "[ -f $APP_DIR/.env ] && chown root:$APP_USER $APP_DIR/.env && chmod 640 $APP_DIR/.env || true"
 
 # ---------- 5. systemd ----------
 say "Installing the $APP service"
@@ -177,7 +180,7 @@ run "systemctl daemon-reload"
 run "systemctl enable $APP >/dev/null 2>&1"
 run "systemctl restart $APP"
 
-APP_HOST="$(grep -E '^HOST=' "$APP_DIR/.env" 2>/dev/null | head -1 | sed -E 's/^HOST=([^ ]*).*/\1/')"
+APP_HOST="$(grep -E '^HOST=' "$APP_DIR/.env" 2>/dev/null | head -1 | sed -E 's/^HOST=([^ ]*).*/\1/' || true)"
 case "$APP_HOST" in ""|0.0.0.0) APP_HOST=127.0.0.1 ;; esac
 if [ "$DRY" = 0 ]; then
   for _ in 1 2 3 4 5 6 7 8 9 10; do
@@ -216,7 +219,7 @@ fi
 # ---------- 6. web server ----------
 say "Setting up $DOMAIN"
 DNS_OK=1
-DNS_IP="$(getent ahostsv4 "$DOMAIN" 2>/dev/null | awk '{print $1}' | head -1)"
+DNS_IP="$(getent ahostsv4 "$DOMAIN" 2>/dev/null | awk '{print $1}' | head -1 || true)"
 MY_IP="$(curl -4 -fsS --max-time 5 https://api.ipify.org 2>/dev/null || curl -4 -fsS --max-time 5 https://ifconfig.me 2>/dev/null || true)"
 if [ -z "$DNS_IP" ]; then
   DNS_OK=0; warn "DNS for $DOMAIN isn't resolving yet. Add an A record pointing at this server${MY_IP:+ ($MY_IP)}; HTTPS needs it."
@@ -356,15 +359,43 @@ EOF
 esac
 
 # ---------- 7. backups ----------
-say "Adding a daily backup"
+say "Daily encrypted backups"
 write_file /etc/cron.daily/$APP-backup 755 <<EOF
 #!/bin/sh
-# How Well Are We Doing? — daily backup of workshop data (keeps 14 days)
-mkdir -p /var/backups/$APP
-tar -czf /var/backups/$APP/data-\$(date +%F).tgz -C $APP_DIR data 2>/dev/null
-find /var/backups/$APP -name 'data-*.tgz' -mtime +14 -delete
+# Evalu8 Compass: daily encrypted backup (local + off-site if configured). Log: /var/log/hwwd-backup.log
+exec /bin/bash $APP_DIR/deploy/backup.sh run >> /var/log/hwwd-backup.log 2>&1
 EOF
-ok "Backups go to /var/backups/$APP"
+if [ "$DRY" = 0 ] && [ ! -s /root/.hwwd-backup-passphrase ]; then bash "$APP_DIR/deploy/backup.sh" run || true; fi
+if [ ! -f /etc/hwwd/backup.conf ]; then
+  warn "Backups are only on this server so far. To also copy them off-site (recommended), run:
+      bash $APP_DIR/deploy/backup.sh setup"
+else ok "Off-site backups configured"; fi
+
+# ---------- 8. self-healing guard ----------
+say "Self-healing guard (checks every 5 minutes)"
+write_file /etc/systemd/system/$APP-guard.service 644 <<EOF
+[Unit]
+Description=Evalu8 Compass self-healing guard
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash $APP_DIR/deploy/guard.sh
+EOF
+write_file /etc/systemd/system/$APP-guard.timer 644 <<EOF
+[Unit]
+Description=Run the Evalu8 Compass guard every 5 minutes
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=5min
+
+[Install]
+WantedBy=timers.target
+EOF
+run "systemctl daemon-reload"
+run "systemctl enable --now $APP-guard.timer >/dev/null 2>&1"
+ok "Guard on. Its log: journalctl -t hwwd-guard"
 
 echo
 say "Done"
