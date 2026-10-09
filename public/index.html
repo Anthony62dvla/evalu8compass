@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- build:head -->
+<title>How Well Are We Doing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/styles.css">
+<!-- /build:head -->
+</head>
+<body>
+<!-- build:body -->
+<div class="brandbar">
+  <div class="brandbar-in">
+    <div class="brand-logo" id="brandLogo"><i data-icon="school" data-size="26"></i></div>
+    <div class="brand-text"><b id="brandName">Your school</b><span>How well are we doing?</span></div>
+    <nav class="brand-nav" aria-label="Main">
+      <a href="index.html" aria-current="page"><i data-icon="list-check"></i>Checklist</a>
+      <a href="workshop.html" id="workshopLink"><i data-icon="users-group"></i>Staff workshop</a>
+    </nav>
+  </div>
+</div>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Ofsted self-assessment · renewed framework</div>
+      <h1>How well are we doing?</h1>
+      <p>Rate each expectation as Met, Partly or Not yet and record your evidence. For any gap, ask the AI inspector for improvement activities, or run a full readiness review.</p>
+    </div>
+    <span class="ai-badge off" id="aiBadge"><i data-icon="sparkles" data-size="18"></i><span>Checking AI inspector…</span></span>
+  </header>
+
+  <section class="setup" aria-labelledby="setupTitle">
+    <div class="setup-head"><div class="tile"><i data-icon="building" data-size="24"></i></div><h2 id="setupTitle">Your school</h2></div>
+    <div class="setup-grid">
+      <div class="field"><label for="pName">School or trust name</label><input type="text" id="pName" placeholder="e.g. EFE"></div>
+      <div class="field"><label for="pBy">Completed by</label><input type="text" id="pBy" placeholder="Name and role"></div>
+      <div class="field"><label for="pDate">Date reviewed</label><input type="date" id="pDate"></div>
+    </div>
+    <div class="field"><span class="lbl" id="typeLbl">School type</span><div class="seg" id="types" role="group" aria-labelledby="typeLbl"></div></div>
+    <div class="field"><span class="lbl" id="phaseLbl">Phases you teach</span><div class="chips" id="phases" role="group" aria-labelledby="phaseLbl"></div></div>
+    <label class="switch"><input type="checkbox" id="pSpecial"> Specialist provision (special school, resourced provision or AP)</label>
+    <div class="logo-row">
+      <label class="btn filebtn"><i data-icon="photo"></i>Add school logo<input type="file" id="pLogo" accept="image/png,image/jpeg,image/webp,image/svg+xml"></label>
+      <button class="btn hide" id="pLogoRemove"><i data-icon="x"></i>Remove logo</button>
+      <span>PNG, JPG or SVG, under 200 KB. Shown in the bar at the top.</span>
+    </div>
+    <p class="scope-note" id="scopeNote"></p>
+  </section>
+
+  <div class="summary">
+    <div class="sumrow">
+      <div class="big" id="pct">0%<small>met</small></div>
+      <div class="stack"><div class="bar" id="bar"></div><div class="legend" id="legend"></div></div>
+    </div>
+    <div class="tools">
+      <button class="btn" data-f="all" aria-pressed="true"><i data-icon="list-details"></i>All</button>
+      <button class="btn" data-f="todo" aria-pressed="false"><i data-icon="help-circle"></i>Not yet assessed</button>
+      <button class="btn" data-f="gaps" aria-pressed="false"><i data-icon="filter"></i>Gaps only</button>
+      <span class="spacer"></span>
+      <button class="btn ai" id="reviewBtn"><i data-icon="sparkles"></i>Inspector review</button>
+      <button class="btn" id="copyBtn"><i data-icon="clipboard-list"></i>Copy action plan</button>
+      <button class="btn" id="dataBtn"><i data-icon="device-floppy"></i>Save / load</button>
+      <button class="btn" id="expandBtn"><i data-icon="layout-navbar-collapse"></i><span>Collapse all</span></button>
+      <button class="btn" id="resetBtn"><i data-icon="refresh"></i>Reset</button>
+    </div>
+    <div class="panel danger hide" id="confirm">
+      <span>Clear every answer, note and AI suggestion? Your school details are kept. This can't be undone.</span>
+      <div class="row"><button class="btn" id="yesBtn">Yes, clear</button><button class="btn" id="noBtn">Keep my answers</button></div>
+    </div>
+    <div class="panel hide" id="copyPanel">
+      <span id="copyMsg">Select and copy the text below.</span>
+      <textarea id="copyBox" readonly aria-label="Action plan text"></textarea>
+    </div>
+    <div class="panel hide" id="dataPanel">
+      <span>Copy this text to keep a backup or move your self-assessment to another device. To load one, paste it in and choose Load.</span>
+      <textarea id="dataBox" aria-label="Saved self-assessment data"></textarea>
+      <div class="row"><button class="btn" id="dataCopy"><i data-icon="copy"></i>Copy</button><button class="btn" id="dataLoad"><i data-icon="file-upload"></i>Load pasted data</button><button class="btn" id="dataClose">Close</button></div>
+    </div>
+  </div>
+
+  <div class="key">
+    <span style="color:var(--met)"><i data-icon="circle-check" data-size="18"></i><b>Met</b></span><span>we can evidence this consistently</span>
+    <span style="color:var(--part)"><i data-icon="circle-half-2" data-size="18"></i><b>Partly</b></span><span>in place but not consistent</span>
+    <span style="color:var(--no)"><i data-icon="circle-x" data-size="18"></i><b>Not yet</b></span><span>a gap</span>
+    <span style="color:var(--na)"><i data-icon="circle-minus" data-size="18"></i><b>N/A</b></span><span>doesn't apply to us</span>
+  </div>
+
+  <div id="review"></div>
+  <div id="areas"></div>
+
+  <footer>
+    <p>Criteria reflect Ofsted's renewed school inspection framework evaluation areas, the independent school standards and DfE statutory guidance. Check current guidance before inspection: requirements change.</p>
+    <p>AI inspector suggestions are advisory. They are not an Ofsted judgement.</p>
+    <p>Your answers are saved in this browser only. Icons by Tabler Icons (MIT licence).</p>
+  </footer>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="js/icons.js"></script>
+<script src="js/criteria.js"></script>
+<script src="js/prompts.js"></script>
+<script src="js/inspector.js"></script>
+<script src="js/store.js"></script>
+<script src="js/app.js"></script>
+<!-- /build:body -->
+</body>
+</html>

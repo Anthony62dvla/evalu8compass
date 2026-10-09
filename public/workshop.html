@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How Well Are We Doing · Staff workshop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/workshop.css">
+</head>
+<body>
+<div class="brandbar">
+  <div class="brandbar-in">
+    <div class="brand-logo" id="brandLogo"><i data-icon="school" data-size="26"></i></div>
+    <div class="brand-text"><b id="brandName">How well are we doing?</b><span id="brandSub">Staff workshop</span></div>
+    <nav class="brand-nav fac-only" aria-label="Main" id="brandNav">
+      <a href="index.html"><i data-icon="list-check"></i>Checklist</a>
+      <a href="workshop.html" aria-current="page"><i data-icon="users-group"></i>Staff workshop</a>
+    </nav>
+  </div>
+</div>
+<div class="wrap">
+
+  <!-- ============ Landing ============ -->
+  <section id="landing" class="view">
+    <header class="top">
+      <div>
+        <div class="eyebrow">How well are we doing? · Staff workshop</div>
+        <h1>Self-evaluation, together</h1>
+        <p>Staff rate the school anonymously on their own devices. Everyone sees the collated findings, and leaders turn them into an improvement plan.</p>
+      </div>
+    </header>
+
+    <div class="cards">
+      <form class="card" id="joinForm" autocomplete="off">
+        <div class="card-head"><span class="tile"><i data-icon="login" data-size="24"></i></span><h2>Join a workshop</h2></div>
+        <p class="muted">Enter the code on the screen at the front of the room.</p>
+        <div class="field"><label for="joinCode">Workshop code</label>
+          <input type="text" id="joinCode" class="code-input" maxlength="6" inputmode="text" autocapitalize="characters" spellcheck="false" placeholder="ABC123" required></div>
+        <div class="field"><span class="lbl" id="roleLbl">Your role</span><div class="seg" id="roles" role="group" aria-labelledby="roleLbl"></div></div>
+        <p class="muted small">Your name isn't collected. Your role is only shown when at least three people with that role have answered.</p>
+        <p class="error" id="joinError" role="alert"></p>
+        <button class="btn primary" type="submit" id="joinBtn"><i data-icon="arrow-right"></i>Join</button>
+      </form>
+
+      <form class="card" id="createForm" autocomplete="off">
+        <div class="card-head"><span class="tile"><i data-icon="presentation" data-size="24"></i></span><h2>Run a workshop</h2></div>
+        <p class="muted">For the headteacher or facilitator.</p>
+        <div class="field"><label for="cName">School or trust name</label><input type="text" id="cName" placeholder="e.g. EFE"></div>
+        <div class="field"><span class="lbl" id="cTypeLbl">School type</span><div class="seg" id="cTypes" role="group" aria-labelledby="cTypeLbl"></div></div>
+        <div class="field"><span class="lbl" id="cPhaseLbl">Phases</span><div class="chips" id="cPhases" role="group" aria-labelledby="cPhaseLbl"></div></div>
+        <label class="switch"><input type="checkbox" id="cSpecial"> Specialist provision</label>
+        <div class="logo-row"><label class="btn filebtn"><i data-icon="photo"></i>Add school logo<input type="file" id="cLogo" accept="image/png,image/jpeg,image/webp,image/svg+xml"></label><span id="cLogoName">Optional. Staff see it on their screens.</span></div>
+        <div class="field"><span class="lbl" id="cAreaLbl">Areas to cover in this workshop</span><div class="arealist" id="cAreas" role="group" aria-labelledby="cAreaLbl"></div>
+          <p class="muted small" id="cAreaNote"></p></div>
+        <p class="error" id="createError" role="alert"></p>
+        <button class="btn primary" type="submit" id="createBtn"><i data-icon="player-play"></i>Start workshop</button>
+        <div id="resumeList"></div>
+      </form>
+    </div>
+  </section>
+
+  <!-- ============ Staff ============ -->
+  <section id="staff" class="view hide">
+    <header class="top">
+      <div>
+        <div class="eyebrow" id="sEyebrow">Workshop</div>
+        <h1 id="sTitle">How well are we doing?</h1>
+        <p id="sIntro">Rate each line from your own experience. There are no wrong answers, and your name isn't recorded.</p>
+      </div>
+      <div class="savestate" id="saveState" aria-live="polite">Saved</div>
+    </header>
+    <div class="banner hide" id="sBanner" role="status"></div>
+    <nav class="tabs" role="tablist" aria-label="Workshop sections">
+      <button role="tab" class="tab" data-tab="s-answer" aria-selected="true"><i data-icon="message-circle"></i>My responses <span class="count" id="sMine"></span></button>
+      <button role="tab" class="tab hide" data-tab="s-results" id="sResultsTab" aria-selected="false"><i data-icon="broadcast"></i>Findings</button>
+      <button role="tab" class="tab hide" data-tab="s-plan" id="sPlanTab" aria-selected="false"><i data-icon="target"></i>Our plan</button>
+    </nav>
+    <div class="tabpanel" id="s-answer"></div>
+    <div class="tabpanel hide" id="s-results"></div>
+    <div class="tabpanel hide" id="s-plan"></div>
+  </section>
+
+  <!-- ============ Facilitator ============ -->
+  <section id="fac" class="view hide">
+    <div class="joinbar">
+      <div class="joinbar-code">
+        <span class="lbl">Join at <b id="fJoinUrl"></b> with code</span>
+        <span class="bigcode" id="fCode">——————</span>
+      </div>
+      <div class="qr" id="fQr" aria-hidden="true"></div>
+      <div class="joinbar-stats">
+        <div class="statbox"><span class="tile"><i data-icon="users" data-size="24"></i></span><div><span class="stat" id="fPeople">0</span><span class="lbl">staff joined</span></div></div>
+        <div class="statbox"><span class="tile"><i data-icon="checks" data-size="24"></i></span><div><span class="stat" id="fDone">0%</span><span class="lbl">answered</span></div></div>
+      </div>
+    </div>
+    <div class="factools fac-only">
+      <label class="switch toggle"><input type="checkbox" id="fShare"><i data-icon="broadcast"></i> Share findings with staff</label>
+      <label class="switch toggle"><input type="checkbox" id="fClosed"><i data-icon="lock"></i> Close responses</label>
+      <span class="spacer"></span>
+      <button class="btn" id="fPresent"><i data-icon="presentation"></i>Present mode</button>
+      <button class="btn" id="fCopyLink"><i data-icon="link"></i>Copy facilitator link</button>
+      <button class="btn" id="fLeave"><i data-icon="logout"></i>Leave</button>
+    </div>
+    <p class="muted small fac-only" id="fRoles"></p>
+
+    <nav class="tabs fac-only" role="tablist" aria-label="Facilitator sections">
+      <button role="tab" class="tab" data-tab="f-results" aria-selected="true"><i data-icon="eye"></i>Live findings</button>
+      <button role="tab" class="tab" data-tab="f-plan" aria-selected="false"><i data-icon="target"></i>Improvement plan</button>
+      <button role="tab" class="tab" data-tab="f-export" aria-selected="false"><i data-icon="file-export"></i>Export</button>
+    </nav>
+
+    <div class="tabpanel" id="f-results">
+      <div class="tools fac-only">
+        <button class="btn" data-ff="all" aria-pressed="true"><i data-icon="list-details"></i>All lines</button>
+        <button class="btn" data-ff="flag" aria-pressed="false"><i data-icon="arrows-diff"></i>Splits and gaps</button>
+        <button class="btn" data-ff="todo" aria-pressed="false"><i data-icon="help-circle"></i>Not yet agreed</button>
+        <span class="spacer"></span>
+        <button class="btn" id="fAgreeAll" title="Sets each line without an agreed rating to the most common staff answer"><i data-icon="checks"></i>Agree most common answers</button>
+      </div>
+      <div id="fResults"></div>
+    </div>
+
+    <div class="tabpanel hide" id="f-plan">
+      <ol class="steps">
+        <li class="step">
+          <h3><i data-icon="building" data-size="22"></i>About your setting</h3>
+          <p class="muted">Context the AI should know: pupil numbers and needs, recent changes, staffing, current priorities. Don't include pupil names or other personal information.</p>
+          <textarea id="fContext" rows="6" placeholder="e.g. 3 pupils, all with EHC plans, aged 11–17. New headteacher since September. Admissions now include pupils with severe learning difficulties…"></textarea>
+          <div class="row"><button class="btn" id="fSaveContext"><i data-icon="device-floppy"></i>Save context</button><span class="muted small" id="fContextSaved"></span></div>
+        </li>
+        <li class="step">
+          <h3><i data-icon="file-text" data-size="22"></i>Latest Ofsted report</h3>
+          <p class="muted">Upload the PDF, or paste the text. The AI maps the report's findings to the checklist lines.</p>
+          <div class="row">
+            <label class="btn filebtn"><i data-icon="file-upload"></i>Choose PDF<input type="file" id="fReportFile" accept="application/pdf"></label>
+            <span class="muted small" id="fReportName">No file chosen</span>
+          </div>
+          <details><summary>Or paste the report text</summary><textarea id="fReportText" rows="6" placeholder="Paste the full report text here"></textarea></details>
+          <div class="row"><button class="btn ai" id="fReadReport"><i data-icon="sparkles"></i>Read the report</button></div>
+          <div id="fReport"></div>
+        </li>
+        <li class="step">
+          <h3><i data-icon="message-circle" data-size="22"></i>What staff are saying</h3>
+          <p class="muted">Groups staff comments into themes. Comments are already anonymous.</p>
+          <div class="row"><button class="btn ai" id="fThemes"><i data-icon="sparkles"></i>Summarise staff comments</button></div>
+          <div id="fThemesOut"></div>
+        </li>
+        <li class="step">
+          <h3><i data-icon="target" data-size="22"></i>Generate the improvement plan</h3>
+          <p class="muted">Uses the agreed ratings, staff findings, your context and the Ofsted report. Agree the ratings on the Live findings tab first for the best plan.</p>
+          <div class="row"><button class="btn ai" id="fPlanBtn"><i data-icon="sparkles"></i>Generate plan</button>
+            <label class="switch toggle"><input type="checkbox" id="fSharePlan" disabled><i data-icon="broadcast"></i> Share plan with staff</label>
+            <button class="btn" id="fCopyPlan" disabled><i data-icon="copy"></i>Copy plan</button></div>
+          <div id="fPlan"></div>
+        </li>
+      </ol>
+    </div>
+
+    <div class="tabpanel hide" id="f-export">
+      <div class="card">
+        <div class="card-head"><span class="tile"><i data-icon="list-check" data-size="24"></i></span><h3>Send agreed ratings to the self-assessment checklist</h3></div>
+        <p class="muted">Copies the agreed ratings in a format the single-user checklist can load. Open the checklist, choose Save / load, paste and choose Load.</p>
+        <div class="row"><button class="btn" id="fExportChecklist"><i data-icon="copy"></i>Copy for checklist</button><a class="btn" href="index.html" target="_blank" rel="noopener"><i data-icon="arrow-right"></i>Open checklist</a></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="tile"><i data-icon="file-export" data-size="24"></i></span><h3>Full workshop record</h3></div>
+        <p class="muted">Collated findings, agreed ratings, report reading and plan as data, for your records. Individual responses aren't included.</p>
+        <div class="row"><button class="btn" id="fExportAll"><i data-icon="copy"></i>Copy workshop record</button></div>
+      </div>
+      <textarea id="fExportBox" class="hide" readonly aria-label="Export text"></textarea>
+    </div>
+  </section>
+
+  <footer>
+    <p>AI suggestions are advisory and are not an Ofsted judgement. Responses are anonymous; role breakdowns appear only for groups of three or more. Icons by Tabler Icons (MIT licence).</p>
+  </footer>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/criteria.js"></script>
+<script src="js/workshop.js"></script>
+</body>
+</html>

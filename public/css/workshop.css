@@ -1,0 +1,155 @@
+/* Workshop additions — builds on the tokens in styles.css */
+.muted { color: var(--muted) }
+.small { font-size: 12.5px }
+.error { color: var(--no); font-size: 13.5px; margin: 0; min-height: 1em }
+.error:empty { display: none }
+a.btn { text-decoration: none; display: inline-block }
+.btn.primary { padding: 10px 18px; font-size: 15px; min-height: 48px }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-top: 24px; align-items: start }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0 }
+.card h2, .card h3 { font-family: var(--display); margin: 0 }
+.card h2 { font-size: 22px } .card h3 { font-size: 18px }
+.card p { margin: 0 }
+.code-input { font-family: ui-monospace, Menlo, Consolas, monospace !important; font-size: 26px !important; letter-spacing: .25em; text-transform: uppercase; text-align: center; padding: 10px !important; width: 100% }
+.field input[type=text] { width: 100%; font: inherit; padding: 7px 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink) }
+.arealist { display: grid; gap: 6px }
+.arealist label { display: flex; gap: 8px; align-items: center; font-size: 14px }
+.arealist input { width: 17px; height: 17px; accent-color: var(--accent) }
+.arealist small { color: var(--muted) }
+#resumeList:empty { display: none }
+#resumeList { border-top: 1px solid var(--line); padding-top: 12px; display: grid; gap: 6px; font-size: 13.5px }
+
+textarea { width: 100%; font: inherit; font-size: 14px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); resize: vertical }
+
+/* Tabs */
+.tabs { display: flex; gap: 4px; margin-top: 20px; border-bottom: 1px solid var(--line); overflow-x: auto }
+.tab { border: 0; background: none; color: var(--muted); font-weight: 600; padding: 10px 14px; border-bottom: 3px solid transparent; white-space: nowrap; font-size: 14.5px }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent) }
+.tab .count { font-weight: 500; font-variant-numeric: tabular-nums }
+.tabpanel { padding-top: 16px }
+
+.banner { margin-top: 16px; padding: 12px 14px; border-radius: 8px; background: var(--accent-soft); color: var(--ink); border: 1px solid var(--accent); font-weight: 500 }
+.banner.closed { background: var(--part-soft); border-color: var(--part) }
+.savestate { font-size: 12.5px; color: var(--muted); white-space: nowrap }
+.savestate.saving { color: var(--part) }
+.savestate.err { color: var(--no) }
+
+/* Staff answer list (reuses .area/.item from styles.css) */
+.item textarea { min-height: 38px }
+
+
+/* Join bar */
+.joinbar { display: flex; flex-wrap: wrap; gap: 16px 28px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px }
+.joinbar-code { display: grid; gap: 2px; min-width: 0 }
+.joinbar .lbl { font-size: 12.5px; color: var(--muted) }
+.joinbar .lbl b { color: var(--ink); word-break: break-all }
+.bigcode { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: clamp(36px, 8vw, 56px); font-weight: 700; letter-spacing: .14em; line-height: 1.05 }
+.qr svg { width: 112px; height: 112px; display: block; background: #fff; border-radius: 6px }
+.qr:empty { display: none }
+.joinbar-stats { display: flex; gap: 24px; margin-left: auto }
+.joinbar-stats > div { display: grid }
+.stat { font-family: var(--display); font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1 }
+.factools { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-top: 14px }
+
+/* Findings */
+.warea { margin-top: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden }
+.warea-head { display: flex; gap: 12px; align-items: baseline; padding: 14px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap }
+.warea-head h3 { font-family: var(--display); font-size: 20px; margin: 0; flex: 1; min-width: 0 }
+.score { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 14px }
+.witems { list-style: none; margin: 0; padding: 0 }
+.witem { padding: 14px 16px; border-top: 1px solid var(--line); display: grid; gap: 8px }
+.witem:first-child { border-top: 0 }
+.wq { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap }
+.wq strong { flex: 1 1 280px; min-width: 0; font-weight: 600 }
+.flag { font-size: 11.5px; font-weight: 700; border-radius: 999px; padding: 2px 9px; white-space: nowrap }
+.flag.split { color: var(--part); background: var(--part-soft) }
+.flag.gap { color: var(--no); background: var(--no-soft) }
+.flag.ofsted { color: var(--g-exc); background: var(--accent-soft) }
+.wbarrow { display: flex; gap: 12px; align-items: center; flex-wrap: wrap }
+.wbar { flex: 1 1 220px; display: flex; height: 22px; border-radius: 5px; overflow: hidden; background: var(--na-soft); min-width: 0 }
+.wbar span { display: grid; place-items: center; color: var(--surface); font-size: 11.5px; font-weight: 700; min-width: 0; overflow: hidden }
+.wmeta { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap }
+.witem details { font-size: 13.5px }
+.witem summary { cursor: pointer; color: var(--accent); font-weight: 600; font-size: 13px }
+.rolegrid { display: grid; gap: 6px; margin-top: 8px }
+.rolerow { display: grid; grid-template-columns: minmax(110px, 160px) 1fr auto; gap: 10px; align-items: center; font-size: 12.5px }
+.rolerow .wbar { height: 12px }
+.comments { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px }
+.comments li { background: var(--bg); border-radius: 6px; padding: 7px 10px }
+.comments .who { display: block; font-size: 11.5px; color: var(--muted); font-weight: 600 }
+.ofsted-note { font-size: 13px; border-left: 3px solid var(--g-exc); padding: 4px 10px; background: var(--accent-soft); border-radius: 0 6px 6px 0 }
+.agree { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding-top: 4px; border-top: 1px dashed var(--line) }
+.agree .lbl { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-right: 4px }
+.agree input { flex: 1 1 200px; font: inherit; font-size: 13px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); min-width: 0 }
+.agreed-badge { font-size: 12px; font-weight: 700 }
+.empty { padding: 28px 16px; text-align: center; color: var(--muted) }
+
+/* Plan steps */
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: st }
+.step { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 16px 16px 56px; position: relative; display: grid; gap: 10px; counter-increment: st; min-width: 0 }
+.step::before { content: counter(st); position: absolute; left: 16px; top: 15px; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--surface); font-weight: 700; font-size: 13px; display: grid; place-items: center }
+.step h3 { margin: 0; font-family: var(--display); font-size: 18px }
+.step p { margin: 0 }
+.out { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; gap: 10px; font-size: 14px; background: var(--bg) }
+.out h4 { margin: 0; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted) }
+.out ul { margin: 0; padding-left: 18px; display: grid; gap: 4px }
+.out p { margin: 0 }
+.srcs { display: inline-flex; gap: 4px; flex-wrap: wrap; margin-left: 4px }
+.src { font-size: 11px; font-weight: 700; border-radius: 4px; padding: 0 6px; background: var(--accent-soft); color: var(--accent); text-transform: uppercase; letter-spacing: .04em }
+.src.ofsted { background: var(--accent-soft); color: var(--g-exc) }
+.src.staff { background: var(--met-soft); color: var(--met) }
+.src.agreed { background: var(--ai-soft); color: var(--ai) }
+.src.context { background: var(--na-soft); color: var(--na) }
+.plan-pr { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; counter-reset: pp }
+.plan-pr > li { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px 12px 46px; position: relative; counter-increment: pp; display: grid; gap: 6px }
+.plan-pr > li::before { content: counter(pp); position: absolute; left: 12px; top: 12px; width: 24px; height: 24px; border-radius: 50%; background: var(--ai); color: var(--surface); font-weight: 700; font-size: 12px; display: grid; place-items: center }
+.plan-pr b { font-size: 15px }
+.acttable { width: 100%; border-collapse: collapse; font-size: 13px }
+.acttable th, .acttable td { text-align: left; padding: 6px 8px; border-top: 1px solid var(--line); vertical-align: top }
+.acttable th { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em }
+.tablewrap { overflow-x: auto }
+.staffmsg { background: var(--ai-soft); border-radius: 8px; padding: 12px 14px; white-space: pre-wrap }
+#fExportBox { min-height: 140px; margin-top: 12px; font: 12.5px/1.45 ui-monospace, Menlo, Consolas, monospace }
+#f-export { display: grid; gap: 14px }
+
+/* Present mode: big, clean, controls hidden */
+body.present .fac-only, body.present footer, body.present .agree { display: none !important }
+body.present .wrap { max-width: 1200px }
+body.present .witem strong { font-size: 18px }
+body.present .bigcode { font-size: 72px }
+body.present .exitpresent { display: inline-block !important }
+.exitpresent { display: none !important; position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 10 }
+
+@media (max-width: 560px) {
+  .joinbar-stats { margin-left: 0 }
+  .rolerow { grid-template-columns: 1fr auto; } .rolerow .wbar { grid-column: 1 / -1 }
+  .step { padding-left: 16px; padding-top: 50px } .step::before { top: 16px }
+}
+
+.card-head { display: flex; gap: 12px; align-items: center }
+.card { border-radius: 14px }
+.statbox { display: flex; gap: 10px; align-items: center }
+.statbox > div { display: grid }
+.tab { display: inline-flex; gap: 7px; align-items: center; min-height: 46px }
+.tab .ic { color: var(--icon) }
+.switch.toggle { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 6px 12px; min-height: 44px }
+.switch.toggle .ic { color: var(--icon) }
+.switch.toggle:has(input:checked) { background: var(--accent-soft); border-color: var(--brand) }
+.step h3 { display: flex; gap: 8px; align-items: center }
+.step h3 .ic { color: var(--icon) }
+.flag { display: inline-flex; gap: 4px; align-items: center }
+.warea-head { align-items: center }
+.warea-head .tile { width: 40px; height: 40px }
+.privacy-note { display: flex; gap: 8px; align-items: flex-start; background: var(--accent-soft); border-radius: 10px; padding: 10px 12px; font-size: 13.5px; margin-top: 14px }
+.privacy-note .ic { color: var(--icon); margin-top: 2px }
+.joinbar { background: var(--brand-deep); border-color: var(--brand-deep); color: var(--on-brand) }
+.joinbar .lbl { color: var(--brand-bright) }
+.joinbar .lbl b { color: var(--on-brand) }
+.joinbar .tile { background: var(--brand); color: var(--on-brand) }
+.opt.role { min-width: 0 }
+@media (pointer: coarse) { .tab { min-height: 48px } }
+.tile.sm { width: 30px; height: 30px; border-radius: 8px }
+.arealist label { min-height: 40px }
+.field .arealist label { text-transform: none; letter-spacing: 0; font-size: 14.5px; font-weight: 500; color: var(--ink); margin: 0 }
+.field .arealist small { font-size: 12.5px; font-weight: 400 }
