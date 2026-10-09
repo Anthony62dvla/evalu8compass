@@ -202,7 +202,8 @@ write_file /usr/local/bin/hwwd-access 755 <<EOF
 [ "\$(id -u)" = 0 ] || { echo "Run as root (sudo hwwd-access ...)"; exit 1; }
 exec runuser -u $APP_USER -- $APP_DIR/runtime/node $APP_DIR/scripts/access.js "\$@"
 EOF
-if [ "$DRY" = 0 ] && ! runuser -u "$APP_USER" -- "$APP_DIR/runtime/node" -e 'process.exit(require("'"$APP_DIR"'/lib/access").required()?0:1)' 2>/dev/null; then
+# Only on a first install: no codes yet and no superadmin (checked from the files, so re-running never adds another)
+if [ "$DRY" = 0 ] && [ ! -f "$APP_DIR/data/admin.json" ] && ! grep -q '"hash"' "$APP_DIR/data/access.json" 2>/dev/null; then
   say "Creating your first access code"
   /usr/local/bin/hwwd-access add "Administrator"
   warn "Keep that code safe: from now on the checklist, starting workshops and AI need an access code.
