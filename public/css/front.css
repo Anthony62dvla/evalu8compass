@@ -1,0 +1,88 @@
+/* Front page — builds on the brand tokens in styles.css */
+.hero { background: var(--brand-deep); color: var(--on-brand); overflow: hidden }
+.hero-in { max-width: 1080px; margin: 0 auto; padding-inline: 16px; padding-block: 48px 44px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: center }
+.hero-eyebrow { margin: 0 0 10px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; color: var(--brand-bright) }
+.hero h1 { font-size: clamp(34px, 6vw, 56px); line-height: 1.05; margin: 0 0 16px; text-wrap: balance; color: #fff }
+.hero-lead { font-size: 18px; line-height: 1.6; max-width: 60ch; margin: 0; color: #CDEDE2 }
+.hero-lead b { color: #fff }
+.hero-cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px }
+.btn.big { min-height: 52px; padding: 12px 20px; font-size: 16px; border-radius: 12px }
+.hero .btn.primary { background: var(--brand-bright); border-color: var(--brand-bright); color: var(--brand-deep) }
+.hero .btn.primary .ic { color: var(--brand-deep) }
+.btn.ghost { background: transparent; border-color: rgba(225, 245, 238, .45); color: var(--on-brand) }
+.btn.ghost .ic { color: var(--brand-bright) }
+.btn.ghost:hover { border-color: var(--brand-bright); background: rgba(255, 255, 255, .05) }
+.hero-art { color: var(--brand); opacity: .55 }
+.hero-art .ic { width: clamp(180px, 26vw, 300px); height: auto; stroke-width: 1.1 }
+
+.joinbox { margin-top: 26px; max-width: 460px; background: rgba(255, 255, 255, .06); border: 1px solid rgba(225, 245, 238, .2); border-radius: 14px; padding: 14px; display: grid; gap: 8px }
+.joinbox label { font-size: 14px; font-weight: 600; display: flex; gap: 8px; align-items: center; color: var(--on-brand) }
+.joinbox label .ic { color: var(--brand-bright) }
+.joinbox-row { display: flex; gap: 8px }
+.hero-text { min-width: 0 }
+.joinbox input { flex: 1; min-width: 0; width: 100%; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 22px; letter-spacing: .22em; text-transform: uppercase; text-align: center; padding: 8px; min-height: 48px; border-radius: 10px; border: 1px solid rgba(225, 245, 238, .35); background: rgba(0, 0, 0, .2); color: #fff }
+.joinbox input::placeholder { color: rgba(225, 245, 238, .4) }
+.joinerr { font-size: 13px; color: #F7C1C1; min-height: 0 }
+.joinerr:empty { display: none }
+
+.fitstrip { background: var(--accent-soft); color: var(--ink); display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 22px; padding: 14px 16px; font-size: 14px; font-weight: 600 }
+.fitstrip span { display: inline-flex; gap: 7px; align-items: center }
+.fitstrip .ic { color: var(--icon) }
+
+.wrap.front { max-width: 1080px }
+.fsec { margin-top: 56px }
+.fsec-head { max-width: 70ch; margin-bottom: 22px }
+.fsec-head h2 { font-size: clamp(26px, 4vw, 34px); margin: 0 0 10px; line-height: 1.15 }
+.fsec-head p:last-child { margin: 0; color: var(--muted); font-size: 16.5px }
+.cards3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px }
+.cols2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start }
+.fcard { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; display: grid; gap: 10px; align-content: start; min-width: 0 }
+.fcard.soft { background: var(--accent-soft); border-color: transparent }
+.fcard h3 { font-size: 19px; margin: 0; display: flex; gap: 9px; align-items: center }
+.fcard h3 .ic { color: var(--icon) }
+.fcard p { margin: 0; color: var(--muted) }
+.fcard.soft p { color: var(--ink) }
+.ticks { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px }
+.ticks li { padding-left: 26px; position: relative; font-size: 15px }
+.ticks li::before { content: ""; position: absolute; left: 3px; top: .45em; width: 12px; height: 7px; border-left: 2.5px solid var(--accent); border-bottom: 2.5px solid var(--accent); transform: rotate(-45deg) }
+
+.steps6 { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; counter-reset: s }
+.steps6 li { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px; display: flex; gap: 14px; align-items: flex-start; counter-increment: s; position: relative }
+.steps6 li::after { content: counter(s); position: absolute; top: 14px; right: 16px; font-family: var(--display); font-weight: 700; font-size: 28px; color: var(--line) }
+.steps6 h3 { font-size: 17px; margin: 2px 0 6px; padding-right: 26px }
+.steps6 p { margin: 0; color: var(--muted); font-size: 14.5px }
+.steps6 a, .fcard a { color: var(--accent); font-weight: 600 }
+
+.pill { display: inline-block; font-size: 11.5px; font-weight: 700; letter-spacing: .03em; padding: 2px 9px; border-radius: 999px; white-space: nowrap; vertical-align: 1px }
+.pill.now { background: var(--met-soft); color: var(--met) }
+.pill.next { background: var(--part-soft); color: var(--part) }
+.outgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 16px; align-items: start }
+.outcol { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px; min-width: 0 }
+.outcol h3 { font-size: 18px; margin: 0 0 12px; display: flex; gap: 9px; align-items: center }
+.outcol h3 .ic { color: var(--icon) }
+.outs { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px }
+.outs li { display: grid; gap: 3px; font-size: 14px; color: var(--muted); padding-bottom: 12px; border-bottom: 1px solid var(--line) }
+.outs li:last-child { border-bottom: 0; padding-bottom: 0 }
+.outs .pill { justify-self: start }
+.outs b { color: var(--ink); font-size: 15px }
+
+.enter { margin-top: 56px; background: var(--brand-deep); color: var(--on-brand); border-radius: 20px; padding: 28px 22px }
+.enter h2 { margin: 0 0 16px; font-size: 26px; color: #fff }
+.enter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px }
+.enter-card { display: flex; gap: 14px; align-items: center; background: rgba(255, 255, 255, .06); border: 1px solid rgba(225, 245, 238, .2); border-radius: 14px; padding: 16px; color: var(--on-brand); text-decoration: none; min-height: 76px }
+.enter-card:hover { border-color: var(--brand-bright); background: rgba(255, 255, 255, .1) }
+.enter-card .tile { background: var(--brand); color: var(--on-brand) }
+.enter-card > span:nth-child(2) { flex: 1; display: grid; min-width: 0 }
+.enter-card b { font-family: var(--display); font-size: 17px }
+.enter-card small { font-size: 13.5px; color: var(--brand-bright) }
+.enter-card > .ic { color: var(--brand-bright) }
+
+.frontfoot { margin-top: 48px; border-top: 1px solid var(--line); padding-block: 22px 40px; font-size: 13px; color: var(--muted) }
+.frontfoot p { margin: 0 0 6px; max-width: 80ch }
+
+@media (max-width: 760px) {
+  .hero-in { grid-template-columns: minmax(0, 1fr); padding-block: 36px 32px }
+  .hero-art { display: none }
+  .hero-lead { font-size: 16.5px }
+  .hero-cta .btn { flex: 1 1 100% }
+}

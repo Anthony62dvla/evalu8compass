@@ -317,7 +317,7 @@
   /* ---------- Start ---------- */
   renderSetup(); renderAreas(); renderReview();
   // The workshop needs the server; hide its link in single-file or artifact copies
-  if (location.protocol === "file:" || !document.querySelector('link[href="css/styles.css"]')) { const w = $("workshopLink"); if (w) w.hidden = true; }
+  if (location.protocol === "file:" || !document.querySelector('link[href="css/styles.css"]')) { ["workshopLink", "homeLink"].forEach(id => { const w = $(id); if (w) w.hidden = true; }); }
   AI.provider().then(p => {
     const b = $("aiBadge");
     b.classList.toggle("off", p.kind === "offline");

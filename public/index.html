@@ -3,109 +3,233 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- build:head -->
-<title>How Well Are We Doing</title>
+<title>Evalu8 Compass</title>
+<meta name="description" content="Evalu8 Compass helps schools evaluate themselves against Ofsted's renewed framework, involve every member of staff, and turn findings into action.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="css/styles.css">
-<!-- /build:head -->
+<link rel="stylesheet" href="css/front.css">
 </head>
 <body>
-<!-- build:body -->
 <div class="brandbar">
   <div class="brandbar-in">
-    <div class="brand-logo" id="brandLogo"><i data-icon="school" data-size="26"></i></div>
-    <div class="brand-text"><b id="brandName">Your school</b><span>How well are we doing?</span></div>
+    <div class="brand-logo"><i data-icon="compass" data-size="26"></i></div>
+    <div class="brand-text"><b>Evalu8 Compass</b><span>School self-evaluation</span></div>
     <nav class="brand-nav" aria-label="Main">
-      <a href="index.html" aria-current="page"><i data-icon="list-check"></i>Checklist</a>
-      <a href="workshop.html" id="workshopLink"><i data-icon="users-group"></i>Staff workshop</a>
+      <a href="checklist.html"><i data-icon="list-check"></i>Checklist</a>
+      <a href="workshop.html"><i data-icon="users-group"></i>Staff workshop</a>
     </nav>
   </div>
 </div>
 
-<div class="wrap">
-  <header class="top">
-    <div>
-      <div class="eyebrow">Ofsted self-assessment · renewed framework</div>
-      <h1>How well are we doing?</h1>
-      <p>Rate each expectation as Met, Partly or Not yet and record your evidence. For any gap, ask the AI inspector for improvement activities, or run a full readiness review.</p>
+<!-- Hero -->
+<header class="hero">
+  <div class="hero-in">
+    <div class="hero-text">
+      <p class="hero-eyebrow">For Ofsted's renewed school inspection framework</p>
+      <h1>See your school clearly, together.</h1>
+      <p class="hero-lead">Evalu8 Compass helps leaders and staff answer one question honestly: <b>how well are we doing?</b> Rate your school against what inspectors look for, hear from every member of staff, and turn what you find into a plan you can act on.</p>
+      <div class="hero-cta">
+        <a class="btn primary big" href="checklist.html"><i data-icon="list-check"></i>Start the self-evaluation</a>
+        <a class="btn ghost big" href="workshop.html"><i data-icon="presentation"></i>Run a staff workshop</a>
+      </div>
+      <form class="joinbox" id="joinBox" autocomplete="off">
+        <label for="frontCode"><i data-icon="login" data-size="18"></i>Joining a staff workshop? Enter the code on the screen</label>
+        <div class="joinbox-row">
+          <input id="frontCode" maxlength="6" placeholder="ABC123" autocapitalize="characters" spellcheck="false" aria-describedby="frontCodeErr">
+          <button class="btn primary" type="submit"><i data-icon="arrow-right"></i>Join</button>
+        </div>
+        <span class="joinerr" id="frontCodeErr" role="alert"></span>
+      </form>
     </div>
-    <span class="ai-badge off" id="aiBadge"><i data-icon="sparkles" data-size="18"></i><span>Checking AI inspector…</span></span>
-  </header>
+    <div class="hero-art" aria-hidden="true"><i data-icon="compass" data-size="300"></i></div>
+  </div>
+</header>
 
-  <section class="setup" aria-labelledby="setupTitle">
-    <div class="setup-head"><div class="tile"><i data-icon="building" data-size="24"></i></div><h2 id="setupTitle">Your school</h2></div>
-    <div class="setup-grid">
-      <div class="field"><label for="pName">School or trust name</label><input type="text" id="pName" placeholder="e.g. EFE"></div>
-      <div class="field"><label for="pBy">Completed by</label><input type="text" id="pBy" placeholder="Name and role"></div>
-      <div class="field"><label for="pDate">Date reviewed</label><input type="date" id="pDate"></div>
+<div class="fitstrip">
+  <span><i data-icon="building-community" data-size="18"></i>Maintained schools</span>
+  <span><i data-icon="school" data-size="18"></i>Academies and free schools</span>
+  <span><i data-icon="building" data-size="18"></i>Independent schools</span>
+  <span><i data-icon="horse-toy" data-size="18"></i>EYFS to post-16</span>
+  <span><i data-icon="heart-handshake" data-size="18"></i>Specialist provision</span>
+</div>
+
+<main class="wrap front">
+
+  <!-- Purpose -->
+  <section class="fsec" aria-labelledby="whyTitle">
+    <div class="fsec-head">
+      <p class="eyebrow">Why it exists</p>
+      <h2 id="whyTitle">Our intention</h2>
+      <p>Inspection should never be a surprise. Evalu8 Compass gives schools a calm, structured way to look at themselves the way an inspector would, well before anyone arrives, so energy goes into improving rather than performing.</p>
     </div>
-    <div class="field"><span class="lbl" id="typeLbl">School type</span><div class="seg" id="types" role="group" aria-labelledby="typeLbl"></div></div>
-    <div class="field"><span class="lbl" id="phaseLbl">Phases you teach</span><div class="chips" id="phases" role="group" aria-labelledby="phaseLbl"></div></div>
-    <label class="switch"><input type="checkbox" id="pSpecial"> Specialist provision (special school, resourced provision or AP)</label>
-    <div class="logo-row">
-      <label class="btn filebtn"><i data-icon="photo"></i>Add school logo<input type="file" id="pLogo" accept="image/png,image/jpeg,image/webp,image/svg+xml"></label>
-      <button class="btn hide" id="pLogoRemove"><i data-icon="x"></i>Remove logo</button>
-      <span>PNG, JPG or SVG, under 200 KB. Shown in the bar at the top.</span>
+    <div class="cards3">
+      <article class="fcard">
+        <span class="tile"><i data-icon="eye" data-size="24"></i></span>
+        <h3>An honest picture</h3>
+        <p>117 expectations drawn from the renewed framework, the independent school standards and DfE guidance, matched to your type of school and the phases you teach. Each line asks for evidence, not opinion.</p>
+      </article>
+      <article class="fcard">
+        <span class="tile"><i data-icon="users" data-size="24"></i></span>
+        <h3>Every voice counts</h3>
+        <p>Teachers, teaching assistants, support staff, leaders and governors rate the school anonymously. Where views differ, you find out where practice isn't yet consistent: the conversations worth having.</p>
+      </article>
+      <article class="fcard">
+        <span class="tile"><i data-icon="target" data-size="24"></i></span>
+        <h3>From findings to action</h3>
+        <p>Gaps become priorities with owners, timescales and the evidence each one will produce. Optional AI suggestions help you draft; your professional judgement decides.</p>
+      </article>
     </div>
-    <p class="scope-note" id="scopeNote"></p>
   </section>
 
-  <div class="summary">
-    <div class="sumrow">
-      <div class="big" id="pct">0%<small>met</small></div>
-      <div class="stack"><div class="bar" id="bar"></div><div class="legend" id="legend"></div></div>
+  <!-- Co-creation -->
+  <section class="fsec" aria-labelledby="coTitle">
+    <div class="fsec-head">
+      <p class="eyebrow">Co-creation</p>
+      <h2 id="coTitle">What we ask of you</h2>
+      <p>Evalu8 Compass works best as something you build with your staff, and something we keep building with schools.</p>
     </div>
-    <div class="tools">
-      <button class="btn" data-f="all" aria-pressed="true"><i data-icon="list-details"></i>All</button>
-      <button class="btn" data-f="todo" aria-pressed="false"><i data-icon="help-circle"></i>Not yet assessed</button>
-      <button class="btn" data-f="gaps" aria-pressed="false"><i data-icon="filter"></i>Gaps only</button>
-      <span class="spacer"></span>
-      <button class="btn ai" id="reviewBtn"><i data-icon="sparkles"></i>Inspector review</button>
-      <button class="btn" id="copyBtn"><i data-icon="clipboard-list"></i>Copy action plan</button>
-      <button class="btn" id="dataBtn"><i data-icon="device-floppy"></i>Save / load</button>
-      <button class="btn" id="expandBtn"><i data-icon="layout-navbar-collapse"></i><span>Collapse all</span></button>
-      <button class="btn" id="resetBtn"><i data-icon="refresh"></i>Reset</button>
+    <div class="cols2">
+      <article class="fcard">
+        <h3><i data-icon="school" data-size="22"></i>In your school</h3>
+        <ul class="ticks">
+          <li><b>Be honest, not hopeful.</b> "Partly" and "Not yet" are useful answers. A self-evaluation that's all green helps nobody.</li>
+          <li><b>Bring evidence.</b> Note what you'd show an inspector for each line. If you can't find it, that's a finding too.</li>
+          <li><b>Involve everyone.</b> Run a workshop so every role is heard, not only senior leaders.</li>
+          <li><b>Protect anonymity.</b> Never try to work out who said what. Role breakdowns only appear for groups of three or more.</li>
+          <li><b>Keep people out of comments.</b> Describe what happens, not who. Never name pupils or colleagues.</li>
+          <li><b>Lead with judgement.</b> AI suggestions are a starting point. Leaders decide what goes in the plan.</li>
+        </ul>
+      </article>
+      <article class="fcard">
+        <h3><i data-icon="message-circle" data-size="22"></i>With us</h3>
+        <ul class="ticks">
+          <li><b>This is an early version.</b> It will change as schools use it, and some features below are still being built.</li>
+          <li><b>Tell us what's missing.</b> A line that doesn't fit your setting, a report you need, wording that confuses staff: your feedback shapes the next version.</li>
+          <li><b>Check what matters.</b> Statutory guidance changes, especially each September. Treat references as a guide and check the current version.</li>
+          <li><b>We're not Ofsted.</b> Nothing here is an inspection judgement or predicts one.</li>
+        </ul>
+      </article>
     </div>
-    <div class="panel danger hide" id="confirm">
-      <span>Clear every answer, note and AI suggestion? Your school details are kept. This can't be undone.</span>
-      <div class="row"><button class="btn" id="yesBtn">Yes, clear</button><button class="btn" id="noBtn">Keep my answers</button></div>
+  </section>
+
+  <!-- How to use -->
+  <section class="fsec" aria-labelledby="howTitle">
+    <div class="fsec-head">
+      <p class="eyebrow">How to use it</p>
+      <h2 id="howTitle">Six steps, at your own pace</h2>
     </div>
-    <div class="panel hide" id="copyPanel">
-      <span id="copyMsg">Select and copy the text below.</span>
-      <textarea id="copyBox" readonly aria-label="Action plan text"></textarea>
+    <ol class="steps6">
+      <li><span class="tile"><i data-icon="building" data-size="22"></i></span><div><h3>Set up your school</h3><p>Open the <a href="checklist.html">checklist</a>, add your school's name and logo, choose your school type and the phases you teach. The checklist adjusts to fit.</p></div></li>
+      <li><span class="tile"><i data-icon="circle-check" data-size="22"></i></span><div><h3>Rate each expectation</h3><p>Mark each line Met, Partly, Not yet or N/A and add your evidence. Your progress and area scores update as you go.</p></div></li>
+      <li><span class="tile"><i data-icon="users-group" data-size="22"></i></span><div><h3>Bring your staff in</h3><p>Start a <a href="workshop.html">staff workshop</a>, pick two or three areas and share the code. Staff answer on their phones in 20–30 minutes.</p></div></li>
+      <li><span class="tile"><i data-icon="broadcast" data-size="22"></i></span><div><h3>Share and agree</h3><p>Show staff the collated findings, discuss where views differ, and record the school's agreed rating for each line.</p></div></li>
+      <li><span class="tile"><i data-icon="sparkles" data-size="22"></i></span><div><h3>Plan improvements</h3><p>For any gap, ask the AI inspector for ideas if you want them, add your setting's context and latest Ofsted report, and draft the plan.</p></div></li>
+      <li><span class="tile"><i data-icon="file-export" data-size="22"></i></span><div><h3>Keep the record</h3><p>Copy the action plan into your school improvement plan, and repeat each term to show how far you've come.</p></div></li>
+    </ol>
+  </section>
+
+  <!-- Outputs -->
+  <section class="fsec" aria-labelledby="outTitle">
+    <div class="fsec-head">
+      <p class="eyebrow">What you'll get</p>
+      <h2 id="outTitle">Outputs, now and next</h2>
+      <p>Everything marked <span class="pill now">Ready now</span> works today. Items marked <span class="pill next">Coming next</span> are being built.</p>
     </div>
-    <div class="panel hide" id="dataPanel">
-      <span>Copy this text to keep a backup or move your self-assessment to another device. To load one, paste it in and choose Load.</span>
-      <textarea id="dataBox" aria-label="Saved self-assessment data"></textarea>
-      <div class="row"><button class="btn" id="dataCopy"><i data-icon="copy"></i>Copy</button><button class="btn" id="dataLoad"><i data-icon="file-upload"></i>Load pasted data</button><button class="btn" id="dataClose">Close</button></div>
+    <div class="outgrid">
+      <div class="outcol">
+        <h3><i data-icon="list-check" data-size="22"></i>Self-evaluation</h3>
+        <ul class="outs">
+          <li><span class="pill now">Ready now</span><b>Rated checklist with evidence notes</b>for every expectation that applies to your school</li>
+          <li><span class="pill now">Ready now</span><b>Progress overview</b>overall % met and a status for each evaluation area</li>
+          <li><span class="pill now">Ready now</span><b>AI improvement ideas per line</b>3–4 activities with a lead, timescale and the evidence each produces (optional)</li>
+          <li><span class="pill now">Ready now</span><b>AI readiness review</b>indicative grades on the five-point scale, priorities and strengths (optional)</li>
+          <li><span class="pill now">Ready now</span><b>Action plan as text</b>gaps, notes and suggestions to paste into your improvement plan</li>
+          <li><span class="pill next">Coming next</span><b>Downloadable evaluation report</b>a formatted PDF and Word report with your logo, scores, evidence and plan</li>
+        </ul>
+      </div>
+      <div class="outcol">
+        <h3><i data-icon="users-group" data-size="22"></i>Staff workshop</h3>
+        <ul class="outs">
+          <li><span class="pill now">Ready now</span><b>Live collated findings</b>how staff rated each line, by role, with anonymous comments</li>
+          <li><span class="pill now">Ready now</span><b>Splits and gaps</b>flags where staff disagree or leaders rate higher than staff</li>
+          <li><span class="pill now">Ready now</span><b>Findings shared to every device</b>in one click, plus present mode for the projector</li>
+          <li><span class="pill now">Ready now</span><b>Ofsted report reading</b>grades, next steps and concerns mapped to the checklist (AI)</li>
+          <li><span class="pill now">Ready now</span><b>Comment themes and improvement plan</b>priorities tagged by source, quick wins and a message for staff (AI)</li>
+          <li><span class="pill now">Ready now</span><b>Agreed ratings into the checklist</b>so the workshop becomes your official self-evaluation</li>
+        </ul>
+      </div>
+      <div class="outcol">
+        <h3><i data-icon="target" data-size="22"></i>Planning and tracking</h3>
+        <ul class="outs">
+          <li><span class="pill next">Coming next</span><b>Action plan builder</b>owners, deadlines, success criteria and progress for each action, with AI suggestions only if you ask for them</li>
+          <li><span class="pill next">Coming next</span><b>Termly snapshots</b>re-run the evaluation and see what moved from Not yet to Met</li>
+          <li><span class="pill next">Coming next</span><b>School access</b>a sign-in for your leadership team</li>
+          <li><span class="pill next">Coming next</span><b>Trust and group view</b>compare schools across a trust or group</li>
+        </ul>
+      </div>
     </div>
+  </section>
+
+  <!-- AI and data -->
+  <section class="fsec" aria-labelledby="aiTitle">
+    <div class="cols2">
+      <article class="fcard soft">
+        <h3 id="aiTitle"><i data-icon="sparkles" data-size="22"></i>AI is your choice</h3>
+        <p>Everything works without AI. The AI inspector only runs when you press an AI button, and it never changes your ratings.</p>
+        <ul class="ticks">
+          <li>Its suggestions are advisory and are never an Ofsted judgement.</li>
+          <li>When you use it, the relevant lines and notes are sent to our AI provider (Anthropic) to produce the answer.</li>
+          <li>Keep names and personal details out of notes and comments.</li>
+        </ul>
+      </article>
+      <article class="fcard soft">
+        <h3><i data-icon="lock" data-size="22"></i>Your data</h3>
+        <ul class="ticks">
+          <li><b>Checklist:</b> your answers are saved in your own browser, not on our server. Use Save / load to keep a copy.</li>
+          <li><b>Workshops:</b> staff join with a code and a role only, with no names or accounts. Workshop records are deleted 90 days after they were last used.</li>
+          <li><b>Exports</b> contain collated findings only, never individual responses.</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <!-- Enter -->
+  <section class="enter" aria-labelledby="enterTitle">
+    <h2 id="enterTitle">Ready to start?</h2>
+    <div class="enter-grid">
+      <a class="enter-card" href="checklist.html">
+        <span class="tile"><i data-icon="list-check" data-size="26"></i></span>
+        <span><b>Self-evaluation checklist</b><small>For leaders working on their own or as a team</small></span>
+        <i data-icon="arrow-right" data-size="22"></i>
+      </a>
+      <a class="enter-card" href="workshop.html">
+        <span class="tile"><i data-icon="users-group" data-size="26"></i></span>
+        <span><b>Staff workshop</b><small>Run a session, or join one with a code</small></span>
+        <i data-icon="arrow-right" data-size="22"></i>
+      </a>
+    </div>
+  </section>
+</main>
+
+<footer class="frontfoot">
+  <div class="wrap">
+    <p><b>Evalu8 Compass</b> is an independent tool. It is not affiliated with, endorsed by or connected to Ofsted or the Department for Education.</p>
+    <p>Icons by Tabler Icons (MIT licence).</p>
   </div>
-
-  <div class="key">
-    <span style="color:var(--met)"><i data-icon="circle-check" data-size="18"></i><b>Met</b></span><span>we can evidence this consistently</span>
-    <span style="color:var(--part)"><i data-icon="circle-half-2" data-size="18"></i><b>Partly</b></span><span>in place but not consistent</span>
-    <span style="color:var(--no)"><i data-icon="circle-x" data-size="18"></i><b>Not yet</b></span><span>a gap</span>
-    <span style="color:var(--na)"><i data-icon="circle-minus" data-size="18"></i><b>N/A</b></span><span>doesn't apply to us</span>
-  </div>
-
-  <div id="review"></div>
-  <div id="areas"></div>
-
-  <footer>
-    <p>Criteria reflect Ofsted's renewed school inspection framework evaluation areas, the independent school standards and DfE statutory guidance. Check current guidance before inspection: requirements change.</p>
-    <p>AI inspector suggestions are advisory. They are not an Ofsted judgement.</p>
-    <p>Your answers are saved in this browser only. Icons by Tabler Icons (MIT licence).</p>
-  </footer>
-</div>
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
+</footer>
 
 <script src="js/icons.js"></script>
-<script src="js/criteria.js"></script>
-<script src="js/prompts.js"></script>
-<script src="js/inspector.js"></script>
-<script src="js/store.js"></script>
-<script src="js/app.js"></script>
-<!-- /build:body -->
+<script>
+  (function () {
+    var f = document.getElementById("joinBox"), i = document.getElementById("frontCode"), e = document.getElementById("frontCodeErr");
+    i.addEventListener("input", function () { i.value = i.value.toUpperCase().replace(/[^A-Z0-9]/g, ""); e.textContent = ""; });
+    f.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      if (i.value.length !== 6) { e.textContent = "The code has six letters and numbers."; i.focus(); return; }
+      location.href = "workshop.html?code=" + encodeURIComponent(i.value);
+    });
+  })();
+</script>
 </body>
 </html>
