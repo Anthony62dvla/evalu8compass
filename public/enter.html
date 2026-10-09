@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Enter · Evalu8 Compass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/styles.css">
+<style>
+  body { min-height: 100vh; display: flex; flex-direction: column }
+  .enter-wrap { flex: 1; display: grid; place-items: center; padding-inline: 16px; padding-block: 40px }
+  .enter-box { width: 100%; max-width: 440px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 26px 22px; display: grid; gap: 14px }
+  .enter-box h1 { font-size: 26px; margin: 0 }
+  .enter-box p { margin: 0; color: var(--muted) }
+  #code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 22px; letter-spacing: .14em; text-transform: uppercase; text-align: center; width: 100%; padding: 10px; min-height: 52px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink) }
+  .err { color: var(--no); font-size: 14px; margin: 0 }
+  .err:empty { display: none }
+  .btn.primary { min-height: 50px; font-size: 16px }
+  .note { font-size: 13.5px; background: var(--accent-soft); border-radius: 10px; padding: 10px 12px; display: flex; gap: 8px; align-items: flex-start }
+  .note .ic { color: var(--icon); margin-top: 2px }
+  .note a { color: var(--accent); font-weight: 600 }
+</style>
+</head>
+<body>
+<div class="brandbar">
+  <div class="brandbar-in">
+    <div class="brand-logo"><i data-icon="compass" data-size="26"></i></div>
+    <div class="brand-text"><b>Evalu8 Compass</b><span>School self-evaluation</span></div>
+    <nav class="brand-nav" aria-label="Main"><a href="index.html"><i data-icon="home"></i>Home</a></nav>
+  </div>
+</div>
+<main class="enter-wrap">
+  <form class="enter-box" id="form" autocomplete="off">
+    <span class="tile"><i data-icon="lock" data-size="24"></i></span>
+    <h1>Enter your school access code</h1>
+    <p>Your code opens the self-evaluation checklist, staff workshops and the AI inspector for your school. You'll stay signed in on this device for 30 days.</p>
+    <label class="field" for="code"><span class="lbl">Access code</span></label>
+    <input id="code" placeholder="ABCD-EFGH-JKLM" maxlength="20" spellcheck="false" autocapitalize="characters" required aria-describedby="err">
+    <p class="err" id="err" role="alert"></p>
+    <button class="btn primary" type="submit" id="go"><i data-icon="arrow-right"></i>Enter</button>
+    <div class="note"><i data-icon="users-group" data-size="18"></i><span>Joining a staff workshop? You don't need this. Use the <a href="workshop.html">workshop code</a> on the screen instead.</span></div>
+    <p class="small" style="font-size:13px">Don't have a code? Ask whoever introduced Evalu8 Compass to your school.</p>
+  </form>
+</main>
+<script src="js/icons.js"></script>
+<script>
+(function () {
+  var params = new URLSearchParams(location.search);
+  var next = params.get("next") || "/checklist.html";
+  if (!/^\/[^/\\]/.test(next)) next = "/checklist.html"; // only same-site paths
+  var form = document.getElementById("form"), code = document.getElementById("code"), err = document.getElementById("err"), go = document.getElementById("go");
+  fetch("/api/access").then(function (r) { return r.json(); }).then(function (s) { if (!s.required || s.ok) location.replace(next); }).catch(function () {});
+  code.addEventListener("input", function () { err.textContent = ""; });
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (code.value.replace(/[^A-Za-z0-9]/g, "").length < 8) { err.textContent = "Enter the full code, for example ABCD-EFGH-JKLM."; return; }
+    go.disabled = true;
+    fetch("/api/access", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ code: code.value }) })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (x) { if (x.ok) location.replace(next); else { err.textContent = x.d.error || "That didn't work. Try again."; go.disabled = false; code.focus(); } })
+      .catch(function () { err.textContent = "Couldn't reach the server. Check your connection and try again."; go.disabled = false; });
+  });
+})();
+</script>
+</body>
+</html>

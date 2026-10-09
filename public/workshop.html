@@ -48,6 +48,11 @@
       <form class="card" id="createForm" autocomplete="off">
         <div class="card-head"><span class="tile"><i data-icon="presentation" data-size="24"></i></span><h2>Run a workshop</h2></div>
         <p class="muted">For the headteacher or facilitator.</p>
+        <div class="locked hide" id="createLocked">
+          <p>Starting a workshop needs your school's access code. Staff joining a workshop don't need one.</p>
+          <a class="btn primary" href="enter.html?next=/workshop.html"><i data-icon="lock"></i>Enter access code</a>
+        </div>
+        <div id="createFields">
         <div class="field"><label for="cName">School or trust name</label><input type="text" id="cName" placeholder="e.g. EFE"></div>
         <div class="field"><span class="lbl" id="cTypeLbl">School type</span><div class="seg" id="cTypes" role="group" aria-labelledby="cTypeLbl"></div></div>
         <div class="field"><span class="lbl" id="cPhaseLbl">Phases</span><div class="chips" id="cPhases" role="group" aria-labelledby="cPhaseLbl"></div></div>
@@ -57,6 +62,7 @@
           <p class="muted small" id="cAreaNote"></p></div>
         <p class="error" id="createError" role="alert"></p>
         <button class="btn primary" type="submit" id="createBtn"><i data-icon="player-play"></i>Start workshop</button>
+        </div>
         <div id="resumeList"></div>
       </form>
     </div>
@@ -161,8 +167,13 @@
 
     <div class="tabpanel hide" id="f-export">
       <div class="card">
+        <div class="card-head"><span class="tile"><i data-icon="file-text" data-size="24"></i></span><h3>Workshop report</h3></div>
+        <p class="muted">A formatted report of this workshop: participation, findings by area, where views differ, comment themes, the Ofsted report reading and the improvement plan. Save it as a PDF or download it as a Word document.</p>
+        <div class="row"><a class="btn primary" id="fReport" href="report.html" target="_blank" rel="noopener"><i data-icon="file-export"></i>Open report</a></div>
+      </div>
+      <div class="card">
         <div class="card-head"><span class="tile"><i data-icon="list-check" data-size="24"></i></span><h3>Send agreed ratings to the self-assessment checklist</h3></div>
-        <p class="muted">Copies the agreed ratings in a format the single-user checklist can load. Open the checklist, choose Save / load, paste and choose Load.</p>
+        <p class="muted">Copies the agreed ratings, and the improvement plan's actions if you've generated one, in a format the checklist can load. Open the checklist, choose Save / load, paste and choose Load.</p>
         <div class="row"><button class="btn" id="fExportChecklist"><i data-icon="copy"></i>Copy for checklist</button><a class="btn" href="checklist.html" target="_blank" rel="noopener"><i data-icon="arrow-right"></i>Open checklist</a></div>
       </div>
       <div class="card">

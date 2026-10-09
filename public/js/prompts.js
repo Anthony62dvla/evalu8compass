@@ -71,6 +71,48 @@ Reply with only JSON in this shape:
 Give 3 to 5 priorities, most urgent first. Safeguarding or statutory breaches always come first.`;
   }
 
+  /* ---------- Action plan ---------- */
+
+  const ACTION_SHAPE = `{"title":"short imperative title (max 12 words)","steps":["concrete step 1","step 2","step 3"],"owner":"role who leads it","dueInWeeks":6,"success":"what inspectors and staff would see when it's done","evidence":"the evidence it will produce"}`;
+
+  /** One action → an improved, concrete version the school can choose to use. */
+  function actionPrompt({ ctx, action, line }) {
+    return `SCHOOL
+${describe(ctx)}
+
+ACTION IN THE SCHOOL'S PLAN
+Title: ${action.title || "(untitled)"}
+Details so far: ${String(action.detail || "(none)").slice(0, 1500)}
+Owner so far: ${action.owner || "(none)"}
+${line ? `Linked checklist line: ${line.text}
+Evidence inspectors look for: ${line.evidence || "not specified"}
+Statutory reference: ${line.ref || "none listed"}
+School's rating: ${({ met: "Met", part: "Partly", no: "Not yet", na: "N/A" })[line.status] || "not rated"}
+School's note: ${line.note ? String(line.note).slice(0, 800) : "(none)"}` : "Not linked to a checklist line."}
+
+TASK
+Rewrite this as a SMART action the school can deliver: specific steps, a named role, a realistic timescale, and clear success criteria. Keep the school's intent. Keep it proportionate to the school's size and type.
+Reply with only JSON in this shape:
+${ACTION_SHAPE}
+Give 3 to 5 steps. dueInWeeks is a whole number from 1 to 52.`;
+  }
+
+  /** Gaps (Partly / Not yet lines) → a drafted set of actions. */
+  function draftPrompt({ ctx, gaps }) {
+    const rows = gaps.slice(0, 40).map(g => `  ${g.id} | ${g.area} | ${g.status === "no" ? "Not yet" : "Partly"} | ${g.text}${g.note ? " | note: " + String(g.note).slice(0, 200) : ""}`).join("\n");
+    return `SCHOOL
+${describe(ctx)}
+
+GAPS FROM THE SCHOOL'S SELF-EVALUATION (id | area | rating | expectation | note)
+${rows}
+
+TASK
+Draft an action plan for these gaps. Group closely related gaps into one action where that's sensible. Safeguarding and statutory compliance come first. At most 12 actions.
+Reply with only JSON in this shape:
+{"actions":[{"itemId":"the main checklist id this action addresses", ${ACTION_SHAPE.slice(1)}]}
+Each action has 3 to 5 steps. dueInWeeks is a whole number from 1 to 52.`;
+  }
+
   /* ---------- Workshop stage ---------- */
 
   const lineList = areas => areas.map(a => `${a.name}\n` + a.items.map(i => `  ${i.id}: ${i.text}`).join("\n")).join("\n");
@@ -161,7 +203,7 @@ Reply with only JSON in this shape:
   /** For providers with no separate system prompt (artifact mode): persona + task in one message. */
   function withSystem(body) { return SYSTEM + "\n\n" + body; }
 
-  const api = { SYSTEM, itemPrompt, reviewPrompt, reportPrompt, themesPrompt, planPrompt, describe, withSystem };
+  const api = { SYSTEM, itemPrompt, reviewPrompt, actionPrompt, draftPrompt, reportPrompt, themesPrompt, planPrompt, describe, withSystem };
   root.HWWD = Object.assign(root.HWWD || {}, { prompts: api });
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : globalThis);

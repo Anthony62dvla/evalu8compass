@@ -134,7 +134,10 @@
       const r = await api("POST", "", { profile: cProfile, areaIds: [...cAreas] });
       const fac = ls.get(FAC_KEY, {}); fac[r.code] = { key: r.key, name: cProfile.name, at: new Date().toISOString() }; ls.set(FAC_KEY, fac);
       await startFac(r.code, r.key);
-    } catch (err) { $("createError").textContent = err.message; }
+    } catch (err) {
+      $("createError").textContent = err.message;
+      if (err.status === 401) { $("createFields").classList.add("hide"); $("createLocked").classList.remove("hide"); }
+    }
     finally { btn.disabled = false; }
   });
 
@@ -285,6 +288,7 @@
     history.replaceState(null, "", `${BASE_PATH}workshop.html?code=${c}`);
     const joinUrl = BASE_PATH === "/" ? `${location.host}/join/${c}` : `${location.host}${BASE_PATH}workshop.html?code=${c}`;
     $("fCode").textContent = c;
+    $("fReport").href = `${BASE_PATH}report.html?workshop=${c}`;
     setBrand(info.profile, `Facilitating workshop ${c}`);
     $("brandNav").classList.remove("hide");
     $("fJoinUrl").textContent = joinUrl.replace(/^www\./, "");
@@ -443,7 +447,14 @@
       notes[i.id] = [i.agreed.note, `Workshop ${code}: ${c.met} met, ${c.part} partly, ${c.no} not yet (${c.n} staff)`].filter(Boolean).join(" · ");
     }));
     if (!Object.keys(answers).length) return toast("Agree some ratings first on the Live findings tab.");
-    const data = { version: 2, profile: { ...info.profile, by: `Staff workshop ${code}`, date: new Date().toISOString().slice(0, 10) }, answers, notes, ai: {}, review: null, collapsed: {} };
+    // The workshop's improvement plan comes across as actions in the checklist's action plan
+    const actions = [];
+    ((aiState.plan && aiState.plan.priorities) || []).forEach(pr => (pr.actions || []).forEach(x => actions.push({
+      id: Math.random().toString(36).slice(2, 10), title: x.action || pr.title,
+      detail: [pr.title ? "Priority: " + pr.title : "", x.by ? "By: " + x.by : "", x.evidence ? "Evidence: " + x.evidence : ""].filter(Boolean).join("\n"),
+      itemId: (pr.lines || [])[0] || "", owner: x.lead || "", due: "", success: pr.successCriteria || "", status: "todo", source: "workshop", createdAt: new Date().toISOString(),
+    })));
+    const data = { version: 2, profile: { ...info.profile, by: `Staff workshop ${code}`, date: new Date().toISOString().slice(0, 10) }, answers, notes, ai: {}, review: null, collapsed: {}, actions };
     copy(JSON.stringify(data), $("fExportBox"));
   });
   $("fExportAll").addEventListener("click", async () => {
@@ -454,6 +465,11 @@
   /* ================= Start ================= */
   (async function init() {
     renderLanding();
+    try {
+      const a = await fetch(BASE_PATH + "api/access").then(r => r.json());
+      if (a.required && !a.ok) { $("createFields").classList.add("hide"); $("createLocked").classList.remove("hide"); }
+      else if (a.school && !$("cName").value) $("cName").value = a.school;
+    } catch (e) {}
     const params = new URLSearchParams(location.search);
     const c = (params.get("code") || "").toUpperCase();
     const hk = (location.hash.match(/key=([a-f0-9]+)/) || [])[1];

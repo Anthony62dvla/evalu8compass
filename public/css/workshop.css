@@ -127,6 +127,9 @@ body.present .exitpresent { display: inline-block !important }
   .step { padding-left: 16px; padding-top: 50px } .step::before { top: 16px }
 }
 
+.locked { display: grid; gap: 10px; background: var(--accent-soft); border-radius: 12px; padding: 14px }
+.locked p { margin: 0 }
+#createFields { display: grid; gap: 12px }
 .card-head { display: flex; gap: 12px; align-items: center }
 .card { border-radius: 14px }
 .statbox { display: flex; gap: 10px; align-items: center }

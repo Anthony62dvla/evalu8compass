@@ -5,6 +5,9 @@ An Ofsted self-assessment tool for **maintained schools, academies and free scho
 It has two parts:
 
 0. **Front page** (`index.html`): explains the purpose, co-creation expectations, how to use it and what it produces, with links in.
+- **School access codes** protect the checklist, starting workshops, reports and AI (`enter.html`). Staff joining a workshop never need one.
+- **Action plan** (checklist → Action plan tab): actions with owner, due date, success criteria and status, created by hand, from gaps, from AI suggestions or from a workshop plan. AI is optional and can be switched off per school.
+- **Reports** (`report.html`): the self-evaluation or a workshop as a formatted PDF (via the browser) or Word document.
 1. **Self-assessment checklist** (`checklist.html`): one person rates each expectation, and an AI education inspector suggests improvement activities and gives a readiness review.
 2. **Staff workshop** (`workshop.html`): staff join on their own devices with a code, rate the school anonymously, see the collated findings broadcast back to them, and leaders turn the findings, the setting's context and the latest Ofsted report into an improvement plan.
 
@@ -54,10 +57,14 @@ how-well-are-we-doing/
 │   ├── workshop.js            Workshop API routes, live updates (Server-Sent Events), facilitator controls
 │   ├── aggregate.js           Collates responses; anonymity rules; split and gap flags
 │   ├── store.js               Saves each workshop as a JSON file in data/sessions/
+│   ├── access.js              School access codes and signed sign-in cookie
 │   └── ai.js                  Calls the Anthropic Messages API (text and PDF)
 ├── public/
 │   ├── index.html             Front page (purpose, how to use, outputs, links in)
-│   ├── checklist.html         Self-assessment checklist
+│   ├── checklist.html         Self-assessment checklist and action plan
+│   ├── enter.html             School access code entry
+│   ├── report.html            PDF / Word reports (checklist or ?workshop=CODE)
+│   ├── vendor/docx-9.5.1.umd.js  Word file builder (docx, MIT), loaded only when needed
 │   ├── workshop.html          Staff workshop (landing, staff view, facilitator dashboard)
 │   ├── css/styles.css         Teal brand tokens (light/dark) and shared components
 │   ├── css/workshop.css       Workshop layout
@@ -69,10 +76,14 @@ how-well-are-we-doing/
 │       ├── inspector.js       Checklist AI connection (artifact → server → offline)
 │       ├── store.js           Checklist storage (browser)
 │       ├── app.js             Checklist page
+│       ├── plan.js            Action plan
+│       ├── report.js          Report model → print HTML and .docx
 │       └── workshop.js        Workshop page
 ├── scripts/
 │   ├── validate-criteria.js   Checks criteria ids; counts lines per profile
 │   ├── test-workshop.js       End-to-end workshop API test with simulated staff
+│   ├── test-access.js         End-to-end access code test
+│   ├── access.js              Access code admin (hwwd-access on the server)
 │   └── build-icons.js         Regenerates icons.js from Tabler Icons
 ├── deploy/install.sh          One-command VPS installer and updater (see deploy/DEPLOY.md)
 ├── build.js                   Single-file checklist in dist/ (no workshop: that needs the server)
@@ -190,7 +201,20 @@ One small server comfortably handles several simultaneous workshops of a few hun
 
 ---
 
-## 5. Running a workshop
+## 5. School access codes
+
+Once at least one code exists, leaders need a code to open the checklist, reports, the AI inspector or to start a workshop. Staff joining a workshop only ever need the workshop code. On the server:
+
+```bash
+hwwd-access add "Athena School"        # creates a code; shown once, so give it to the school
+hwwd-access add "Pilot school" --days 90
+hwwd-access list                       # codes, schools, last used
+hwwd-access revoke <id or school name> # stops it working straight away
+```
+
+Codes are stored only as hashes in `data/access.json`. A signed cookie keeps a device signed in for 30 days. `ACCESS_REQUIRED=0` in `.env` turns codes off entirely. The installer creates a first "Administrator" code for you.
+
+## 6. Running a workshop
 
 1. **Before**: open `/workshop.html`, choose **Run a workshop**, enter the school details and pick 2–3 areas for a 30–40 minute session.
 2. **Start**: project the dashboard (use **Present mode**). Staff join with the code or QR, pick their role and rate each line.
@@ -205,7 +229,7 @@ The facilitator's browser remembers the workshop. To hand over to the headteache
 
 ---
 
-## 6. Workshop API (for developers)
+## 7. Workshop API (for developers)
 
 All under `/api/w`. Facilitator calls need header `x-facilitator-key` (or `?key=` on the events stream).
 
@@ -226,7 +250,7 @@ All under `/api/w`. Facilitator calls need header `x-facilitator-key` (or `?key=
 
 ---
 
-## 7. Customising
+## 8. Customising
 
 - **Criteria**: edit `public/js/criteria.js` (fields documented at the top), then `npm run check`.
 - **AI behaviour**: edit `public/js/prompts.js`. If you change a JSON shape, update the matching render function (`adviceHTML`/`renderReview` in `app.js`, `reportHTML`/`themesHTML`/`planHTML` in `workshop.js`).
@@ -238,12 +262,12 @@ All under `/api/w`. Facilitator calls need header `x-facilitator-key` (or `?key=
 
 ---
 
-## 8. Roadmap
+## 9. Roadmap
 
 | Next | Feature |
 |---|---|
-| 3.1 | Edit the AI plan in place and export it as Word/PDF |
-| 3.1 | Facilitator PIN in addition to the key link |
+| 4.1 | Individual sign-ins for leadership teams |
+| 4.1 | Store each school's checklist and action plan on the server (shared across devices) |
 | 3.2 | Re-run a workshop each term and chart the movement per line |
 | 3.2 | Evidence uploads per line |
 | 3.3 | Trust / group dashboard across schools |
@@ -251,6 +275,6 @@ All under `/api/w`. Facilitator calls need header `x-facilitator-key` (or `?key=
 
 ---
 
-## 9. Keeping the content current
+## 10. Keeping the content current
 
 Criteria reflect Ofsted's renewed school inspection framework (from November 2025), the Education (Independent School Standards) Regulations 2014 and DfE statutory guidance (KCSIE, Working together to improve school attendance, RSHE, SEND Code of Practice, EYFS framework). Review `criteria.js` at least yearly, especially after KCSIE updates each September. AI output is advisory and never an Ofsted judgement.

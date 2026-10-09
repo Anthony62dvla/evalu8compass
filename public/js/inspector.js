@@ -22,8 +22,8 @@
         kind: "artifact",
         label: "AI inspector (your Claude account)",
         run: (task, data) => {
-          const body = task === "review" ? P().reviewPrompt(data) : P().itemPrompt(data);
-          return sample.json(P().withSystem(body), { modelTier: task === "review" ? "complex" : "default", cache: false });
+          const build = { item: P().itemPrompt, review: P().reviewPrompt, action: P().actionPrompt, draft: P().draftPrompt }[task];
+          return sample.json(P().withSystem(build(data)), { modelTier: task === "review" || task === "draft" ? "complex" : "default", cache: false });
         },
       };
     } catch (e) { return null; }
@@ -59,6 +59,14 @@
 
   function offlineRun(task, data) {
     const C = root.HWWD.criteria;
+    const fallbackFor = id => { const a = C.AREAS.find(x => x.items.some(i => i.id === id)); return a ? a.fallback : []; };
+    if (task === "action") {
+      const steps = (data.line ? fallbackFor(data.line.id) : []).slice(0, 3);
+      return Promise.resolve({ offline: true, title: data.action.title, steps: steps.length ? steps : ["Agree what 'done' looks like with the staff involved", "Gather the evidence that already exists", "Fill the gaps and review in half a term"], owner: data.action.owner || "Area lead", dueInWeeks: 6, success: "The expectation is met consistently and the evidence is easy to find.", evidence: data.line ? data.line.evidence : "" });
+    }
+    if (task === "draft") {
+      return Promise.resolve({ offline: true, actions: data.gaps.slice(0, 12).map(g => ({ itemId: g.id, title: g.text, steps: fallbackFor(g.id).slice(0, 3), owner: "Area lead", dueInWeeks: g.status === "no" ? 6 : 12, success: "This line can be rated Met with evidence to hand." })) });
+    }
     if (task === "item") {
       const area = C.AREAS.find(a => a.name === data.area);
       return Promise.resolve({
@@ -104,6 +112,7 @@
     rate_limited: "The AI inspector is busy. Wait a minute and try again.",
     invalid_json: "The AI reply couldn't be read. Try again.",
     no_key: "The server has no Anthropic API key set. Add ANTHROPIC_API_KEY to .env.",
+    access_required: "Your access has expired. Sign in again with your school access code (go to the home page and open the checklist).",
   };
   function errorText(e) { return ERRORS[e && e.code] || "The AI inspector couldn't answer just now. Try again in a moment."; }
 

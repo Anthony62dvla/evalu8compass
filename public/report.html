@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Report · Evalu8 Compass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/report.css">
+</head>
+<body>
+<div class="brandbar noprint">
+  <div class="brandbar-in">
+    <div class="brand-logo"><i data-icon="compass" data-size="26"></i></div>
+    <div class="brand-text"><b>Evalu8 Compass</b><span>Report</span></div>
+    <nav class="brand-nav" aria-label="Main">
+      <a href="index.html"><i data-icon="compass"></i>Home</a>
+      <a href="checklist.html"><i data-icon="list-check"></i>Checklist</a>
+      <a href="workshop.html"><i data-icon="users-group"></i>Staff workshop</a>
+    </nav>
+  </div>
+</div>
+
+<div class="rtools noprint">
+  <div class="rtools-in">
+    <div>
+      <h1 id="rtTitle">Your report</h1>
+      <p class="muted" id="rtSub">Choose what to include, then save it as a PDF or download it as a Word document.</p>
+    </div>
+    <div class="ropts" id="opts" role="group" aria-label="Include in the report"></div>
+    <div class="row">
+      <button class="btn primary big" id="pdfBtn"><i data-icon="file-text"></i>Save as PDF</button>
+      <button class="btn big" id="wordBtn"><i data-icon="file-export"></i>Download Word (.docx)</button>
+    </div>
+    <p class="muted small" id="pdfHint">"Save as PDF" opens your browser's print window. Choose <b>Save as PDF</b> as the destination.</p>
+    <p class="error" id="rErr" role="alert"></p>
+  </div>
+</div>
+
+<main class="paperwrap">
+  <article class="paper" id="doc" aria-live="polite"><p>Loading…</p></article>
+</main>
+
+<div class="toast noprint" id="toast" role="status" aria-live="polite"></div>
+<script src="js/icons.js"></script>
+<script src="js/criteria.js"></script>
+<script src="js/store.js"></script>
+<script src="js/report.js"></script>
+</body>
+</html>

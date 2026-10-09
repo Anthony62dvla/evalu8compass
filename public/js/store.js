@@ -6,11 +6,12 @@
   const KEY = "hwwd-selfassessment-v2";
   const DEFAULT = () => ({
     version: 2,
-    profile: { name: "EFE", type: "independent", phases: ["ks3", "ks4"], special: true, by: "", date: "" },
+    profile: { name: "", type: "independent", phases: ["ks3", "ks4"], special: true, by: "", date: "", ai: true },
     answers: {},   // { itemId: "met" | "part" | "no" | "na" }
     notes: {},     // { itemId: "evidence or next step" }
     ai: {},        // { itemId: inspector suggestion object }
     review: null,  // last inspector review
+    actions: [],   // action plan: { id, title, detail, itemId, owner, due, success, status, source, createdAt }
     collapsed: {}, // { areaId: true }
   });
 

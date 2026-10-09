@@ -191,6 +191,24 @@ if [ "$DRY" = 0 ]; then
   fi
 fi
 
+# ---------- school access codes ----------
+say "School access codes"
+write_file /usr/local/bin/hwwd-access 755 <<EOF
+#!/bin/sh
+# Manage Evalu8 Compass school access codes:  hwwd-access add "School name" | list | revoke <id>
+[ "\$(id -u)" = 0 ] || { echo "Run as root (sudo hwwd-access ...)"; exit 1; }
+exec runuser -u $APP_USER -- $APP_DIR/runtime/node $APP_DIR/scripts/access.js "\$@"
+EOF
+if [ "$DRY" = 0 ] && ! runuser -u "$APP_USER" -- "$APP_DIR/runtime/node" -e 'process.exit(require("'"$APP_DIR"'/lib/access").required()?0:1)' 2>/dev/null; then
+  say "Creating your first access code"
+  /usr/local/bin/hwwd-access add "Administrator"
+  warn "Keep that code safe: from now on the checklist, starting workshops and AI need an access code.
+    Create one for each school with:   hwwd-access add \"School name\"
+    See all codes:                     hwwd-access list"
+else
+  ok "Manage codes with: hwwd-access add \"School name\" | hwwd-access list | hwwd-access revoke <id>"
+fi
+
 # ---------- 6. web server ----------
 say "Setting up $DOMAIN"
 DNS_OK=1

@@ -19,6 +19,7 @@ const prompts = require("./public/js/prompts.js");
 const ai = require("./lib/ai");
 const workshop = require("./lib/workshop");
 const store = require("./lib/store");
+const access = require("./lib/access");
 
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || "127.0.0.1"; // only reachable through your web server; use 0.0.0.0 to accept direct connections
@@ -26,7 +27,11 @@ const PUBLIC = path.join(__dirname, "public");
 const LIMITS = {
   ai: Number(process.env.RATE_LIMIT_PER_MIN || 20),   // AI calls per IP per minute
   api: Number(process.env.API_LIMIT_PER_MIN || 600),  // other API calls per IP per minute
+  login: 10,                                          // access-code attempts per IP per minute
 };
+// Pages that need a school access code (staff joining a workshop never do)
+const PROTECTED_PAGES = new Set(["/checklist.html", "/report.html"]);
+const AI_TASKS = ["item", "review", "action", "draft"];
 const hits = new Map();
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".ico": "image/x-icon", ".webmanifest": "application/manifest+json" };
 
@@ -40,7 +45,13 @@ const server = http.createServer(async (req, res) => {
     if (p.startsWith("/api/")) {
       const isAI = p === "/api/inspector" || /\/(report|themes|plan)$/.test(p);
       if (limited(req, isAI ? "ai" : "api")) return json(res, 429, { code: "rate_limited", error: "Too many requests. Wait a minute and try again." });
-      if (p === "/api/inspector" && req.method === "POST") return inspector(req, res);
+      if (p === "/api/access") return accessRoute(req, res);
+      if (p === "/api/access/logout" && req.method === "POST") { access.logout(req, res); return json(res, 200, { ok: true }); }
+      if (p === "/api/inspector" && req.method === "POST") {
+        if (!access.who(req)) return json(res, 401, { code: "access_required", error: "Enter your school access code to use the AI inspector." });
+        return inspector(req, res);
+      }
+      if (p === "/api/w" && req.method === "POST" && !access.who(req)) return json(res, 401, { code: "access_required", error: "Enter your school access code to start a workshop." });
       if (p === "/api/w" || p.startsWith("/api/w/")) return workshop.handle(req, res, url, readBody, json);
       return json(res, 404, { error: "Not found" });
     }
@@ -48,6 +59,9 @@ const server = http.createServer(async (req, res) => {
     if (req.method !== "GET" && req.method !== "HEAD") return json(res, 405, { error: "Method not allowed" });
     // Friendly join links: /join/ABC123 → workshop page
     if (/^\/join\/[A-Za-z0-9]{6}$/.test(p)) { res.writeHead(302, { location: "/workshop.html?code=" + p.slice(6).toUpperCase() }); return res.end(); }
+    if (PROTECTED_PAGES.has(p) && !access.who(req)) {
+      res.writeHead(302, { location: "/enter.html?next=" + encodeURIComponent(p + url.search) }); return res.end();
+    }
     return serveStatic(p, res);
   } catch (e) {
     console.error(e);
@@ -65,17 +79,33 @@ async function inspector(req, res) {
   let body;
   try { body = JSON.parse(await readBody(req)); } catch { return json(res, 400, { error: "Invalid JSON body" }); }
   const { task, data } = body || {};
-  if (!data || !data.ctx || !["item", "review"].includes(task)) return json(res, 400, { error: "Expected { task: 'item'|'review', data }" });
+  if (!data || !data.ctx || !AI_TASKS.includes(task)) return json(res, 400, { error: "Expected { task: " + AI_TASKS.join("|") + ", data }" });
+  const build = { item: prompts.itemPrompt, review: prompts.reviewPrompt, action: prompts.actionPrompt, draft: prompts.draftPrompt }[task];
   try {
     const result = await ai.askJson({
       system: prompts.SYSTEM,
-      content: task === "review" ? prompts.reviewPrompt(data) : prompts.itemPrompt(data),
-      maxTokens: task === "review" ? 3000 : 1500,
+      content: build(data),
+      maxTokens: { item: 1500, review: 3000, action: 1200, draft: 4000 }[task],
     });
     return json(res, 200, { result });
   } catch (e) {
     return json(res, e.status || 502, { code: e.code || "upstream_error", error: e.message });
   }
+}
+
+/* School access: GET → status, POST {code} → sign in */
+async function accessRoute(req, res) {
+  if (req.method === "GET") {
+    const w = access.who(req);
+    return json(res, 200, { required: access.required(), ok: !!w, school: w && w.name ? w.name : "" });
+  }
+  if (req.method !== "POST") return json(res, 405, { error: "Method not allowed" });
+  if (limited(req, "login")) return json(res, 429, { code: "rate_limited", error: "Too many attempts. Wait a minute and try again." });
+  let body;
+  try { body = JSON.parse(await readBody(req, 4096)); } catch { return json(res, 400, { error: "Invalid request" }); }
+  const c = access.login(req, res, body && body.code);
+  if (!c) return json(res, 401, { code: "bad_code", error: "That access code isn't recognised. Check it and try again." });
+  return json(res, 200, { ok: true, school: c.name });
 }
 
 /* ---------- helpers ---------- */

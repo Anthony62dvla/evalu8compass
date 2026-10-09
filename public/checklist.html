@@ -20,6 +20,7 @@
       <a href="index.html" id="homeLink"><i data-icon="compass"></i>Home</a>
       <a href="checklist.html" aria-current="page"><i data-icon="list-check"></i>Checklist</a>
       <a href="workshop.html" id="workshopLink"><i data-icon="users-group"></i>Staff workshop</a>
+      <a href="#" id="signOut" hidden><i data-icon="logout"></i>Sign out</a>
     </nav>
   </div>
 </div>
@@ -37,13 +38,14 @@
   <section class="setup" aria-labelledby="setupTitle">
     <div class="setup-head"><div class="tile"><i data-icon="building" data-size="24"></i></div><h2 id="setupTitle">Your school</h2></div>
     <div class="setup-grid">
-      <div class="field"><label for="pName">School or trust name</label><input type="text" id="pName" placeholder="e.g. EFE"></div>
+      <div class="field"><label for="pName">School or trust name</label><input type="text" id="pName" placeholder="e.g. Athena School"></div>
       <div class="field"><label for="pBy">Completed by</label><input type="text" id="pBy" placeholder="Name and role"></div>
       <div class="field"><label for="pDate">Date reviewed</label><input type="date" id="pDate"></div>
     </div>
     <div class="field"><span class="lbl" id="typeLbl">School type</span><div class="seg" id="types" role="group" aria-labelledby="typeLbl"></div></div>
     <div class="field"><span class="lbl" id="phaseLbl">Phases you teach</span><div class="chips" id="phases" role="group" aria-labelledby="phaseLbl"></div></div>
     <label class="switch"><input type="checkbox" id="pSpecial"> Specialist provision (special school, resourced provision or AP)</label>
+    <label class="switch"><input type="checkbox" id="pAI"> Use AI suggestions <span class="muted-inline">(optional; when off, no information is sent to the AI and AI buttons are hidden)</span></label>
     <div class="logo-row">
       <label class="btn filebtn"><i data-icon="photo"></i>Add school logo<input type="file" id="pLogo" accept="image/png,image/jpeg,image/webp,image/svg+xml"></label>
       <button class="btn hide" id="pLogoRemove"><i data-icon="x"></i>Remove logo</button>
@@ -52,6 +54,13 @@
     <p class="scope-note" id="scopeNote"></p>
   </section>
 
+  <nav class="tabs pagetabs" role="tablist" aria-label="Checklist sections">
+    <button role="tab" class="tab" data-view="evalView" aria-selected="true"><i data-icon="list-check"></i>Evaluate</button>
+    <button role="tab" class="tab" data-view="planView" aria-selected="false"><i data-icon="target"></i>Action plan<span id="planTabCount"></span></button>
+    <a class="tab tablink" href="report.html" id="reportLink"><i data-icon="file-export"></i>Report</a>
+  </nav>
+
+  <div id="evalView">
   <div class="summary">
     <div class="sumrow">
       <div class="big" id="pct">0%<small>met</small></div>
@@ -69,7 +78,7 @@
       <button class="btn" id="resetBtn"><i data-icon="refresh"></i>Reset</button>
     </div>
     <div class="panel danger hide" id="confirm">
-      <span>Clear every answer, note and AI suggestion? Your school details are kept. This can't be undone.</span>
+      <span>Clear every answer, note, AI suggestion and action? Your school details are kept. This can't be undone.</span>
       <div class="row"><button class="btn" id="yesBtn">Yes, clear</button><button class="btn" id="noBtn">Keep my answers</button></div>
     </div>
     <div class="panel hide" id="copyPanel">
@@ -92,6 +101,29 @@
 
   <div id="review"></div>
   <div id="areas"></div>
+  </div>
+
+  <section id="planView" class="hide" aria-label="Action plan">
+    <div class="plan-head">
+      <div class="sumrow" id="planSummary"></div>
+      <div class="tools">
+        <button class="btn primary" id="planAdd"><i data-icon="target"></i>Add an action</button>
+        <button class="btn" id="planGaps"><i data-icon="list-check"></i>Add actions for my gaps</button>
+        <button class="btn ai ai-only" id="planDraft"><i data-icon="sparkles"></i>Draft actions with AI</button>
+        <span class="spacer"></span>
+        <button class="btn" id="planCopy"><i data-icon="clipboard-list"></i>Copy action plan</button>
+      </div>
+      <div class="tools" role="group" aria-label="Show">
+        <button class="btn" data-pf="all" aria-pressed="true">All</button>
+        <button class="btn" data-pf="todo" aria-pressed="false">Not started</button>
+        <button class="btn" data-pf="doing" aria-pressed="false">In progress</button>
+        <button class="btn" data-pf="done" aria-pressed="false">Done</button>
+        <button class="btn" data-pf="overdue" aria-pressed="false">Overdue</button>
+      </div>
+      <div id="planStatus"></div>
+    </div>
+    <div id="planList"></div>
+  </section>
 
   <footer>
     <p>Criteria reflect Ofsted's renewed school inspection framework evaluation areas, the independent school standards and DfE statutory guidance. Check current guidance before inspection: requirements change.</p>
@@ -100,12 +132,14 @@
   </footer>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="undobar hide" id="undoBar" role="status" aria-live="polite"><span id="undoMsg"></span><button class="btn" id="undoBtn">Undo</button></div>
 
 <script src="js/icons.js"></script>
 <script src="js/criteria.js"></script>
 <script src="js/prompts.js"></script>
 <script src="js/inspector.js"></script>
 <script src="js/store.js"></script>
+<script src="js/plan.js"></script>
 <script src="js/app.js"></script>
 <!-- /build:body -->
 </body>
