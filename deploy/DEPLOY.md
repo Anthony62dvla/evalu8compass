@@ -34,7 +34,7 @@ Try it with `--dry-run` first to see exactly what it will do without changing an
 | Check it's running | `systemctl status hwwd` |
 | Watch the log | `journalctl -u hwwd -f` |
 | Add or change the API key | `nano /opt/hwwd/.env` then `systemctl restart hwwd` |
-| Update to a new version | unzip the new zip, `cd` into it, run `bash deploy/install.sh review.yourdomain.co.uk` again (settings and data are kept) |
+| Update to a new version | `cd` into your copy of the repository, `git pull`, then `bash deploy/install.sh yourdomain` again (settings and data are kept) |
 | Stop / start | `systemctl stop hwwd` / `systemctl start hwwd` |
 
 ## Check it works
