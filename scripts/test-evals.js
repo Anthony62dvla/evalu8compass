@@ -59,5 +59,7 @@ ok(E.checkAdvice({ activities: [1, 2, 3].map(() => ({ lead: "SENCo", evidence: "
 const iss = E.checkAdvice({ activities: [{ lead: "", evidence: "", when: "Soon" }], summary: "Attendance is 87.3% nationally" });
 ok(iss.some(i => /activities/.test(i)) && iss.some(i => /percentages/.test(i)) && iss.some(i => /no lead/.test(i)), "advice problems flagged: " + iss.length);
 
+ok(E.checkAdvice({ activities: [1, 2, 3].map(() => ({ lead: "Attendance lead", evidence: "x", when: "This week", what: "List pupils below 90% attendance (persistent absence) and below 50% (severe absence)" })), inspectorQuestion: "q", quickWin: "w" }).length === 0, "DfE absence thresholds aren't flagged as invented statistics");
+
 // Every reference report resolves to a checklist and its areas exist in the checklist's vocabulary
 for (const r of E.REFERENCE) ok(C.resolve(r.profile).length >= 6 && r.url.startsWith("https://files.ofsted.gov.uk/"), `reference report ready: ${r.school}`);
