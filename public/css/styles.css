@@ -216,7 +216,7 @@ footer p { margin: 0 }
 .pagetabs .tablink { margin-left: auto }
 .tablist-in { display: contents }
 .muted-inline { color: var(--muted); font-size: 13px }
-.no-ai .ai-only, .no-ai .ask, .no-ai #reviewBtn, .no-ai #aiBadge, .no-ai .advice-add { display: none !important }
+.no-ai .ai-only, .no-ai .ask, .no-ai #reviewBtn, .no-ai #aiBadge, .no-ai .advice-add, .no-ai #aiAllowance { display: none !important }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0 }
 .plan-head { margin-top: 16px; display: grid; gap: 4px }
 .plan-head .sumrow:empty { display: none }
@@ -299,3 +299,8 @@ footer p { margin: 0 }
 .moves .chg { font-weight: 700; font-size: 13px }
 .moves.up .chg { color: var(--met) } .moves.down .chg { color: var(--no) }
 footer a { color: var(--accent); font-weight: 600 }
+
+.allowance { display: flex; gap: 8px; align-items: flex-start; margin: 0; font-size: 13.5px; color: var(--muted) }
+.allowance .ic { color: var(--ai); flex: none; margin-top: 2px }
+.allowance[data-level="low"] { color: var(--part) }
+.allowance[data-level="out"] { color: var(--no) }

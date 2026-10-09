@@ -94,6 +94,15 @@ SCHOOL_RETENTION_DAYS=365
 Then run `systemctl restart hwwd`. Any you leave blank use neutral wording.
 Ask a data protection adviser to review the pages before you sign up schools.
 
+## AI allowance
+
+Each school can make `AI_MONTHLY_REQUESTS` AI requests a month (default 200), counted in UK time and
+reset on the 1st. Workshop AI counts against the school that started the workshop. Schools see how
+much is left next to the AI switch; when it runs out they get the built-in suggestions instead.
+In the admin console, **AI allowance** next to a school changes its limit (a number, 0 to switch AI
+off, `unlimited`, or blank for the default). Add `AI_PRICE_INPUT_PER_MTOK` and
+`AI_PRICE_OUTPUT_PER_MTOK` (from Anthropic's pricing page for your model) to see estimated costs.
+
 ## Saved school work
 
 Each school's checklist, action plan and snapshots live in `/opt/hwwd/data/schools/<code id>/`,

@@ -10,7 +10,7 @@
   const ACTION = {
     "admin.setup": "Superadmin set up", "admin.login": "Signed in", "admin.logout": "Signed out", "admin.login_failed": "Failed sign-in attempt",
     "code.create": "Code created", "code.revoke": "Code revoked", "code.reactivate": "Code reactivated", "code.extend": "Expiry changed",
-    "data.erase": "School data deleted", "data.retention_delete": "Deleted under retention policy",
+    "data.erase": "School data deleted", "ai.allowance": "AI allowance changed", "data.retention_delete": "Deleted under retention policy",
   };
   function toast(m) { const t = $("toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("on"), 2400); }
   async function api(method, path, body) {
@@ -35,37 +35,60 @@
   /* ---------- console ---------- */
   async function load() {
     const d = await api("GET", "/overview");
-    const s = d.stats, y = d.system;
+    const s = d.stats, y = d.system, A = d.ai; window.__cur = A.currency;
+    const money = v => v == null ? "" : ` · about ${A.currency}${v.toFixed(2)}`;
+    const toks = t => t.input + t.output >= 1e6 ? (Math.round((t.input + t.output) / 1e5) / 10) + "M tokens" : Math.round((t.input + t.output) / 1000) + "k tokens";
     $("stats").innerHTML = [
       ["building", s.activeCodes, "Active school codes"], ["login", s.schoolsSignedIn30, "Schools signed in (30 days)"],
       ["users-group", s.workshops30, `Workshops (30 days) · ${s.workshops} in total`], ["users", s.participants, "Staff responses (all workshops)"],
       ["device-floppy", s.schoolsSaving || 0, "Schools with saved self-evaluations"],
+      ["sparkles", A.total.requests, `AI requests this month · ${toks(A.total)}${money(A.total.cost)}. Last month ${A.lastMonth.requests}${money(A.lastMonth.cost)}`],
     ].map(([ic, n, l]) => `<div class="stat"><span class="tile">${I(ic, 24)}</span><div><b>${esc(n)}</b><span>${esc(l)}</span></div></div>`).join("");
     $("sys").innerHTML = `<span><i class="dot" style="background:${y.ai ? "var(--met)" : "var(--no)"}"></i>AI ${y.ai ? "connected (" + esc(y.model) + ")" : "not connected: add ANTHROPIC_API_KEY to .env"}</span>
       <span><i class="dot" style="background:${y.accessRequired ? "var(--met)" : "var(--part)"}"></i>${y.accessRequired ? "Access codes required" : "Site open: no codes created yet"}</span>
+      <span>Default AI allowance: ${A.defaultLimit == null ? "unlimited" : A.defaultLimit + " requests per school per month"} (resets ${day(A.resetsOn)})</span>
       <span>Node ${esc(y.node)} · up ${esc(y.uptimeHours)} h</span>`;
     const codes = d.codes.slice().sort((a, b) => (a.state === "active" ? 0 : 1) - (b.state === "active" ? 0 : 1) || a.name.localeCompare(b.name));
-    $("codes").innerHTML = `<thead><tr><th>School</th><th>Status</th><th>Created</th><th>Expires</th><th>Last signed in</th><th>Saved work</th><th>Workshops</th><th>Actions</th></tr></thead><tbody>${
+    $("codes").innerHTML = `<thead><tr><th>School</th><th>Status</th><th>Created</th><th>Expires</th><th>Last signed in</th><th>Saved work</th><th>AI this month</th><th>Workshops</th><th>Actions</th></tr></thead><tbody>${
       codes.length ? codes.map(c => `<tr>
         <td><b>${esc(c.name)}</b>${c.email ? `<span class="sub">${esc(c.email)}</span>` : ""}${c.notes ? `<span class="sub">${esc(c.notes)}</span>` : ""}<span class="sub">id ${esc(c.id)}</span></td>
         <td><span class="state state-${c.state}">${c.state[0].toUpperCase() + c.state.slice(1)}</span></td>
         <td>${day(c.createdAt)}</td><td>${c.expiresAt ? day(c.expiresAt) : "Never"}</td><td>${c.lastUsedAt ? day(c.lastUsedAt) : "Never"}</td>
         <td>${c.saved ? `${day(c.saved.updatedAt)}<span class="sub">${c.saved.assessed} lines · ${c.saved.actions} actions · ${c.saved.snapshots} snapshots</span>` : `<span class="sub">None yet</span>`}</td>
+        <td>${aiCell(c.ai)}</td>
         <td class="num">${c.workshops}${c.participants ? `<span class="sub">${c.participants} staff</span>` : ""}</td>
         <td><div class="acts">${c.state === "revoked"
           ? `<button class="btn" data-act="reactivate" data-id="${c.id}">${I("refresh", 16)}Reactivate</button>`
           : `<button class="btn" data-act="revoke" data-id="${c.id}" data-name="${esc(c.name)}">${I("x", 16)}Revoke</button>`}
+          <button class="btn" data-act="allowance" data-id="${c.id}" data-name="${esc(c.name)}" data-cur="${c.ai.limit == null ? "unlimited" : c.ai.limit}">${I("sparkles", 16)}AI allowance</button>
           <button class="btn" data-act="extend" data-id="${c.id}" data-days="365">${I("calendar-check", 16)}+1 year</button>
           ${c.expiresAt ? `<button class="btn" data-act="extend" data-id="${c.id}" data-days="0">No expiry</button>` : ""}
           ${c.saved || c.workshops ? `<button class="btn" data-act="erase" data-id="${c.id}" data-name="${esc(c.name)}">${I("trash", 16)}Delete data</button>` : ""}</div></td>
-      </tr>`).join("") : `<tr class="empty-row"><td colspan="8">No school codes yet. Create the first one above.</td></tr>`
+      </tr>`).join("") : `<tr class="empty-row"><td colspan="9">No school codes yet. Create the first one above.</td></tr>`
     }</tbody>`;
     $("audit").innerHTML = d.audit.length ? d.audit.map(a => `<li><time datetime="${esc(a.at)}">${esc(when(a.at))}</time><span class="${a.action === "admin.login_failed" ? "fail" : ""}">${esc(ACTION[a.action] || a.action)}${a.detail ? ": " + esc(a.detail) : ""} <span class="muted small">(${esc(a.ip)})</span></span></li>`).join("") : `<li><span class="muted">Nothing yet.</span></li>`;
+  }
+
+  function aiCell(a) {
+    const lim = a.limit == null ? "unlimited" : a.limit === 0 ? "AI off" : a.limit;
+    const pct = a.limit ? Math.min(100, Math.round(a.used / a.limit * 100)) : 0;
+    const col = a.limit === 0 ? "var(--na)" : a.limit && a.used >= a.limit ? "var(--no)" : pct >= 80 ? "var(--part)" : "var(--met)";
+    return `<b style="color:${col}">${a.used}</b> / ${esc(lim)}${a.custom ? "" : ` <span class="sub" style="display:inline">(default)</span>`}
+      ${a.limit ? `<span class="meter" aria-hidden="true"><span style="width:${pct}%;background:${col}"></span></span>` : ""}
+      <span class="sub">${a.input + a.output ? Math.round((a.input + a.output) / 1000) + "k tokens" : "no tokens"}${a.cost != null ? ` · about ${esc(window.__cur || "$")}${a.cost.toFixed(2)}` : ""} · last month ${a.lastMonth}</span>`;
   }
 
   $("codes").addEventListener("click", async e => {
     const b = e.target.closest("[data-act]"); if (!b) return;
     const { act, id } = b.dataset;
+    if (act === "allowance") {
+      const v = prompt(`AI requests per month for ${b.dataset.name} (currently ${b.dataset.cur}).\n\nEnter a number, 0 to switch AI off for this school, "unlimited", or leave blank to use the default.`, "");
+      if (v === null) return;
+      b.disabled = true;
+      try { const st = await api("POST", `/codes/${id}/allowance`, { limit: v.trim() === "" ? null : v.trim() }); toast(st.limit == null ? "AI unlimited for this school" : st.limit === 0 ? "AI switched off for this school" : `Allowance set to ${st.limit} a month`); await load(); }
+      catch (err) { toast(err.message); b.disabled = false; }
+      return;
+    }
     if (act === "erase") {
       const typed = prompt(`This permanently deletes ${b.dataset.name}'s saved self-evaluation, action plan, snapshots and workshops. It can't be undone (backups expire within 90 days).\n\nType DELETE to confirm.`);
       if (typed !== "DELETE") return;

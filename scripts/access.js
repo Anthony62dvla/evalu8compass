@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * Manage school access codes.
- *   node scripts/access.js add "Athena School" [--days 365]
+ *   node scripts/access.js add "Athena School" [--days 365] [--email head@school.org.uk] [--notes "..."]
  *   node scripts/access.js list
  *   node scripts/access.js revoke <id or school name>
  * On the server use the wrapper:  hwwd-access add "Athena School"
@@ -11,7 +11,8 @@ const [cmd, ...args] = process.argv.slice(2);
 
 function help() {
   console.log(`School access codes
-  add "School name" [--days N]   create a code (shown once; give it to the school)
+  add "School name" [--days N] [--email x] [--notes "..."]
+                                 create a code (shown once; give it to the school)
   list                           show all codes (codes themselves are never stored)
   revoke <id or name>            stop a code working straight away
   admin                          set up (or reset) the superadmin password and authenticator`);
@@ -62,11 +63,18 @@ Keep the key somewhere safe. If you lose your phone, run "hwwd-access admin" aga
 }
 
 if (cmd === "add") {
-  const di = args.indexOf("--days");
-  const days = di >= 0 ? Number(args[di + 1]) : 0;
-  const name = args.filter((a, i) => di < 0 || (i !== di && i !== di + 1)).join(" ").trim();
+  // Options: --days N, --email address, --notes "text"; everything else is the school name
+  const opts = {}, words = [];
+  for (let i = 0; i < args.length; i++) {
+    const m = args[i].match(/^--(days|email|notes)(?:=(.*))?$/);
+    if (m) { opts[m[1]] = m[2] !== undefined ? m[2] : args[++i]; continue; }
+    if (args[i].startsWith("--")) { console.error(`Unknown option ${args[i]}. Use --days, --email or --notes.`); process.exit(1); }
+    words.push(args[i]);
+  }
+  const name = words.join(" ").trim(), days = Number(opts.days) || 0;
   if (!name) { console.error('Give the school name, e.g.  add "Athena School"'); process.exit(1); }
-  const c = access.add(name, days);
+  if (opts.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(opts.email)) { console.error("That email address doesn't look right."); process.exit(1); }
+  const c = access.add(name, days, { email: opts.email, notes: opts.notes });
   console.log(`\nAccess code for ${c.name}:\n\n    ${c.code}\n\nGive this to the school's leaders. It's shown only once.${c.expiresAt ? `\nExpires ${c.expiresAt.slice(0, 10)}.` : ""}\n`);
 } else if (cmd === "list") {
   const rows = access.list();

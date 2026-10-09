@@ -47,6 +47,7 @@
           });
           const out = await res.json().catch(() => ({}));
           if (!res.ok) throw { code: out.code || "upstream_error", message: out.error || res.statusText };
+          if (out.allowance) root.dispatchEvent(new CustomEvent("hwwd-allowance", { detail: out.allowance }));
           return out.result;
         },
       };
@@ -114,7 +115,10 @@
     no_key: "The server has no Anthropic API key set. Add ANTHROPIC_API_KEY to .env.",
     access_required: "Your access has expired. Sign in again with your school access code (go to the home page and open the checklist).",
   };
-  function errorText(e) { return ERRORS[e && e.code] || "The AI inspector couldn't answer just now. Try again in a moment."; }
+  function errorText(e) {
+    if (e && (e.code === "allowance_reached" || e.code === "ai_disabled") && e.message) return e.message;
+    return ERRORS[e && e.code] || "The AI inspector couldn't answer just now. Try again in a moment.";
+  }
 
   /** Ask the inspector. Falls back to offline ideas if AI access is refused. */
   async function ask(task, data) {
@@ -122,6 +126,12 @@
     try {
       return await p.run(task, data);
     } catch (e) {
+      if (e && (e.code === "allowance_reached" || e.code === "ai_disabled")) {
+        // Out of AI for now: give the built-in ideas, and try the AI again next time
+        const r = await offlineRun(task, data);
+        r.notice = errorText(e);
+        return r;
+      }
       if (e && (e.code === "not_granted" || e.code === "sampling_disabled" || e.code === "not_declared")) {
         providerPromise = Promise.resolve(offline());
         const r = await offlineRun(task, data);

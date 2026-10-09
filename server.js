@@ -23,6 +23,7 @@ const store = require("./lib/store");
 const access = require("./lib/access");
 const admin = require("./lib/admin");
 const schools = require("./lib/schools");
+const usage = require("./lib/usage");
 access.setAdminCheck(req => admin.who(req));
 
 const PORT = Number(process.env.PORT || 3000);
@@ -71,8 +72,9 @@ const server = http.createServer(async (req, res) => {
       if (p === "/api/access") return accessRoute(req, res);
       if (p === "/api/access/logout" && req.method === "POST") { access.logout(req, res); return json(res, 200, { ok: true }); }
       if (p === "/api/inspector" && req.method === "POST") {
-        if (!access.who(req)) return json(res, 401, { code: "access_required", error: "Enter your school access code to use the AI inspector." });
-        return inspector(req, res);
+        const w = access.who(req);
+        if (!w) return json(res, 401, { code: "access_required", error: "Enter your school access code to use the AI inspector." });
+        return inspector(req, res, w.open ? "open" : w.id);
       }
       if (p.startsWith("/api/admin")) return adminRoute(req, res, p);
       if (p === "/api/school" || p.startsWith("/api/school/")) return schoolRoute(req, res, p, url);
@@ -117,10 +119,10 @@ function retention() {
 }
 setTimeout(retention, 5000).unref();
 setInterval(retention, 24 * 3600e3).unref();
-for (const sig of ["SIGINT", "SIGTERM"]) process.on(sig, () => { store.flushAll(); process.exit(0); });
+for (const sig of ["SIGINT", "SIGTERM"]) process.on(sig, () => { store.flushAll(); usage.flush(); process.exit(0); });
 
 /* Single-user AI inspector used by the self-assessment page */
-async function inspector(req, res) {
+async function inspector(req, res, account) {
   let body;
   try { body = JSON.parse(await readBody(req)); } catch { return json(res, 400, { error: "Invalid JSON body" }); }
   const { task, data } = body || {};
@@ -131,8 +133,9 @@ async function inspector(req, res) {
       system: prompts.SYSTEM,
       content: build(data),
       maxTokens: { item: 1500, review: 3000, action: 1200, draft: 4000 }[task],
+      account,
     });
-    return json(res, 200, { result });
+    return json(res, 200, { result, allowance: usage.status(account) });
   } catch (e) {
     return json(res, e.status || 502, { code: e.code || "upstream_error", error: e.message });
   }
@@ -142,7 +145,7 @@ async function inspector(req, res) {
 async function accessRoute(req, res) {
   if (req.method === "GET") {
     const w = access.who(req);
-    return json(res, 200, { required: access.required(), ok: !!w, school: w && w.name ? w.name : "" });
+    return json(res, 200, { required: access.required(), ok: !!w, school: w && w.name ? w.name : "", ai: w && ai.hasKey() ? usage.status(w.open ? "open" : w.id) : null });
   }
   if (req.method !== "POST") return json(res, 405, { error: "Method not allowed" });
   if (limited(req, "login")) return json(res, 429, { code: "rate_limited", error: "Too many attempts. Wait a minute and try again." });
@@ -214,11 +217,11 @@ async function adminRoute(req, res, p) {
   if (!admin.who(req)) return json(res, 401, { error: "Sign in as superadmin." });
 
   if (p === "/api/admin/overview" && req.method === "GET") {
-    const ws = store.summaries(), saved = schools.summaries(), now = Date.now();
+    const ws = store.summaries(), saved = schools.summaries(), use = usage.overview(), now = Date.now();
     const codes = access.list().map(c => {
       const mine = ws.filter(w => w.createdBy === c.id);
       const state = c.revoked ? "revoked" : c.expiresAt && Date.parse(c.expiresAt) < now ? "expired" : "active";
-      return { ...c, state, workshops: mine.length, participants: mine.reduce((t, w) => t + w.participants, 0), lastWorkshop: mine.map(w => w.updatedAt).sort().pop() || null, saved: saved[c.id] || null };
+      return { ...c, state, workshops: mine.length, participants: mine.reduce((t, w) => t + w.participants, 0), lastWorkshop: mine.map(w => w.updatedAt).sort().pop() || null, saved: saved[c.id] || null, ai: use.perSchool(c.id) };
     });
     const recent = ws.filter(w => now - Date.parse(w.createdAt) < 30 * 864e5);
     return json(res, 200, {
@@ -228,6 +231,7 @@ async function adminRoute(req, res, p) {
         schoolsSignedIn30: codes.filter(c => c.lastUsedAt && now - Date.parse(c.lastUsedAt) < 30 * 864e5).length,
         workshops: ws.length, workshops30: recent.length, schoolsSaving: Object.keys(saved).filter(k => k !== "admin" && k !== "open").length, participants: ws.reduce((t, w) => t + w.participants, 0),
       },
+      ai: { month: use.month, resetsOn: use.resetsOn, defaultLimit: use.defaultLimit, total: use.total, lastMonth: use.lastMonth, currency: use.currency },
       system: { ai: ai.hasKey(), model: ai.hasKey() ? ai.model() : null, accessRequired: access.required(), node: process.version, uptimeHours: Math.round(process.uptime() / 360) / 10 },
     });
   }
@@ -248,6 +252,17 @@ async function adminRoute(req, res, p) {
     const had = schools.erase(c.id), ws = store.removeByCreator(c.id);
     admin.audit("data.erase", `${c.name} (${c.id}): ${had ? "saved work and snapshots" : "no saved work"}, ${ws} workshop${ws === 1 ? "" : "s"}`, req);
     return json(res, 200, { ok: true, erased: had, workshops: ws });
+  }
+  const al = p.match(/^\/api\/admin\/codes\/([a-f0-9]{8})\/allowance$/);
+  if (al && req.method === "POST") {
+    const c = access.list().find(x => x.id === al[1]);
+    if (!c) return json(res, 404, { error: "No code with that id." });
+    const b = (await body()) || {};
+    try {
+      const st = usage.setLimit(c.id, b.limit);
+      admin.audit("ai.allowance", `${c.name} (${c.id}): ${st.limit === null ? "unlimited" : st.limit === 0 ? "AI off" : st.limit + " requests a month"}${st.custom ? "" : " (default)"}`, req);
+      return json(res, 200, st);
+    } catch (e) { return json(res, 400, { error: e.message }); }
   }
   const m = p.match(/^\/api\/admin\/codes\/([a-f0-9]{8})\/(revoke|reactivate|extend)$/);
   if (m && req.method === "POST") {

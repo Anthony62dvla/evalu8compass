@@ -474,6 +474,19 @@
     e.preventDefault(); tabs[n].focus(); showView(tabs[n].dataset.view);
   });
 
+  /* ---------- AI allowance ---------- */
+  function showAllowance(st) {
+    const el = $("aiAllowance"); if (!el || !st) return;
+    const resets = new Date(st.resetsOn + "T12:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "long" });
+    el.classList.remove("hide");
+    el.dataset.level = st.limit === null ? "ok" : st.limit === 0 || st.left === 0 ? "out" : st.left <= st.limit * 0.2 ? "low" : "ok";
+    el.innerHTML = I("sparkles", 16) + "<span>" + (st.limit === null ? `AI requests this month: ${st.used}.`
+      : st.limit === 0 ? "AI suggestions aren't switched on for your school. Built-in suggestions are used instead."
+      : st.left === 0 ? `Your school has used all ${st.limit} AI requests for this month. They reset on ${resets}; built-in suggestions are used until then.`
+      : `AI requests this month: ${st.used} of ${st.limit} used. Resets on ${resets}.`) + "</span>";
+  }
+  window.addEventListener("hwwd-allowance", e => showAllowance(e.detail));
+
   /* ---------- Start ---------- */
   Y.onStatus(showSync);
   Y.onRemote(applyRemote);
@@ -506,6 +519,7 @@
   // School access: show sign-out, and use the school's name if none is set yet
   if (location.protocol !== "file:" && document.querySelector('link[href="css/styles.css"]')) {
     fetch("api/access").then(r => r.json()).then(a => {
+      if (a.ai) showAllowance(a.ai);
       if (a.required && a.ok) {
         const so = $("signOut"); so.hidden = false;
         so.onclick = e => { e.preventDefault(); fetch("api/access/logout", { method: "POST" }).finally(() => { location.href = "index.html"; }); };
