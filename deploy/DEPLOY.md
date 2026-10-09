@@ -75,6 +75,32 @@ The guard fixes problems on the server, but it can't tell you if the whole serve
 3. URL: `https://evalu8compass.app/api/health`, keyword: `"ok":true` (alert when the keyword is *not* found).
 4. Interval: 5 minutes. Alert contact: your email (and the mobile app if you want phone alerts).
 
+## Policy pages (privacy, terms, DPIA, accessibility)
+
+The privacy notice, terms, DPIA information and accessibility statement are at
+`/privacy.html`, `/terms.html`, `/dpia.html` and `/accessibility.html`. Details that
+are specific to you come from `/opt/hwwd/.env`. Add these lines and fill them in:
+
+```
+OPERATOR_NAME=Your name or company
+OPERATOR_ADDRESS=Registered office (optional)
+ICO_REGISTRATION=ZB123456
+HOSTING_REGION=the United Kingdom
+BACKUP_PROVIDER=Backblaze (EU region)
+EMAIL_PROVIDER=Hostinger
+SCHOOL_RETENTION_DAYS=365
+```
+
+Then run `systemctl restart hwwd`. Any you leave blank use neutral wording.
+Ask a data protection adviser to review the pages before you sign up schools.
+
+## Saved school work
+
+Each school's checklist, action plan and snapshots live in `/opt/hwwd/data/schools/<code id>/`,
+and the daily encrypted backup covers them. Saved work is deleted automatically
+`SCHOOL_RETENTION_DAYS` after a school's code is revoked or expires. To delete a school's data
+straight away (for example when a school asks), use **Delete data** next to its code in the admin console.
+
 ## Security
 
 - Code belongs to root; the app runs as its own restricted user and can only write to its data folder.

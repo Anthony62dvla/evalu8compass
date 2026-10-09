@@ -20,7 +20,7 @@
   --radius: 10px;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --brand-deep: #04342C; --brand: #1D9E75; --brand-bright: #5DCAA5; --brand-tint: #0F3B33; --on-brand: #E1F5EE;
+  --brand-deep: #04342C; --brand: #0F6E56; --brand-bright: #5DCAA5; --brand-tint: #0F3B33; --on-brand: #E1F5EE;
   --bg: #071D19; --surface: #0D2924; --ink: #E1F5EE; --muted: #9DC2B8; --line: #1F4840;
   --accent: #5DCAA5; --accent-soft: #0F3B33; --icon: #5DCAA5;
   --ai: #AFA9EC; --ai-soft: #26215C;
@@ -29,7 +29,7 @@
   --g-exc: #85B7EB; --g-strong: #97C459; --g-exp: #C0DD97; --g-att: #EF9F27; --g-urg: #F09595;
   color-scheme: dark } }
 :root[data-theme="dark"] {
-  --brand-deep: #04342C; --brand: #1D9E75; --brand-bright: #5DCAA5; --brand-tint: #0F3B33; --on-brand: #E1F5EE;
+  --brand-deep: #04342C; --brand: #0F6E56; --brand-bright: #5DCAA5; --brand-tint: #0F3B33; --on-brand: #E1F5EE;
   --bg: #071D19; --surface: #0D2924; --ink: #E1F5EE; --muted: #9DC2B8; --line: #1F4840;
   --accent: #5DCAA5; --accent-soft: #0F3B33; --icon: #5DCAA5;
   --ai: #AFA9EC; --ai-soft: #26215C;
@@ -212,8 +212,9 @@ footer p { margin: 0 }
 .pagetabs { display: flex; gap: 4px; margin-top: 22px; border-bottom: 1px solid var(--line); overflow-x: auto }
 .pagetabs .tab { border: 0; background: none; color: var(--muted); font-weight: 600; padding: 10px 14px; border-bottom: 3px solid transparent; white-space: nowrap; font-size: 15px; display: inline-flex; gap: 7px; align-items: center; min-height: 46px; text-decoration: none; cursor: pointer }
 .pagetabs .tab .ic { color: var(--icon) }
-.pagetabs .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--brand) }
+.pagetabs .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent) }
 .pagetabs .tablink { margin-left: auto }
+.tablist-in { display: contents }
 .muted-inline { color: var(--muted); font-size: 13px }
 .no-ai .ai-only, .no-ai .ask, .no-ai #reviewBtn, .no-ai #aiBadge, .no-ai .advice-add { display: none !important }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0 }
@@ -297,3 +298,4 @@ footer p { margin: 0 }
 .moves li small { color: var(--muted) }
 .moves .chg { font-weight: 700; font-size: 13px }
 .moves.up .chg { color: var(--met) } .moves.down .chg { color: var(--no) }
+footer a { color: var(--accent); font-weight: 600 }

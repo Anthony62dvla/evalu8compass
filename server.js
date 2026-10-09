@@ -26,6 +26,7 @@ const schools = require("./lib/schools");
 access.setAdminCheck(req => admin.who(req));
 
 const PORT = Number(process.env.PORT || 3000);
+const SCHOOL_RETENTION_DAYS = Number(process.env.SCHOOL_RETENTION_DAYS || 365); // saved work is deleted this long after a school's access ends
 const HOST = process.env.HOST || "127.0.0.1"; // only reachable through your web server; use 0.0.0.0 to accept direct connections
 const PUBLIC = path.join(__dirname, "public");
 const LIMITS = {
@@ -39,10 +40,10 @@ const PROTECTED_PAGES = new Set(["/checklist.html", "/report.html"]);
 const AI_TASKS = ["item", "review", "action", "draft"];
 const hits = new Map();
 // Browser security headers for every response. Scripts may only come from this site
-// (no inline scripts, no third-party scripts); fonts come from Google Fonts.
+// (no inline scripts, no third-party anything): fonts are served from this site too.
 const CSP = [
-  "default-src 'self'", "script-src 'self'", "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com", "img-src 'self' data: blob:", "connect-src 'self'",
+  "default-src 'self'", "script-src 'self'", "style-src 'self' 'unsafe-inline'",
+  "font-src 'self'", "img-src 'self' data: blob:", "connect-src 'self'",
   "object-src 'none'", "base-uri 'self'", "form-action 'self'", "frame-ancestors 'none'",
 ].join("; ");
 function securityHeaders(req, res) {
@@ -54,7 +55,7 @@ function securityHeaders(req, res) {
   res.setHeader("cross-origin-opener-policy", "same-origin");
   if (req.headers["x-forwarded-proto"] === "https") res.setHeader("strict-transport-security", "max-age=31536000; includeSubDomains");
 }
-const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".ico": "image/x-icon", ".webmanifest": "application/manifest+json" };
+const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".ico": "image/x-icon", ".webmanifest": "application/manifest+json", ".woff2": "font/woff2", ".txt": "text/plain; charset=utf-8" };
 
 const server = http.createServer(async (req, res) => {
   try {
@@ -99,6 +100,23 @@ server.listen(PORT, HOST, () => {
   console.log(`How Well Are We Doing? running at http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}`);
   console.log(ai.hasKey() ? `AI inspector on (${ai.model()})` : "AI inspector off: set ANTHROPIC_API_KEY in .env to turn it on");
 });
+// Retention: delete saved work for schools whose access ended over SCHOOL_RETENTION_DAYS ago
+function retention() {
+  const codes = access.list();
+  const gone = schools.cleanup(id => {
+    const c = codes.find(x => x.id === id);
+    if (!c) return undefined;
+    if (c.revoked) return c.revoked;
+    if (c.expiresAt && Date.parse(c.expiresAt) < Date.now()) return c.expiresAt;
+    return null;
+  }, SCHOOL_RETENTION_DAYS);
+  gone.forEach(id => admin.audit("data.retention_delete", `saved work for ${id} (access ended over ${SCHOOL_RETENTION_DAYS} days ago)`, null));
+  const scrubbed = access.scrubEnded(SCHOOL_RETENTION_DAYS);
+  if (scrubbed) admin.audit("data.retention_delete", `contact details removed from ${scrubbed} ended code${scrubbed === 1 ? "" : "s"}`, null);
+  admin.trimAudit(730);
+}
+setTimeout(retention, 5000).unref();
+setInterval(retention, 24 * 3600e3).unref();
 for (const sig of ["SIGINT", "SIGTERM"]) process.on(sig, () => { store.flushAll(); process.exit(0); });
 
 /* Single-user AI inspector used by the self-assessment page */
@@ -223,6 +241,14 @@ async function adminRoute(req, res, p) {
     admin.audit("code.create", `${c.name} (${c.id})${days ? `, expires in ${days} days` : ""}`, req);
     return json(res, 201, { code: c.code, id: c.id, name: c.name, expiresAt: c.expiresAt || null });
   }
+  const er = p.match(/^\/api\/admin\/codes\/([a-f0-9]{8})\/erase$/);
+  if (er && req.method === "POST") {
+    const c = access.list().find(x => x.id === er[1]);
+    if (!c) return json(res, 404, { error: "No code with that id." });
+    const had = schools.erase(c.id), ws = store.removeByCreator(c.id);
+    admin.audit("data.erase", `${c.name} (${c.id}): ${had ? "saved work and snapshots" : "no saved work"}, ${ws} workshop${ws === 1 ? "" : "s"}`, req);
+    return json(res, 200, { ok: true, erased: had, workshops: ws });
+  }
   const m = p.match(/^\/api\/admin\/codes\/([a-f0-9]{8})\/(revoke|reactivate|extend)$/);
   if (m && req.method === "POST") {
     const [, id, act] = m;
@@ -238,6 +264,26 @@ async function adminRoute(req, res, p) {
   return json(res, 404, { error: "Not found" });
 }
 
+/* Policy pages: details that differ per installation come from .env (see .env.example) */
+const POLICY_PAGES = new Set(["privacy.html", "terms.html", "dpia.html", "accessibility.html"]);
+const POLICY_DATE = "9 October 2026";
+function policyValues() {
+  const e = k => String(process.env[k] || "").trim();
+  const h = v => v.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const name = e("OPERATOR_NAME"), addr = e("OPERATOR_ADDRESS"), ico = e("ICO_REGISTRATION"), region = e("HOSTING_REGION"), backup = e("BACKUP_PROVIDER"), mail = e("EMAIL_PROVIDER");
+  return {
+    OPERATOR: h(name || "Evalu8 Compass"),
+    OPERATOR_LINE: h(name ? `Evalu8 Compass is provided by ${name}${addr ? ", " + addr : ""}.` : "Evalu8 Compass is an independent service for schools.") +
+      (ico ? h(` We are registered with the Information Commissioner's Office (registration number ${ico}).`) : ""),
+    HOSTING: h(region ? `a Hostinger data centre in ${region}` : "a data centre run by our hosting provider, Hostinger"),
+    BACKUP: h(backup ? `separate off-site storage provided by ${backup}` : "separate off-site storage"),
+    BACKUP_PROVIDER: h(backup || "Our off-site backup storage provider"),
+    EMAIL_HOST: h(!mail ? "" : /hostinger/i.test(mail) ? " and our support email" : ` (our support email is provided by ${mail})`),
+    RETENTION_DAYS: String(SCHOOL_RETENTION_DAYS),
+    UPDATED: h(e("POLICY_UPDATED") || POLICY_DATE),
+  };
+}
+
 /* ---------- helpers ---------- */
 function serveStatic(pathname, res) {
   let rel;
@@ -246,11 +292,15 @@ function serveStatic(pathname, res) {
   if (!file.startsWith(PUBLIC + path.sep)) return json(res, 403, { error: "Forbidden" });
   fs.readFile(file, (err, buf) => {
     if (err) { res.writeHead(404, { "content-type": "text/plain" }); return res.end("Not found"); }
+    if (POLICY_PAGES.has(path.basename(file))) {
+      const v = policyValues();
+      buf = Buffer.from(buf.toString("utf8").replace(/\{\{([A-Z_]+)\}\}/g, (m, k) => (k in v ? v[k] : m)));
+    }
     res.writeHead(200, {
       "content-type": TYPES[path.extname(file)] || "application/octet-stream",
       "x-content-type-options": "nosniff",
       "referrer-policy": "same-origin",
-      "cache-control": path.extname(file) === ".html" ? "no-cache" : "public, max-age=300",
+      "cache-control": path.extname(file) === ".html" ? "no-cache" : path.extname(file) === ".woff2" ? "public, max-age=2592000, immutable" : "public, max-age=300",
     });
     res.end(buf);
   });

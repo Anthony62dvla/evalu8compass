@@ -4,13 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Report · Evalu8 Compass</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="css/styles.css">
 <link rel="stylesheet" href="css/report.css">
 </head>
 <body>
-<div class="brandbar noprint">
+<header class="brandbar noprint">
   <div class="brandbar-in">
     <div class="brand-logo"><i data-icon="compass" data-size="26"></i></div>
     <div class="brand-text"><b>Evalu8 Compass</b><span>Report</span></div>
@@ -20,9 +19,9 @@
       <a href="workshop.html"><i data-icon="users-group"></i>Staff workshop</a>
     </nav>
   </div>
-</div>
+</header>
 
-<div class="rtools noprint">
+<section class="rtools noprint" aria-label="Report options">
   <div class="rtools-in">
     <div>
       <h1 id="rtTitle">Your report</h1>
@@ -36,7 +35,7 @@
     <p class="muted small" id="pdfHint">"Save as PDF" opens your browser's print window. Choose <b>Save as PDF</b> as the destination.</p>
     <p class="error" id="rErr" role="alert"></p>
   </div>
-</div>
+</section>
 
 <main class="paperwrap">
   <article class="paper" id="doc" aria-live="polite"><p>Loading…</p></article>

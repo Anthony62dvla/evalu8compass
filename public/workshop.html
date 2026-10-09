@@ -4,13 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>How Well Are We Doing · Staff workshop</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="css/styles.css">
 <link rel="stylesheet" href="css/workshop.css">
 </head>
 <body>
-<div class="brandbar">
+<header class="brandbar">
   <div class="brandbar-in">
     <div class="brand-logo" id="brandLogo"><i data-icon="school" data-size="26"></i></div>
     <div class="brand-text"><b id="brandName">How well are we doing?</b><span id="brandSub">Staff workshop</span></div>
@@ -20,8 +19,8 @@
       <a href="workshop.html" aria-current="page"><i data-icon="users-group"></i>Staff workshop</a>
     </nav>
   </div>
-</div>
-<div class="wrap">
+</header>
+<main class="wrap">
 
   <!-- ============ Landing ============ -->
   <section id="landing" class="view">
@@ -90,7 +89,8 @@
   </section>
 
   <!-- ============ Facilitator ============ -->
-  <section id="fac" class="view hide">
+  <section id="fac" class="view hide" aria-labelledby="facH1">
+    <h1 class="sr-only" id="facH1">Run the workshop</h1>
     <div class="joinbar">
       <div class="joinbar-code">
         <span class="lbl">Join at <b id="fJoinUrl"></b> with code</span>
@@ -187,8 +187,9 @@
 
   <footer>
     <p>AI suggestions are advisory and are not an Ofsted judgement. Responses are anonymous; role breakdowns appear only for groups of three or more. Icons by Tabler Icons (MIT licence).</p>
+    <p><a href="privacy.html">Privacy</a> · <a href="accessibility.html">Accessibility</a> · <a href="terms.html">Terms</a></p>
   </footer>
-</div>
+</main>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="vendor/qrcode-generator-1.4.4.js"></script>

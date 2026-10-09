@@ -266,7 +266,7 @@
   }
   function showView(id) {
     ["evalView", "planView", "progressView"].forEach(v => $(v).classList.toggle("hide", v !== id));
-    document.querySelectorAll("[data-view]").forEach(b => b.setAttribute("aria-selected", b.dataset.view === id));
+    document.querySelectorAll("[data-view]").forEach(b => { b.setAttribute("aria-selected", b.dataset.view === id); b.tabIndex = b.dataset.view === id ? 0 : -1; });
     if (id === "planView") P.render();
     if (id === "progressView") renderProgress();
     history.replaceState(null, "", id === "planView" ? "#plan" : id === "progressView" ? "#progress" : location.pathname);
@@ -464,6 +464,15 @@
     state = { ...S.DEFAULT(), profile: state.profile };
     save(); $("confirm").classList.add("hide"); renderAreas(); renderReview(); P.render(); toast("All answers cleared");
   };
+
+  // Tabs: left/right arrow keys move between them (WAI-ARIA tabs pattern)
+  document.querySelector(".tablist-in").addEventListener("keydown", e => {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) return;
+    const tabs = [...document.querySelectorAll(".tablist-in [role=tab]")].filter(t => !t.hidden);
+    const i = tabs.indexOf(document.activeElement); if (i < 0) return;
+    const n = e.key === "Home" ? 0 : e.key === "End" ? tabs.length - 1 : (i + (e.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+    e.preventDefault(); tabs[n].focus(); showView(tabs[n].dataset.view);
+  });
 
   /* ---------- Start ---------- */
   Y.onStatus(showSync);

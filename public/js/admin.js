@@ -10,6 +10,7 @@
   const ACTION = {
     "admin.setup": "Superadmin set up", "admin.login": "Signed in", "admin.logout": "Signed out", "admin.login_failed": "Failed sign-in attempt",
     "code.create": "Code created", "code.revoke": "Code revoked", "code.reactivate": "Code reactivated", "code.extend": "Expiry changed",
+    "data.erase": "School data deleted", "data.retention_delete": "Deleted under retention policy",
   };
   function toast(m) { const t = $("toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("on"), 2400); }
   async function api(method, path, body) {
@@ -55,7 +56,8 @@
           ? `<button class="btn" data-act="reactivate" data-id="${c.id}">${I("refresh", 16)}Reactivate</button>`
           : `<button class="btn" data-act="revoke" data-id="${c.id}" data-name="${esc(c.name)}">${I("x", 16)}Revoke</button>`}
           <button class="btn" data-act="extend" data-id="${c.id}" data-days="365">${I("calendar-check", 16)}+1 year</button>
-          ${c.expiresAt ? `<button class="btn" data-act="extend" data-id="${c.id}" data-days="0">No expiry</button>` : ""}</div></td>
+          ${c.expiresAt ? `<button class="btn" data-act="extend" data-id="${c.id}" data-days="0">No expiry</button>` : ""}
+          ${c.saved || c.workshops ? `<button class="btn" data-act="erase" data-id="${c.id}" data-name="${esc(c.name)}">${I("trash", 16)}Delete data</button>` : ""}</div></td>
       </tr>`).join("") : `<tr class="empty-row"><td colspan="8">No school codes yet. Create the first one above.</td></tr>`
     }</tbody>`;
     $("audit").innerHTML = d.audit.length ? d.audit.map(a => `<li><time datetime="${esc(a.at)}">${esc(when(a.at))}</time><span class="${a.action === "admin.login_failed" ? "fail" : ""}">${esc(ACTION[a.action] || a.action)}${a.detail ? ": " + esc(a.detail) : ""} <span class="muted small">(${esc(a.ip)})</span></span></li>`).join("") : `<li><span class="muted">Nothing yet.</span></li>`;
@@ -64,6 +66,14 @@
   $("codes").addEventListener("click", async e => {
     const b = e.target.closest("[data-act]"); if (!b) return;
     const { act, id } = b.dataset;
+    if (act === "erase") {
+      const typed = prompt(`This permanently deletes ${b.dataset.name}'s saved self-evaluation, action plan, snapshots and workshops. It can't be undone (backups expire within 90 days).\n\nType DELETE to confirm.`);
+      if (typed !== "DELETE") return;
+      b.disabled = true;
+      try { const r = await api("POST", `/codes/${id}/erase`, {}); toast(`Deleted${r.erased ? " saved work" : ""}${r.workshops ? ` and ${r.workshops} workshop${r.workshops === 1 ? "" : "s"}` : ""}`); await load(); }
+      catch (err) { toast(err.message); b.disabled = false; }
+      return;
+    }
     if (act === "revoke" && !b.dataset.confirm) {
       b.dataset.confirm = "1"; b.innerHTML = `${I("alert-triangle", 16)}Click again to revoke`; b.classList.add("danger");
       setTimeout(() => { if (b.isConnected) { delete b.dataset.confirm; b.innerHTML = `${I("x", 16)}Revoke`; b.classList.remove("danger"); } }, 4000);

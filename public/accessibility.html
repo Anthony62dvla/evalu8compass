@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Accessibility statement · Evalu8 Compass</title>
+<meta name="description" content="How accessible Evalu8 Compass is and how to report a problem.">
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/front.css">
+<link rel="stylesheet" href="css/legal.css">
+</head>
+<body>
+<header class="brandbar">
+  <div class="brandbar-in">
+    <div class="brand-logo"><i data-icon="compass" data-size="26"></i></div>
+    <div class="brand-text"><b>Evalu8 Compass</b><span>School self-evaluation</span></div>
+    <nav class="brand-nav" aria-label="Main">
+      <a href="index.html"><i data-icon="home"></i>Home</a>
+      <a href="checklist.html"><i data-icon="list-check"></i>Checklist</a>
+      <a href="workshop.html"><i data-icon="users-group"></i>Staff workshop</a>
+    </nav>
+  </div>
+</header>
+<main class="legal">
+<p class="eyebrow">Accessibility</p>
+<h1>Accessibility statement</h1>
+<p class="lead">We want everyone in a school to be able to use Evalu8 Compass, including staff who use assistive technology.</p>
+<p class="meta">Last updated {{UPDATED}}</p>
+
+<p>This statement covers the website at evalu8compass.app: the home page, checklist, action plan, progress tab, staff workshops and reports. We aim to meet the Web Content Accessibility Guidelines (WCAG) 2.2 at level AA.</p>
+
+<h2 id="can">What you can do</h2>
+<ul>
+  <li>Use the whole service with a keyboard alone. In the checklist, the arrow keys move between the Evaluate, Action plan and Progress tabs.</li>
+  <li>Zoom to 400% without losing content. The pages reflow to fit a phone screen with no sideways scrolling.</li>
+  <li>Use a screen reader: pages have landmarks, headings and labelled controls, and buttons have text, not just icons.</li>
+  <li>Use dark mode. The site follows your device's light or dark setting.</li>
+  <li>Turn off animation. The site respects your device's "reduce motion" setting.</li>
+  <li>Read ratings without relying on colour. Every rating has an icon and a word as well as a colour.</li>
+  <li>Join a workshop by typing the code shown on screen. You don't have to scan the QR code.</li>
+</ul>
+<p>Headings use Lexend, a typeface designed for easier reading. Body text uses Public Sans, a clear typeface designed for public services.</p>
+
+<h2 id="testing">How we tested</h2>
+<p>We last tested the service on {{UPDATED}}:</p>
+<ul>
+  <li><b>Automated checks</b> with axe-core 4.10 against WCAG 2.2 A and AA, and good-practice rules, on every page and main screen (home, sign-in, checklist with an AI review open, action plan, progress, report, the workshop facilitator and staff screens, and these policy pages). We tested in both light and dark mode, including colour contrast. All issues found have been fixed.</li>
+  <li><b>Keyboard checks</b> of the main tasks: signing in, rating lines, adding actions, saving a snapshot, joining and answering a workshop.</li>
+  <li><b>Small screens</b> at 390 pixels wide (a typical phone), checking there's no sideways scrolling.</li>
+</ul>
+<p>Automated tools find only some accessibility problems, so we're planning testing with disabled users and with screen readers (NVDA, JAWS and VoiceOver).</p>
+
+<h2 id="known">Known limitations</h2>
+<ul>
+  <li><b>PDF reports</b> are made using your browser's print function, and how accessible they are depends on the browser. Chrome and Edge produce tagged PDFs. If you use assistive technology, the <b>Word download</b> is the most accessible version: it has proper headings and table headers.</li>
+  <li><b>Live workshop updates</b> appear as staff answer. Screen readers aren't told about every change, to avoid constant interruptions.</li>
+  <li><b>AI-generated text</b> is written to be plain English, but its wording varies and it may sometimes be longer or more complex than we'd like.</li>
+  <li><b>Present mode</b> on a projector is designed to be seen from across a room. Staff can follow the same findings on their own device.</li>
+</ul>
+
+<h2 id="feedback">Feedback and contact</h2>
+<p>If you find something hard to use, or need information in a different format, email <a href="mailto:support@evalu8compass.app">support@evalu8compass.app</a>. Tell us the page and what happened. We aim to reply within five working days.</p>
+</main>
+<footer class="frontfoot">
+  <div class="wrap">
+    <nav class="legal-nav" aria-label="Policies"><a href="privacy.html">Privacy notice</a><a href="terms.html">Terms of use</a><a href="dpia.html">DPIA information for schools</a><a href="accessibility.html">Accessibility statement</a></nav>
+    <p><b>Evalu8 Compass</b> is an independent tool. It is not affiliated with, endorsed by or connected to Ofsted or the Department for Education.</p>
+    <p>Questions? <a href="mailto:support@evalu8compass.app">support@evalu8compass.app</a></p>
+  </div>
+</footer>
+<script src="js/icons.js"></script>
+</body>
+</html>

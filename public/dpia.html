@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DPIA information for schools · Evalu8 Compass</title>
+<meta name="description" content="Information to help schools complete a data protection impact assessment for Evalu8 Compass.">
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/front.css">
+<link rel="stylesheet" href="css/legal.css">
+</head>
+<body>
+<header class="brandbar">
+  <div class="brandbar-in">
+    <div class="brand-logo"><i data-icon="compass" data-size="26"></i></div>
+    <div class="brand-text"><b>Evalu8 Compass</b><span>School self-evaluation</span></div>
+    <nav class="brand-nav" aria-label="Main">
+      <a href="index.html"><i data-icon="home"></i>Home</a>
+      <a href="checklist.html"><i data-icon="list-check"></i>Checklist</a>
+      <a href="workshop.html"><i data-icon="users-group"></i>Staff workshop</a>
+    </nav>
+  </div>
+</header>
+<main class="legal">
+<p class="eyebrow">For data protection officers</p>
+<h1>DPIA information for schools</h1>
+<p class="lead">What your school needs to complete its own data protection impact assessment (DPIA), or to record why it doesn't need a full one.</p>
+<p class="meta">Last reviewed {{UPDATED}}</p>
+
+<p class="note">Your school is the controller of what it records in Evalu8 Compass, so the DPIA decision is your school's. This page sets out how the service works, the risks we've identified and how we reduce them. Your data protection officer is welcome to ask us anything: <a href="mailto:support@evalu8compass.app">support@evalu8compass.app</a>.</p>
+
+<nav class="toc" aria-label="On this page"><b>On this page</b>
+  <ol>
+    <li><a href="#processing">The processing</a></li>
+    <li><a href="#data">Data and people</a></li>
+    <li><a href="#necessity">Necessity and proportionality</a></li>
+    <li><a href="#flows">How data flows</a></li>
+    <li><a href="#risks">Risks and how they're reduced</a></li>
+    <li><a href="#security">Security measures</a></li>
+    <li><a href="#retention">Retention</a></li>
+    <li><a href="#signoff">What your school should record</a></li>
+  </ol>
+</nav>
+
+<h2 id="processing">1. The processing</h2>
+<div class="tblwrap"><table>
+  <tbody>
+    <tr><th scope="row">Purpose</th><td>School self-evaluation against Ofsted's school inspection framework and related standards; collecting anonymous staff views in workshops; planning and tracking improvement actions; optional AI improvement suggestions.</td></tr>
+    <tr><th scope="row">Nature</th><td>Leaders rate expectations, record evidence notes and actions, and save termly snapshots. Staff answer the same expectations anonymously in a facilitated workshop and the results are collated. Optional AI features generate suggestions from the text sent to them.</td></tr>
+    <tr><th scope="row">Scope</th><td>One school's leadership team and staff. Personal data is limited: mostly job roles, plus any names leaders choose to record as action owners or report authors.</td></tr>
+    <tr><th scope="row">Context</th><td>Used by school leaders for internal evaluation. Staff take part in workshops voluntarily and anonymously. Not designed for pupils' personal information.</td></tr>
+    <tr><th scope="row">Our role</th><td>Processor for your school's content (terms in our <a href="terms.html#data">terms of use</a>). Controller only for access-code contact details, support emails and security logs.</td></tr>
+    <tr><th scope="row">Lawful basis (your school's)</th><td>Typically public task for maintained schools and academies, and legitimate interests for independent schools, as part of the school's duty to evaluate and improve its provision. Confirm this with your DPO.</td></tr>
+  </tbody>
+</table></div>
+
+<h2 id="data">2. Data and people</h2>
+<div class="tblwrap"><table>
+  <thead><tr><th scope="col">People</th><th scope="col">Data</th><th scope="col">Notes</th></tr></thead>
+  <tbody>
+    <tr><td>School leaders</td><td>Name or role of whoever completed the evaluation; action owners; optional contact email for the access code.</td><td>Roles ("Deputy head") can be used instead of names.</td></tr>
+    <tr><td>Staff in workshops</td><td>Role category (for example teacher, support staff, senior leader), ratings, optional free-text comments.</td><td>No names, emails or accounts. Role breakdowns only shown for three or more people. A random token lets a device change its own answers.</td></tr>
+    <tr><td>Pupils</td><td>None intended.</td><td>Users are told not to enter information about individual pupils.</td></tr>
+    <tr><td>Anyone named in free text</td><td>Whatever is typed into notes, comments or actions.</td><td>The main residual risk; see risk 3 below.</td></tr>
+  </tbody>
+</table></div>
+<p>No special category or criminal offence data is needed or requested.</p>
+
+<h2 id="necessity">3. Necessity and proportionality</h2>
+<ul>
+  <li><b>Data minimisation:</b> workshops collect roles, not identities. The self-evaluation is about the school, not individuals.</li>
+  <li><b>AI is optional:</b> it can be switched off for the whole school, and then nothing is sent to the AI provider. When it's on, it runs only when someone presses an AI button, and only the text needed for that request is sent.</li>
+  <li><b>Access control:</b> each school's information is only reachable with that school's access code.</li>
+  <li><b>No secondary use:</b> no advertising, analytics, profiling or AI training.</li>
+  <li><b>Transparency:</b> staff see a privacy note before answering, and our <a href="privacy.html">privacy notice</a> is linked throughout.</li>
+</ul>
+
+<h2 id="flows">4. How data flows</h2>
+<ol>
+  <li>A leader's or staff member's browser sends information over HTTPS to our server in {{HOSTING}}.</li>
+  <li>The server stores each school's information separately. A copy of the self-evaluation is also kept in the browser of each device that opens it, for offline use.</li>
+  <li>Only if AI is used: the text for that request goes to Anthropic PBC (US) over HTTPS. The result comes back and is shown to the user. Anthropic doesn't train on it and deletes it within 30 days.</li>
+  <li>Every day, an encrypted backup (AES-256) is made on the server and copied to {{BACKUP}}.</li>
+  <li>Leaders can download reports (PDF or Word) to their own devices. These are then under your school's control.</li>
+</ol>
+
+<h2 id="risks">5. Risks and how they're reduced</h2>
+<div class="tblwrap"><table>
+  <thead><tr><th scope="col">Risk</th><th scope="col">How it's reduced</th><th scope="col">Remaining risk</th></tr></thead>
+  <tbody>
+    <tr><td><b>1. Someone outside the leadership team gets the access code</b></td><td>Codes are 12 random characters (about 60 bits), stored only as hashes. Guessing is rate-limited. A code can be revoked instantly and reissued without losing work. Sign-ins expire after 30 days. Your school controls who has the code.</td><td><span class="risk-low">Low</span>, if your school shares the code only with leaders who need it</td></tr>
+    <tr><td><b>2. A staff member is identified from workshop answers</b></td><td>No names or accounts. Role breakdowns are hidden for groups smaller than three. Exports and reports contain collated findings only, never individual responses.</td><td><span class="risk-low">Low</span>. In very small schools, comments can still hint at who wrote them, so facilitators should say this at the start.</td></tr>
+    <tr><td><b>3. Personal information typed into free text</b> (notes, comments, actions)</td><td>On-screen guidance asks people not to name pupils or staff. Your school can edit or delete text at any time, and everything is deleted under the retention schedule.</td><td><span class="risk-med">Low to medium</span>, depending on how staff are briefed</td></tr>
+    <tr><td><b>4. Sending information to an AI provider in the US</b></td><td>Optional, and can be switched off school-wide. Only the minimum text is sent. No training, deletion within 30 days, and transfer safeguards in Anthropic's data processing terms.</td><td><span class="risk-low">Low</span></td></tr>
+    <tr><td><b>5. Over-reliance on AI or inaccurate suggestions</b></td><td>AI output is labelled advisory and "not an Ofsted judgement" everywhere it appears. AI never changes ratings. It adds draft actions only when someone asks it to, and they can then be edited or deleted.</td><td><span class="risk-low">Low</span></td></tr>
+    <tr><td><b>6. Loss of data</b></td><td>Daily encrypted backups, kept locally for 14 days and off-site for 90 days. Setting up backups includes a test restore. Saving is automatic, with an offline copy on each device.</td><td><span class="risk-low">Low</span></td></tr>
+    <tr><td><b>7. Server compromise</b></td><td>See the security measures below.</td><td><span class="risk-low">Low</span></td></tr>
+    <tr><td><b>8. Information kept longer than needed</b></td><td>Workshops are deleted automatically after 90 days of inactivity. Saved work is deleted automatically {{RETENTION_DAYS}} days after access ends, or on request.</td><td><span class="risk-low">Low</span></td></tr>
+    <tr><td><b>9. Shared computers</b></td><td>Signing out ends the session. The offline copy stays in that browser until site data is cleared, and the privacy notice says how to clear it.</td><td><span class="risk-low">Low</span>, if leaders use their own devices or clear site data</td></tr>
+  </tbody>
+</table></div>
+
+<h2 id="security">6. Security measures</h2>
+<ul>
+  <li>HTTPS everywhere with HSTS. A strict Content Security Policy blocks scripts and fonts from other sites, and there are no third-party scripts, fonts or trackers.</li>
+  <li>Access codes are stored only as SHA-256 hashes. Sign-in cookies are signed (HMAC), HttpOnly and Secure.</li>
+  <li>Each school's information is kept in its own store and is only reachable with its own code. Cross-site requests are refused.</li>
+  <li>Rate limiting on sign-in, on AI use and on the API in general.</li>
+  <li>The developer's superadmin console needs a password (scrypt-hashed) plus an authenticator app code. Its sessions last 8 hours and every action is logged. The console shows counts only, never school content.</li>
+  <li>The app runs as its own unprivileged system user, with read-only access to its code and write access only to its data folder. The AI key is held only on the server and is never sent to browsers.</li>
+  <li>Daily encrypted backups (AES-256 with a key held only by the operator), with off-site copies and restore checks.</li>
+  <li>An automatic health check restarts the service if it stops responding.</li>
+</ul>
+
+<h2 id="retention">7. Retention</h2>
+<div class="tblwrap"><table>
+  <thead><tr><th scope="col">Information</th><th scope="col">Kept for</th></tr></thead>
+  <tbody>
+    <tr><td>Self-evaluation, action plan, snapshots</td><td>While access lasts, then deleted automatically after {{RETENTION_DAYS}} days, or sooner on request</td></tr>
+    <tr><td>Workshops (responses, comments, context, Ofsted report reading, plan)</td><td>90 days after the workshop was last used</td></tr>
+    <tr><td>Access code contact email and notes</td><td>Removed {{RETENTION_DAYS}} days after access ends, or sooner on request</td></tr>
+    <tr><td>Superadmin audit log (includes IP addresses)</td><td>Two years</td></tr>
+    <tr><td>Encrypted backups</td><td>14 days on the server, 90 days off-site</td></tr>
+    <tr><td>Information sent to the AI provider</td><td>Deleted by Anthropic within 30 days</td></tr>
+  </tbody>
+</table></div>
+
+<h2 id="signoff">8. What your school should record</h2>
+<ul>
+  <li>Whether a full DPIA is needed. Given the limited personal data and the measures above, many schools record a screening decision instead. This is your DPO's call.</li>
+  <li>Your lawful basis, and whether you'll allow AI suggestions.</li>
+  <li>How you'll brief staff: keep names out of notes and comments, and explain that workshops are anonymous.</li>
+  <li>Who in your school holds the access code, and how you'll keep that list up to date.</li>
+  <li>Your DPO's advice and the decision-maker's sign-off, with a review date (we suggest yearly, or when the service changes significantly).</li>
+</ul>
+</main>
+<footer class="frontfoot">
+  <div class="wrap">
+    <nav class="legal-nav" aria-label="Policies"><a href="privacy.html">Privacy notice</a><a href="terms.html">Terms of use</a><a href="dpia.html">DPIA information for schools</a><a href="accessibility.html">Accessibility statement</a></nav>
+    <p><b>Evalu8 Compass</b> is an independent tool. It is not affiliated with, endorsed by or connected to Ofsted or the Department for Education.</p>
+    <p>Questions? <a href="mailto:support@evalu8compass.app">support@evalu8compass.app</a></p>
+  </div>
+</footer>
+<script src="js/icons.js"></script>
+</body>
+</html>

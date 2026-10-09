@@ -87,3 +87,4 @@
   .hero-lead { font-size: 16.5px }
   .hero-cta .btn { flex: 1 1 100% }
 }
+.frontfoot .legal-nav { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; margin-bottom: 10px }
