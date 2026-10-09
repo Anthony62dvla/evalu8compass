@@ -21,7 +21,7 @@
     const r = await fetch("api/admin/evals" + path, { method, headers: body ? { "content-type": "application/json" } : {}, body: body ? JSON.stringify(body) : undefined });
     const d = await r.json().catch(() => ({}));
     if (r.status === 401) { showSignedOut(); throw new Error("Signed out"); }
-    if (!r.ok) throw new Error(d.error || "Something went wrong.");
+    if (!r.ok) throw Object.assign(new Error(d.error || "Something went wrong."), { detail: d.detail });
     return d;
   }
   function showSignedOut() { $("signedOut").classList.remove("hide"); $("page").classList.add("hide"); }
@@ -65,7 +65,12 @@
       info.runs.unshift({ id: rec.id, at: rec.at, report: rec.report, promptVersion: rec.promptVersion, model: rec.model, seconds: rec.seconds, pct: rec.score ? rec.score.pct : null, review: null });
       renderRuns(); showResult(rec);
       toast(`Check finished: ${label}`);
-    } catch (e) { if (e.message !== "Signed out") { $("result").innerHTML = `<section class="panel2"><p class="error">${esc(e.message)}</p></section>`; } }
+    } catch (e) {
+      if (e.message !== "Signed out") {
+        const d = e.detail;
+        $("result").innerHTML = `<section class="panel2"><p class="error">${esc(e.message)}</p>${d ? `<details><summary>Details for Claude (copy if asked)</summary><pre class="cmd" style="white-space:pre-wrap">${esc(JSON.stringify(d, null, 1))}</pre></details>` : ""}</section>`;
+      }
+    }
     finally {
       busy = false; $("running").classList.add("hide");
       document.querySelectorAll("[data-run], #oRun").forEach(b => { b.disabled = !info.ai; });

@@ -325,7 +325,7 @@ async function evalRoute(req, res, p) {
     if (m && req.method === "DELETE" && !m[2]) return evals.remove(m[1]) ? json(res, 200, { ok: true }) : json(res, 404, { error: "Not found." });
     return json(res, 404, { error: "Not found" });
   } catch (e) {
-    if (e instanceof ai.AIError) return json(res, e.status, { error: e.message, code: e.code });
+    if (e instanceof ai.AIError) return json(res, e.status, { error: e.message, code: e.code, detail: e.detail || null });
     if (e.status) return json(res, e.status, { error: e.message });
     console.error(e);
     return json(res, 500, { error: "The check couldn't be completed: " + e.message });

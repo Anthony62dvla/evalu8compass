@@ -143,7 +143,7 @@ Reply with only JSON in this shape:
  "summary":"3-4 sentence overview",
  "nextSteps":["each next step in the report, paraphrased, in order"],
  "findings":[{"itemId":"id from the list or null","type":"concern|strength","finding":"one sentence, paraphrased"}]}
-Include every concern and the main strengths. Use null for itemId when no line fits.`;
+Include every concern and the main strengths, at most 15 findings in all, each one short sentence. Use null for itemId when no line fits.`;
   }
 
   /** Staff comments from a workshop → themes per area. */
