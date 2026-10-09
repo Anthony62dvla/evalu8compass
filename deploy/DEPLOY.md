@@ -103,6 +103,13 @@ In the admin console, **AI allowance** next to a school changes its limit (a num
 off, `unlimited`, or blank for the default). Add `AI_PRICE_INPUT_PER_MTOK` and
 `AI_PRICE_OUTPUT_PER_MTOK` (from Anthropic's pricing page for your model) to see estimated costs.
 
+## AI quality check
+
+Signed in as superadmin, open **AI quality check** (`/admin-eval.html`). Run the AI on the reference
+Ofsted reports, or any report PDF from files.ofsted.gov.uk, and see how its reading compares with
+what the report says. Then record your own verdict. Each check uses three AI requests, charged to the
+admin account, not a school. Results are kept in `data/ai-evals.jsonl` (no report text).
+
 ## Saved school work
 
 Each school's checklist, action plan and snapshots live in `/opt/hwwd/data/schools/<code id>/`,

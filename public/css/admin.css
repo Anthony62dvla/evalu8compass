@@ -52,3 +52,41 @@ code { padding: 1px 6px; font-size: .92em }
 .btn.danger { border-color: var(--no); color: var(--no); background: var(--no-soft) }
 .meter { display: block; width: 90px; height: 6px; border-radius: 3px; background: var(--na-soft); overflow: hidden; margin-top: 4px }
 .meter span { display: block; height: 100% }
+
+/* AI quality check */
+.top p { margin: 6px 0 0; color: var(--muted); max-width: 70ch }
+.refs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px }
+.ref { border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 8px; align-content: start; background: var(--bg) }
+.ref b { font-size: 15.5px }
+.ref .sub { color: var(--muted); font-size: 13px }
+.ref ul { margin: 0; padding-left: 18px; font-size: 13px; color: var(--muted) }
+.ref .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px }
+.phasebox { border: 0; padding: 0; margin: 0 }
+.phasebox legend { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 6px }
+.phasechecks { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-bottom: 6px }
+.phasebox label { display: inline-flex; gap: 6px; align-items: center }
+.newgrid textarea { width: 100%; font: inherit; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink) }
+.newgrid input[type=file] { min-height: 0; padding: 8px }
+.res-head { display: flex; flex-wrap: wrap; gap: 14px; align-items: center }
+.res-pct { font-family: var(--display); font-size: 44px; font-weight: 700; line-height: 1 }
+.res-pct.good { color: var(--met) } .res-pct.mid { color: var(--part) } .res-pct.bad { color: var(--no) }
+.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 14px }
+.checks li { display: flex; gap: 8px; align-items: flex-start }
+.checks .ic { flex: none; margin-top: 2px }
+.checks .y .ic { color: var(--met) } .checks .n .ic { color: var(--no) }
+.checks .d { color: var(--muted) }
+.cmp2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px }
+.cmp2 > div { background: var(--bg); border-radius: 10px; padding: 12px }
+.cmp2 h4 { margin: 0 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted) }
+.cmp2 ol, .cmp2 ul { margin: 0; padding-left: 18px; font-size: 14px }
+.res-sec { display: grid; gap: 10px; margin-top: 18px }
+.res-sec h3 { margin: 0; font-size: 17px }
+.adv { border: 1px solid var(--line); border-radius: 10px; padding: 12px; font-size: 14px; display: grid; gap: 6px }
+.adv .issues { color: var(--no); font-size: 13px }
+.rate { display: grid; gap: 12px; margin-top: 18px; background: var(--accent-soft); border-radius: 12px; padding: 14px }
+.rate fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center }
+.rate legend { font-weight: 700; margin-bottom: 4px; width: 100% }
+.rate label { display: inline-flex; gap: 5px; align-items: center; font-size: 14px }
+.rate textarea { width: 100%; font: inherit; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink) }
+.pill2 { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--na-soft) }
+.newgrid input[type=checkbox], .newgrid input[type=radio] { width: auto; min-height: 0; padding: 0; width: 18px; height: 18px }

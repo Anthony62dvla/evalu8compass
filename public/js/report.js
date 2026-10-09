@@ -151,7 +151,7 @@
     if (opts.ofsted && d.report) {
       const r = d.report;
       B.push({ t: "h1", text: "Latest Ofsted report (AI reading)", pb: true });
-      B.push({ t: "p", text: [r.filename, r.inspectionDate ? "Inspected " + r.inspectionDate : "", r.framework].filter(Boolean).join(" · "), muted: true });
+      B.push({ t: "p", text: [r.filename, r.inspectionDate ? "Inspected " + r.inspectionDate : "", r.framework ? ({ renewed: "renewed framework", earlier: "earlier framework" }[r.framework] || r.framework) : "", r.safeguarding ? "Safeguarding " + r.safeguarding : ""].filter(Boolean).join(" · "), muted: true });
       if (r.summary) B.push({ t: "p", text: r.summary });
       if ((r.grades || []).length) B.push({ t: "table", widths: [60, 40], head: ["Area", "Grade"], rows: r.grades.map(g => [g.area, g.grade]) });
       if ((r.nextSteps || []).length) { B.push({ t: "h2", text: "Next steps in the report" }); B.push({ t: "list", items: r.nextSteps }); }

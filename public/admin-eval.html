@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>AI quality check · Evalu8 Compass</title>
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+<header class="brandbar">
+  <div class="brandbar-in">
+    <div class="brand-logo"><i data-icon="compass" data-size="26"></i></div>
+    <div class="brand-text"><b>Evalu8 Compass</b><span>Superadmin</span></div>
+    <nav class="brand-nav" aria-label="Main">
+      <a href="admin.html"><i data-icon="building"></i>Access and usage</a>
+      <a href="admin-eval.html" aria-current="page"><i data-icon="checks"></i>AI quality check</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="acard hide" id="signedOut">
+    <span class="tile"><i data-icon="lock" data-size="24"></i></span>
+    <h1>Sign in first</h1>
+    <p>The AI quality check is for the superadmin only.</p>
+    <a class="btn primary" href="admin.html"><i data-icon="login"></i>Go to superadmin sign-in</a>
+  </section>
+
+  <div id="page" class="hide">
+    <header class="top">
+      <div><div class="eyebrow">Superadmin</div><h1>AI quality check</h1>
+        <p>Run the AI inspector on a published Ofsted report, exactly as a workshop would. It checks the AI's reading against what the report actually says, then asks for your verdict as an inspector.</p></div>
+    </header>
+    <p class="sysline" id="sys"></p>
+
+    <section class="panel2" aria-labelledby="refTitle">
+      <h2 id="refTitle"><i data-icon="file-certificate" data-size="22"></i>Reference reports</h2>
+      <p class="muted small" style="margin:0 0 12px">Published Ofsted reports with their grades and next steps already entered as the answer key. Open the report to check the answer key is right. Each check uses one report reading and two pieces of line advice from the AI, charged to the admin account (not a school).</p>
+      <div class="refs" id="refs"></div>
+    </section>
+
+    <section class="panel2" aria-labelledby="ownTitle">
+      <h2 id="ownTitle"><i data-icon="file-upload" data-size="22"></i>Check another report</h2>
+      <form id="ownForm" class="newgrid" autocomplete="off">
+        <div class="field wide"><label for="oUrl">Link to the report PDF on files.ofsted.gov.uk</label><input type="url" id="oUrl" placeholder="https://files.ofsted.gov.uk/v1/file/…"></div>
+        <div class="field wide"><label for="oPdf">Or upload the PDF</label><input type="file" id="oPdf" accept="application/pdf"></div>
+        <div class="field"><label for="oName">School name</label><input type="text" id="oName" maxlength="120"></div>
+        <div class="field"><label for="oType">School type</label><select id="oType"><option value="maintained">Maintained</option><option value="academy" selected>Academy / free school</option><option value="independent">Independent</option></select></div>
+        <fieldset class="field wide phasebox"><legend>Phases</legend><div id="oPhases" class="phasechecks"></div>
+          <label><input type="checkbox" id="oSpecial"> Specialist provision</label></fieldset>
+        <div class="field wide"><label for="oExpected">Answer key (optional): one per line</label>
+          <textarea id="oExpected" rows="6" placeholder="Inclusion: Expected standard&#10;Curriculum and teaching: Needs attention&#10;Safeguarding: Met&#10;Framework: renewed&#10;Next step: Improve the consistency of phonics teaching"></textarea>
+          <span class="muted small">Leave blank to judge the result yourself without automatic checks.</span></div>
+        <div class="wide row"><button class="btn primary" type="submit" id="oRun"><i data-icon="player-play"></i>Run the check</button><span class="error" id="oErr" role="alert"></span></div>
+      </form>
+    </section>
+
+    <div id="running" class="panel2 hide" role="status"><div class="thinking">Reading the report and writing advice. This usually takes one to three minutes; keep this page open.</div></div>
+    <div id="result"></div>
+
+    <section class="panel2" aria-labelledby="runsTitle">
+      <h2 id="runsTitle"><i data-icon="history" data-size="22"></i>Past checks</h2>
+      <div class="row" style="margin-bottom:10px"><button class="btn" id="copyAll"><i data-icon="copy"></i>Copy results to share</button><span class="muted small">Copies the checks, your ratings and notes (no report text) so you can paste them into a chat to improve the AI's instructions.</span></div>
+      <div class="tablewrap"><table class="atable" id="runs"></table></div>
+    </section>
+  </div>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="js/icons.js"></script>
+<script src="js/criteria.js"></script>
+<script src="js/admin-eval.js"></script>
+</body>
+</html>

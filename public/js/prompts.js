@@ -127,13 +127,21 @@ ${lineList(areas)}
 
 ${hasPdf ? "The school's most recent Ofsted report is attached." : `The school's most recent Ofsted report text:\n"""\n${String(text || "").slice(0, 120000)}\n"""`}
 
+HOW TO READ IT
+- Renewed-framework report cards (from November 2025) grade each evaluation area on the scale Exceptional, Strong standard, Expected standard, Needs attention, Urgent improvement. Areas are usually: Inclusion; Curriculum and teaching; Achievement; Attendance and behaviour; Personal development and well-being; Leadership and governance; plus Early years and/or Post-16 provision where the school has them. Safeguarding is "met" or "not met". There is no overall effectiveness grade.
+- Earlier-framework reports use Outstanding, Good, Requires improvement and Inadequate, with an overall effectiveness grade, and say whether safeguarding is effective. Report those grades exactly as written; don't convert them to the new scale.
+- Take grades only from what the report states for THIS school. Ignore any section that explains what the grades mean in general (for example "Our grades explained"), the grade key, and the "Facts and figures" data tables: they are not findings about this school.
+- Next steps are the report's own "Next steps" or "What does the school need to do to improve?" points. List each one once, in the report's order. Don't add your own.
+- If something isn't in the report, use null or an empty list. Never guess a grade.
+
 TASK
 Read the report and extract what matters for improvement planning. Map each finding to the checklist line it relates to most closely, using the ids above. Paraphrase findings in your own words; never copy long passages.
 Reply with only JSON in this shape:
-{"inspectionDate":"as stated, or null","framework":"e.g. renewed framework 2025, or earlier framework",
- "grades":[{"area":"area name as in the report","grade":"as in the report"}],
+{"inspectionDate":"as stated, or null","framework":"renewed|earlier",
+ "grades":[{"area":"area name exactly as in the report","grade":"grade exactly as in the report"}],
+ "safeguarding":"met|not met|effective|not effective|null",
  "summary":"3-4 sentence overview",
- "nextSteps":["each next step / area for improvement in the report, paraphrased"],
+ "nextSteps":["each next step in the report, paraphrased, in order"],
  "findings":[{"itemId":"id from the list or null","type":"concern|strength","finding":"one sentence, paraphrased"}]}
 Include every concern and the main strengths. Use null for itemId when no line fits.`;
   }
@@ -168,7 +176,7 @@ Reply with only JSON in this shape:
       return `${a.name} (staff score ${a.score == null ? "n/a" : a.score + "%"})\n${rows}`;
     }).join("\n\n");
     const rep = report ? `Report summary: ${report.summary || ""}
-Grades: ${(report.grades || []).map(g => `${g.area}: ${g.grade}`).join("; ") || "not given"}
+Grades: ${(report.grades || []).map(g => `${g.area}: ${g.grade}`).join("; ") || "not given"}${report.safeguarding ? `; safeguarding ${report.safeguarding}` : ""}
 Next steps: ${(report.nextSteps || []).join(" | ") || "none listed"}
 Concerns: ${(report.findings || []).filter(f => f.type === "concern").map(f => `${f.itemId || "-"}: ${f.finding}`).join(" | ")}` : "No Ofsted report provided.";
     const th = themes ? (themes.areas || []).map(a => `${a.area}: ${(a.themes || []).map(t => t.theme).join("; ")}`).join("\n") : "Not summarised.";

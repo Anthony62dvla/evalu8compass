@@ -24,6 +24,7 @@ const access = require("./lib/access");
 const admin = require("./lib/admin");
 const schools = require("./lib/schools");
 const usage = require("./lib/usage");
+const evals = require("./lib/evals");
 access.setAdminCheck(req => admin.who(req));
 
 const PORT = Number(process.env.PORT || 3000);
@@ -98,6 +99,7 @@ const server = http.createServer(async (req, res) => {
     if (!res.headersSent) json(res, 500, { error: "Server error" });
   }
 });
+server.requestTimeout = 10 * 60 * 1000; // an AI quality check reading a full report can take a few minutes
 server.listen(PORT, HOST, () => {
   console.log(`How Well Are We Doing? running at http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}`);
   console.log(ai.hasKey() ? `AI inspector on (${ai.model()})` : "AI inspector off: set ANTHROPIC_API_KEY in .env to turn it on");
@@ -253,6 +255,7 @@ async function adminRoute(req, res, p) {
     admin.audit("data.erase", `${c.name} (${c.id}): ${had ? "saved work and snapshots" : "no saved work"}, ${ws} workshop${ws === 1 ? "" : "s"}`, req);
     return json(res, 200, { ok: true, erased: had, workshops: ws });
   }
+  if (p.startsWith("/api/admin/evals")) return evalRoute(req, res, p);
   const al = p.match(/^\/api\/admin\/codes\/([a-f0-9]{8})\/allowance$/);
   if (al && req.method === "POST") {
     const c = access.list().find(x => x.id === al[1]);
@@ -297,6 +300,36 @@ function policyValues() {
     RETENTION_DAYS: String(SCHOOL_RETENTION_DAYS),
     UPDATED: h(e("POLICY_UPDATED") || POLICY_DATE),
   };
+}
+
+/* AI quality check (superadmin only; see lib/evals.js) */
+async function evalRoute(req, res, p) {
+  try {
+    if (p === "/api/admin/evals" && req.method === "GET") {
+      return json(res, 200, { reference: evals.REFERENCE, runs: evals.summaries(), promptVersion: evals.PROMPT_VERSION, ai: ai.hasKey(), model: ai.hasKey() ? ai.model() : null });
+    }
+    if (p === "/api/admin/evals/run" && req.method === "POST") {
+      if (!ai.hasKey()) return json(res, 503, { error: "The AI isn't connected on this server, so there's nothing to test yet." });
+      let b;
+      try { b = JSON.parse(await readBody(req, 36 * 1024 * 1024) || "{}"); } catch (e) { return json(res, 400, { error: "Couldn't read that request (PDFs up to 25 MB)." }); }
+      const rec = await evals.run({ refId: b.refId, url: b.url, pdf: b.pdf, profile: b.profile, expected: b.expected }, ai);
+      admin.audit("ai.eval", `${rec.report.school}${rec.score ? `: ${rec.score.pct}% of checks passed` : ""}`, req);
+      return json(res, 200, rec);
+    }
+    const m = p.match(/^\/api\/admin\/evals\/([a-f0-9]{8})(\/review)?$/);
+    if (m && req.method === "GET" && !m[2]) { const r = evals.get(m[1]); return r ? json(res, 200, r) : json(res, 404, { error: "Not found." }); }
+    if (m && req.method === "POST" && m[2]) {
+      let b; try { b = JSON.parse(await readBody(req, 16384) || "{}"); } catch (e) { return json(res, 400, { error: "Invalid request" }); }
+      const r = evals.review(m[1], b); return r ? json(res, 200, r) : json(res, 404, { error: "Not found." });
+    }
+    if (m && req.method === "DELETE" && !m[2]) return evals.remove(m[1]) ? json(res, 200, { ok: true }) : json(res, 404, { error: "Not found." });
+    return json(res, 404, { error: "Not found" });
+  } catch (e) {
+    if (e instanceof ai.AIError) return json(res, e.status, { error: e.message, code: e.code });
+    if (e.status) return json(res, e.status, { error: e.message });
+    console.error(e);
+    return json(res, 500, { error: "The check couldn't be completed: " + e.message });
+  }
 }
 
 /* ---------- helpers ---------- */
