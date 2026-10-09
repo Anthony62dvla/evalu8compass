@@ -50,9 +50,8 @@ setTimeout(async () => {
     const id = JSON.parse(fs.readFileSync(FILE, "utf8")).codes[0].id;
     execFileSync(process.execPath, [path.join(__dirname, "access.js"), "revoke", id]);
     await new Promise(r => setTimeout(r, 50));
-    // once every code is revoked the site opens again, so add a second code to check revocation alone
-    execFileSync(process.execPath, [path.join(__dirname, "access.js"), "add", "Other School"]);
     ok((await get("/checklist.html", { headers: H })).status === 302, "revoked code's cookie stops working straight away");
+    ok((await get("/checklist.html")).status === 302, "with every code revoked the site stays locked");
 
     let limited = false;
     for (let i = 0; i < 12; i++) { const r = await get("/api/access", { method: "POST", headers: { "content-type": "application/json" }, body: "{\"code\":\"ZZZZ-ZZZZ-ZZZZ\"}" }); if (r.status === 429) limited = true; }

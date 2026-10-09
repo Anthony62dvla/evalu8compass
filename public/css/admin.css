@@ -1,0 +1,52 @@
+/* Superadmin console */
+.acard { max-width: 460px; margin: 40px auto; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 24px; display: grid; gap: 12px }
+.acard h1 { font-size: 24px; margin: 0 }
+.acard p { margin: 0 }
+.acard .field input { width: 100%; font: inherit; padding: 10px 12px; min-height: 48px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink) }
+#otp { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 22px; letter-spacing: .3em; text-align: center }
+.cmd, code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--accent-soft); border-radius: 8px }
+.cmd { padding: 12px 14px; margin: 0; font-size: 15px; overflow-x: auto }
+code { padding: 1px 6px; font-size: .92em }
+.muted { color: var(--muted) }
+.small { font-size: 13px }
+.error { color: var(--no); margin: 0; font-size: 14px }
+.error:empty { display: none }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-top: 18px }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: flex; gap: 12px; align-items: center }
+.stat b { display: block; font-family: var(--display); font-size: 28px; line-height: 1; font-variant-numeric: tabular-nums }
+.stat span { font-size: 13px; color: var(--muted) }
+.sysline { font-size: 13px; color: var(--muted); margin: 10px 0 0; display: flex; flex-wrap: wrap; gap: 6px 16px }
+.sysline span { display: inline-flex; gap: 6px; align-items: center }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block }
+
+.panel2 { margin-top: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px }
+.panel2 h2 { font-size: 19px; margin: 0 0 14px; display: flex; gap: 9px; align-items: center }
+.panel2 h2 .ic { color: var(--icon) }
+.newgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px }
+.newgrid .wide { grid-column: 1 / -1 }
+.newgrid input, .newgrid select { width: 100%; font: inherit; padding: 9px 11px; min-height: 44px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink) }
+.newcode { margin-top: 16px; background: var(--accent-soft); border-radius: 12px; padding: 16px; display: grid; gap: 10px }
+.newcode p { margin: 0 }
+.codebig { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: clamp(24px, 5vw, 34px); font-weight: 700; letter-spacing: .12em; color: var(--ink); user-select: all }
+.newcode textarea { width: 100%; font: 13.5px/1.5 var(--body); padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); resize: vertical }
+
+.tablewrap { overflow-x: auto }
+.atable { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 760px }
+.atable th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding: 8px; border-bottom: 2px solid var(--line) }
+.atable td { padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top }
+.atable td.num { font-variant-numeric: tabular-nums; text-align: right }
+.atable .sub { display: block; color: var(--muted); font-size: 12.5px }
+.atable .acts { display: flex; gap: 6px; flex-wrap: wrap }
+.atable .acts .btn { min-height: 36px; padding: 5px 10px; font-size: 13px }
+.state { font-size: 12px; font-weight: 700; border-radius: 999px; padding: 3px 9px; white-space: nowrap }
+.state-active { background: var(--met-soft); color: var(--met) }
+.state-expired { background: var(--part-soft); color: var(--part) }
+.state-revoked { background: var(--no-soft); color: var(--no) }
+.empty-row td { text-align: center; color: var(--muted); padding: 24px }
+.audit { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 13.5px }
+.audit li { display: grid; grid-template-columns: 150px 1fr; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line) }
+.audit time { color: var(--muted); font-variant-numeric: tabular-nums }
+.audit .fail { color: var(--no); font-weight: 600 }
+@media (max-width: 560px) { .audit li { grid-template-columns: 1fr } }
+.btn.danger { border-color: var(--no); color: var(--no); background: var(--no-soft) }

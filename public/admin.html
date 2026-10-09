@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Admin · Evalu8 Compass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+<div class="brandbar">
+  <div class="brandbar-in">
+    <div class="brand-logo"><i data-icon="compass" data-size="26"></i></div>
+    <div class="brand-text"><b>Evalu8 Compass</b><span>Superadmin</span></div>
+    <nav class="brand-nav" aria-label="Main">
+      <a href="index.html"><i data-icon="home"></i>Site</a>
+      <a href="#" id="signOut" hidden><i data-icon="logout"></i>Sign out</a>
+    </nav>
+  </div>
+</div>
+
+<main class="wrap">
+  <!-- Not set up -->
+  <section class="acard hide" id="notSetUp">
+    <span class="tile"><i data-icon="tool" data-size="24"></i></span>
+    <h1>Set up the superadmin first</h1>
+    <p>On the server, as root, run:</p>
+    <pre class="cmd">hwwd-access admin</pre>
+    <p class="muted">It asks for a password and gives you a key for your authenticator app. Then come back and sign in here.</p>
+  </section>
+
+  <!-- Sign in -->
+  <form class="acard hide" id="loginForm" autocomplete="on">
+    <span class="tile"><i data-icon="lock" data-size="24"></i></span>
+    <h1>Superadmin sign-in</h1>
+    <div class="field"><label for="pw">Password</label><input type="password" id="pw" autocomplete="current-password" required></div>
+    <div class="field"><label for="otp">6-digit code from your authenticator app</label><input type="text" id="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required></div>
+    <p class="error" id="loginErr" role="alert"></p>
+    <button class="btn primary" type="submit" id="loginBtn"><i data-icon="login"></i>Sign in</button>
+    <p class="muted small">Signing in lasts 8 hours. Lost your authenticator? Run <code>hwwd-access admin</code> on the server to reset it.</p>
+  </form>
+
+  <!-- Console -->
+  <div id="console" class="hide">
+    <header class="top">
+      <div><div class="eyebrow">Superadmin</div><h1>Access and usage</h1></div>
+      <button class="btn" id="refresh"><i data-icon="refresh"></i>Refresh</button>
+    </header>
+
+    <div class="stats" id="stats"></div>
+    <p class="sysline" id="sys"></p>
+
+    <section class="panel2" aria-labelledby="newTitle">
+      <h2 id="newTitle"><i data-icon="building" data-size="22"></i>Create an access code</h2>
+      <form id="newForm" class="newgrid" autocomplete="off">
+        <div class="field"><label for="nName">School or trust name</label><input type="text" id="nName" required maxlength="120" placeholder="Athena School"></div>
+        <div class="field"><label for="nEmail">Contact email (optional)</label><input type="email" id="nEmail" maxlength="200" placeholder="head@school.org.uk"></div>
+        <div class="field"><label for="nDays">Expires</label>
+          <select id="nDays"><option value="0">Never</option><option value="30">After 30 days</option><option value="90">After 90 days (a term)</option><option value="180">After 6 months</option><option value="365" selected>After 1 year</option></select></div>
+        <div class="field wide"><label for="nNotes">Notes (optional, only you see these)</label><input type="text" id="nNotes" maxlength="500" placeholder="Pilot school, contact via trust CEO"></div>
+        <div class="wide row"><button class="btn primary" type="submit" id="nBtn"><i data-icon="lock"></i>Create code</button><span class="error" id="nErr" role="alert"></span></div>
+      </form>
+      <div class="newcode hide" id="newCode" role="status">
+        <p class="muted">Code for <b id="ncSchool"></b>. It's shown only this once, so copy it now.</p>
+        <div class="codebig" id="ncCode"></div>
+        <div class="row">
+          <button class="btn" id="ncCopy"><i data-icon="copy"></i>Copy code</button>
+          <button class="btn" id="ncCopyMsg"><i data-icon="message-circle"></i>Copy message for the school</button>
+          <a class="btn hide" id="ncMail"><i data-icon="arrow-right"></i>Open in email</a>
+        </div>
+        <textarea id="ncMsg" readonly rows="7" aria-label="Message for the school"></textarea>
+      </div>
+    </section>
+
+    <section class="panel2" aria-labelledby="codesTitle">
+      <h2 id="codesTitle"><i data-icon="list-details" data-size="22"></i>Schools and codes</h2>
+      <div class="tablewrap"><table class="atable" id="codes"></table></div>
+    </section>
+
+    <section class="panel2" aria-labelledby="actTitle">
+      <h2 id="actTitle"><i data-icon="clipboard-list" data-size="22"></i>Recent admin activity</h2>
+      <ul class="audit" id="audit"></ul>
+    </section>
+  </div>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="js/icons.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

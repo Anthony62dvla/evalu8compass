@@ -20,6 +20,8 @@ const ai = require("./lib/ai");
 const workshop = require("./lib/workshop");
 const store = require("./lib/store");
 const access = require("./lib/access");
+const admin = require("./lib/admin");
+access.setAdminCheck(req => admin.who(req));
 
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || "127.0.0.1"; // only reachable through your web server; use 0.0.0.0 to accept direct connections
@@ -28,6 +30,7 @@ const LIMITS = {
   ai: Number(process.env.RATE_LIMIT_PER_MIN || 20),   // AI calls per IP per minute
   api: Number(process.env.API_LIMIT_PER_MIN || 600),  // other API calls per IP per minute
   login: 10,                                          // access-code attempts per IP per minute
+  admin: 5,                                           // superadmin sign-in attempts per IP per minute
 };
 // Pages that need a school access code (staff joining a workshop never do)
 const PROTECTED_PAGES = new Set(["/checklist.html", "/report.html"]);
@@ -51,7 +54,11 @@ const server = http.createServer(async (req, res) => {
         if (!access.who(req)) return json(res, 401, { code: "access_required", error: "Enter your school access code to use the AI inspector." });
         return inspector(req, res);
       }
-      if (p === "/api/w" && req.method === "POST" && !access.who(req)) return json(res, 401, { code: "access_required", error: "Enter your school access code to start a workshop." });
+      if (p.startsWith("/api/admin")) return adminRoute(req, res, p);
+      if (p === "/api/w" && req.method === "POST") {
+        req.hwwdWho = access.who(req);
+        if (!req.hwwdWho) return json(res, 401, { code: "access_required", error: "Enter your school access code to start a workshop." });
+      }
       if (p === "/api/w" || p.startsWith("/api/w/")) return workshop.handle(req, res, url, readBody, json);
       return json(res, 404, { error: "Not found" });
     }
@@ -106,6 +113,67 @@ async function accessRoute(req, res) {
   const c = access.login(req, res, body && body.code);
   if (!c) return json(res, 401, { code: "bad_code", error: "That access code isn't recognised. Check it and try again." });
   return json(res, 200, { ok: true, school: c.name });
+}
+
+/* Superadmin console API (see lib/admin.js) */
+async function adminRoute(req, res, p) {
+  const body = async () => { try { return JSON.parse((await readBody(req, 8192)) || "{}"); } catch { return null; } };
+  // Same-site requests only for anything that changes state
+  if (req.method === "POST" && req.headers.origin) {
+    try { if (new URL(req.headers.origin).host !== req.headers.host) return json(res, 403, { error: "Cross-site request refused." }); } catch { return json(res, 403, { error: "Bad origin." }); }
+  }
+  if (p === "/api/admin/me") return json(res, 200, { configured: admin.configured(), signedIn: !!admin.who(req) });
+  if (p === "/api/admin/login" && req.method === "POST") {
+    if (limited(req, "admin")) return json(res, 429, { error: "Too many attempts. Wait a minute and try again." });
+    const b = await body();
+    if (!admin.configured()) return json(res, 409, { error: "The superadmin isn't set up yet. On the server run: hwwd-access admin" });
+    if (!b || !admin.login(req, res, b.password || "", b.code || "")) return json(res, 401, { error: "That password or authenticator code isn't right." });
+    return json(res, 200, { ok: true });
+  }
+  if (p === "/api/admin/logout" && req.method === "POST") { admin.logout(req, res); return json(res, 200, { ok: true }); }
+  if (!admin.who(req)) return json(res, 401, { error: "Sign in as superadmin." });
+
+  if (p === "/api/admin/overview" && req.method === "GET") {
+    const ws = store.summaries(), now = Date.now();
+    const codes = access.list().map(c => {
+      const mine = ws.filter(w => w.createdBy === c.id);
+      const state = c.revoked ? "revoked" : c.expiresAt && Date.parse(c.expiresAt) < now ? "expired" : "active";
+      return { ...c, state, workshops: mine.length, participants: mine.reduce((t, w) => t + w.participants, 0), lastWorkshop: mine.map(w => w.updatedAt).sort().pop() || null };
+    });
+    const recent = ws.filter(w => now - Date.parse(w.createdAt) < 30 * 864e5);
+    return json(res, 200, {
+      codes, audit: admin.recentAudit(40),
+      stats: {
+        activeCodes: codes.filter(c => c.state === "active").length,
+        schoolsSignedIn30: codes.filter(c => c.lastUsedAt && now - Date.parse(c.lastUsedAt) < 30 * 864e5).length,
+        workshops: ws.length, workshops30: recent.length, participants: ws.reduce((t, w) => t + w.participants, 0),
+      },
+      system: { ai: ai.hasKey(), model: ai.hasKey() ? ai.model() : null, accessRequired: access.required(), node: process.version, uptimeHours: Math.round(process.uptime() / 360) / 10 },
+    });
+  }
+  if (p === "/api/admin/codes" && req.method === "POST") {
+    const b = await body();
+    const name = b && String(b.name || "").trim();
+    if (!name) return json(res, 400, { error: "Enter the school's name." });
+    if (b.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(b.email)) return json(res, 400, { error: "That email address doesn't look right." });
+    const days = Math.max(0, Math.min(3650, Number(b.days) || 0));
+    const c = access.add(name, days, { email: b.email, notes: b.notes });
+    admin.audit("code.create", `${c.name} (${c.id})${days ? `, expires in ${days} days` : ""}`, req);
+    return json(res, 201, { code: c.code, id: c.id, name: c.name, expiresAt: c.expiresAt || null });
+  }
+  const m = p.match(/^\/api\/admin\/codes\/([a-f0-9]{8})\/(revoke|reactivate|extend)$/);
+  if (m && req.method === "POST") {
+    const [, id, act] = m;
+    const b = (await body()) || {};
+    const exists = access.list().find(c => c.id === id);
+    if (!exists) return json(res, 404, { error: "No code with that id." });
+    if (act === "revoke") access.revoke(id);
+    if (act === "reactivate") access.reactivate(id);
+    if (act === "extend") access.extend(id, Math.max(0, Math.min(3650, Number(b.days) || 0)));
+    admin.audit(`code.${act}`, `${exists.name} (${id})${act === "extend" ? (Number(b.days) ? `, +${Number(b.days)} days` : ", no expiry") : ""}`, req);
+    return json(res, 200, { ok: true });
+  }
+  return json(res, 404, { error: "Not found" });
 }
 
 /* ---------- helpers ---------- */

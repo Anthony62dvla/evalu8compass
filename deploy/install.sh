@@ -208,6 +208,10 @@ if [ "$DRY" = 0 ] && ! runuser -u "$APP_USER" -- "$APP_DIR/runtime/node" -e 'pro
 else
   ok "Manage codes with: hwwd-access add \"School name\" | hwwd-access list | hwwd-access revoke <id>"
 fi
+if [ "$DRY" = 0 ] && [ ! -f "$APP_DIR/data/admin.json" ]; then
+  warn "Set up your superadmin console (password + authenticator app) with:   hwwd-access admin
+    then sign in at https://$DOMAIN/admin.html"
+fi
 
 # ---------- 6. web server ----------
 say "Setting up $DOMAIN"

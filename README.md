@@ -58,11 +58,13 @@ how-well-are-we-doing/
 │   ├── aggregate.js           Collates responses; anonymity rules; split and gap flags
 │   ├── store.js               Saves each workshop as a JSON file in data/sessions/
 │   ├── access.js              School access codes and signed sign-in cookie
+│   ├── admin.js               Superadmin: password + authenticator, sessions, audit log
 │   └── ai.js                  Calls the Anthropic Messages API (text and PDF)
 ├── public/
 │   ├── index.html             Front page (purpose, how to use, outputs, links in)
 │   ├── checklist.html         Self-assessment checklist and action plan
 │   ├── enter.html             School access code entry
+│   ├── admin.html             Superadmin console
 │   ├── report.html            PDF / Word reports (checklist or ?workshop=CODE)
 │   ├── vendor/docx-9.5.1.umd.js  Word file builder (docx, MIT), loaded only when needed
 │   ├── workshop.html          Staff workshop (landing, staff view, facilitator dashboard)
@@ -83,6 +85,7 @@ how-well-are-we-doing/
 │   ├── validate-criteria.js   Checks criteria ids; counts lines per profile
 │   ├── test-workshop.js       End-to-end workshop API test with simulated staff
 │   ├── test-access.js         End-to-end access code test
+│   ├── test-admin.js          End-to-end superadmin test
 │   ├── access.js              Access code admin (hwwd-access on the server)
 │   └── build-icons.js         Regenerates icons.js from Tabler Icons
 ├── deploy/install.sh          One-command VPS installer and updater (see deploy/DEPLOY.md)
@@ -212,7 +215,25 @@ hwwd-access list                       # codes, schools, last used
 hwwd-access revoke <id or school name> # stops it working straight away
 ```
 
-Codes are stored only as hashes in `data/access.json`. A signed cookie keeps a device signed in for 30 days. `ACCESS_REQUIRED=0` in `.env` turns codes off entirely. The installer creates a first "Administrator" code for you.
+Codes are stored only as hashes in `data/access.json`. A signed cookie keeps a device signed in for 30 days. Once any code exists, codes stay required even if every code is revoked; `ACCESS_REQUIRED=0` in `.env` is the only way to turn them off. The installer creates a first "Administrator" code for you.
+
+### Superadmin console (`/admin.html`)
+
+For the developer or service owner. Set it up once on the server:
+
+```bash
+hwwd-access admin      # asks for a password (12+ characters) and prints a key for your authenticator app
+```
+
+Then sign in at `https://evalu8compass.app/admin.html` with the password **and** the 6-digit code from the app. From the console you can:
+
+- create codes for schools, with optional contact email, notes and expiry, and copy a ready-to-send message
+- revoke (takes effect immediately), reactivate, extend or remove expiry
+- see each school's last sign-in, workshops run and staff responses
+- check whether the AI is connected
+- review the audit log of every admin action, including failed sign-ins
+
+Security: password stored with scrypt, time-based codes cannot be reused, 5 sign-in attempts per minute per IP, 8-hour `HttpOnly; SameSite=Strict` cookie, cross-site requests refused, and re-running `hwwd-access admin` signs out every admin session. The console isn't linked from the public site and asks search engines not to index it. A signed-in superadmin can also open the checklist and reports.
 
 ## 6. Running a workshop
 

@@ -79,6 +79,7 @@
 
 .frontfoot { margin-top: 48px; border-top: 1px solid var(--line); padding-block: 22px 40px; font-size: 13px; color: var(--muted) }
 .frontfoot p { margin: 0 0 6px; max-width: 80ch }
+.frontfoot a { color: var(--accent); font-weight: 600 }
 
 @media (max-width: 760px) {
   .hero-in { grid-template-columns: minmax(0, 1fr); padding-block: 36px 32px }

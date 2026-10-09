@@ -10,7 +10,7 @@
   "scripts": {
     "start": "node server.js",
     "build": "node build.js",
-    "check": "node --check server.js && node --check build.js && node --check public/js/criteria.js && node --check public/js/prompts.js && node --check public/js/inspector.js && node --check public/js/store.js && node --check public/js/app.js && node --check public/js/workshop.js && node --check public/js/plan.js && node --check public/js/report.js && node --check lib/access.js && node --check scripts/access.js && node --check lib/store.js && node --check lib/aggregate.js && node --check lib/ai.js && node --check lib/workshop.js && node scripts/validate-criteria.js",
-    "test": "node scripts/test-workshop.js && node scripts/test-access.js"
+    "check": "node --check server.js && node --check build.js && node --check public/js/criteria.js && node --check public/js/prompts.js && node --check public/js/inspector.js && node --check public/js/store.js && node --check public/js/app.js && node --check public/js/workshop.js && node --check public/js/plan.js && node --check public/js/report.js && node --check lib/access.js && node --check lib/admin.js && node --check public/js/admin.js && node --check scripts/access.js && node --check lib/store.js && node --check lib/aggregate.js && node --check lib/ai.js && node --check lib/workshop.js && node scripts/validate-criteria.js",
+    "test": "node scripts/test-workshop.js && node scripts/test-access.js && node scripts/test-admin.js"
   }
 }
