@@ -3,7 +3,7 @@
 # How Well Are We Doing? — VPS installer / updater
 # ------------------------------------------------------------
 # Usage (as root, from the unzipped project folder):
-#   sudo bash deploy/install.sh review.yourdomain.co.uk [--email you@school.org] [--port 3100] [--dry-run]
+#   sudo bash deploy/install.sh review.yourdomain.co.uk [--email you@school.org] [--port 3100] [--yes] [--dry-run]
 #
 # What it does (safe to re-run; re-running is also how you update):
 #   1. Finds Node 18+ (including root's nvm install) and copies the node binary
@@ -14,6 +14,7 @@
 #   5. Installs and starts a systemd service "hwwd" bound to 127.0.0.1 only.
 #   6. Adds a site for your domain to nginx or Caddy (whichever is running),
 #      without touching your other sites, and sets up HTTPS where it can.
+#      If neither is installed and ports 80/443 are free, offers to install Caddy.
 #   7. Adds a daily backup of workshop data to /var/backups/hwwd (14 days kept).
 #
 set -euo pipefail
@@ -25,6 +26,8 @@ PORT=3100
 EMAIL=""
 DOMAIN=""
 DRY=0
+YES=0
+FRESH_CADDY=0
 SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 say()  { printf '\033[1;36m==>\033[0m %s\n' "$*"; }
@@ -44,7 +47,8 @@ while [ $# -gt 0 ]; do
     --email) EMAIL="${2:-}"; shift 2 ;;
     --port) PORT="${2:-}"; shift 2 ;;
     --dry-run) DRY=1; shift ;;
-    -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
+    --yes|-y) YES=1; shift ;;
+    -h|--help) sed -n '2,22p' "$0"; exit 0 ;;
     -*) die "Unknown option $1" ;;
     *) DOMAIN="$1"; shift ;;
   esac
@@ -204,6 +208,43 @@ elif systemctl is-active --quiet nginx 2>/dev/null; then WEB=nginx
 elif command -v nginx >/dev/null; then WEB=nginx
 elif command -v caddy >/dev/null; then WEB=caddy; fi
 
+if [ -z "$WEB" ]; then
+  say "No web server found. Checking the web ports (80 and 443)"
+  BUSY="$(ss -ltnpH 2>/dev/null | awk '$4 ~ /:(80|443)$/' || true)"
+  if [ -n "$BUSY" ]; then
+    warn "Something else is already using port 80 or 443, so nothing has been changed:"
+    printf '%s\n' "$BUSY" | sed 's/^/      /'
+    command -v docker >/dev/null && docker ps --format '      docker: {{.Names}} ({{.Image}}) {{.Ports}}' 2>/dev/null | grep -E ':(80|443)->' || true
+    warn "That's probably how your other project is served. Add evalu8compass's site to that proxy, pointing at 127.0.0.1:$PORT (see README section 4.3), or ask for help with the output above."
+  elif ! command -v apt-get >/dev/null; then
+    warn "Ports 80 and 443 are free, but this isn't a Debian/Ubuntu server, so install Caddy yourself (caddyserver.com/docs/install) and re-run."
+  else
+    ANSWER=y
+    if [ "$YES" = 0 ] && [ -t 0 ] && [ "$DRY" = 0 ]; then
+      printf 'Ports 80 and 443 are free. Install Caddy to serve %s with automatic HTTPS? [Y/n] ' "$DOMAIN"
+      read -r ANSWER; ANSWER="${ANSWER:-y}"
+    fi
+    case "$ANSWER" in
+      y|Y|yes|Yes)
+        say "Installing Caddy (official package)"
+        run "apt-get update -qq"
+        run "DEBIAN_FRONTEND=noninteractive apt-get install -y -qq debian-keyring debian-archive-keyring apt-transport-https curl gnupg >/dev/null"
+        run "curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor --yes -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg"
+        run "curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' > /etc/apt/sources.list.d/caddy-stable.list"
+        run "chmod o+r /usr/share/keyrings/caddy-stable-archive-keyring.gpg /etc/apt/sources.list.d/caddy-stable.list"
+        run "apt-get update -qq"
+        run "DEBIAN_FRONTEND=noninteractive apt-get install -y -qq caddy >/dev/null"
+        if [ "$DRY" = 1 ] || command -v caddy >/dev/null; then ok "Caddy installed"; WEB=caddy; FRESH_CADDY=1
+        else warn "Caddy didn't install. Install it by hand (caddyserver.com/docs/install) and re-run."; fi
+        ;;
+      *) warn "Skipped. The app is running on 127.0.0.1:$PORT; add a web server in front of it and re-run." ;;
+    esac
+  fi
+  if [ "$WEB" = caddy ] && command -v ufw >/dev/null && ufw status 2>/dev/null | grep -q "Status: active"; then
+    run "ufw allow 80/tcp >/dev/null && ufw allow 443/tcp >/dev/null"; ok "Firewall: opened ports 80 and 443"
+  fi
+fi
+
 case "$WEB" in
   nginx)
     if [ -d /etc/nginx/sites-available ]; then CONF=/etc/nginx/sites-available/$APP.conf; LINK=/etc/nginx/sites-enabled/$APP.conf
@@ -246,6 +287,9 @@ EOF
     ;;
   caddy)
     CF=/etc/caddy/Caddyfile
+    if [ "$FRESH_CADDY" = 1 ] && [ "$DRY" = 0 ] && grep -q "/usr/share/caddy" "$CF" 2>/dev/null; then
+      mv "$CF" "$CF.default.bak"; printf '# Caddy configuration (default saved as Caddyfile.default.bak)\n' > "$CF"
+    fi
     if grep -q "^$DOMAIN {" "$CF" 2>/dev/null; then ok "Caddy already has a block for $DOMAIN"
     else
       run "cp '$CF' '$CF.bak.$(date +%Y%m%d%H%M%S)'"
@@ -265,12 +309,20 @@ EOF
         if [ -n "$WWW" ]; then printf '\n%s {\n    redir https://%s{uri} permanent\n}\n' "$WWW" "$DOMAIN" >> "$CF"; fi
       fi
     fi
-    if [ "$DRY" = 1 ] || caddy validate --config "$CF" >/dev/null 2>&1; then run "systemctl reload caddy"; ok "Caddy site added (HTTPS is automatic)"
-    else die "Caddy config check failed. A backup of your Caddyfile is next to it."; fi
+    if [ "$DRY" = 1 ] || caddy validate --config "$CF" >/dev/null 2>&1; then
+      run "systemctl enable caddy >/dev/null 2>&1; systemctl reload caddy 2>/dev/null || systemctl restart caddy"; ok "Caddy site added"
+    else caddy validate --config "$CF" || true; die "Caddy config check failed. A backup of your Caddyfile is next to it."; fi
+    if [ "$DRY" = 0 ] && [ "$DNS_OK" = 1 ]; then
+      say "Waiting for the HTTPS certificate (up to a minute)"
+      HTTPS_OK=0
+      for _ in $(seq 1 20); do
+        if curl -fsS --max-time 5 "https://$DOMAIN/api/health" >/dev/null 2>&1; then HTTPS_OK=1; break; fi; sleep 3
+      done
+      if [ "$HTTPS_OK" = 1 ]; then ok "HTTPS is working: https://$DOMAIN"
+      else warn "HTTPS isn't answering yet. Check: journalctl -u caddy -n 50 --no-pager   (also check the Hostinger firewall allows ports 80 and 443)"; fi
+    elif [ "$DNS_OK" = 0 ]; then warn "Caddy will get the HTTPS certificate automatically once DNS points at this server."; fi
     ;;
-  *)
-    warn "No nginx or Caddy found. The app is running on 127.0.0.1:$PORT; put a reverse proxy in front of it (see README section 4.3)."
-    ;;
+  *) ;;  # explained above
 esac
 
 # ---------- 7. backups ----------
@@ -292,6 +344,6 @@ cat <<EOF
 
    Settings:  $APP_DIR/.env          then: systemctl restart $APP
    Logs:      journalctl -u $APP -f
-   Update:    unzip the new version and run this script again (settings and data are kept)
+   Update:    cd $SRC_DIR && git pull && bash deploy/install.sh $DOMAIN   (settings and data are kept)
 EOF
 case "$DOMAIN" in *.app|*.dev|*.page) warn "$DOMAIN is HTTPS-only in every browser (.app/.dev/.page domains): the site won't open until HTTPS is set up." ;; esac
