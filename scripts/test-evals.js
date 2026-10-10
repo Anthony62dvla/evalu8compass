@@ -68,3 +68,8 @@ for (const r of E.REFERENCE) ok(C.resolve(r.profile).length >= 6 && r.url.starts
 const pos = E.score({ framework: "renewed", safeguarding: "met", grades: [["Inclusion", "Expected standard"]], nextSteps: ["Make teaching clearer and tackle misconceptions"] },
   { framework: "renewed", safeguarding: "met", grades: [{ area: "Inclusion", grade: "Expected standard" }], nextSteps: ["Ensure pupils grasp demonstrations and explanations"], findings: [{ itemId: null, type: "concern", finding: "x" }] }, new Set());
 ok(pos.pct === 100 && pos.checks.some(c => /matched by position/.test(c.detail)), "differently worded step in the same position matched and flagged for checking");
+
+const sec = { phases: ["ks3", "ks4"] }, good3 = n => [1, 2, 3].map(() => ({ lead: "SENCo", evidence: "x", when: "This term", what: n }));
+ok(E.checkAdvice({ activities: good3("Train early years staff in Reception"), inspectorQuestion: "q", quickWin: "w" }, sec).some(i => /no EYFS/.test(i)), "early years advice for a secondary is flagged");
+ok(E.checkAdvice({ activities: good3("Plan sixth form pathways"), inspectorQuestion: "q", quickWin: "w" }, sec).some(i => /no sixth form/.test(i)), "post-16 advice for an 11-16 school is flagged");
+ok(E.checkAdvice({ activities: good3("Develop vocabulary in Reception and nursery"), inspectorQuestion: "q", quickWin: "w" }, { phases: ["eyfs", "ks1", "ks2"] }).length === 0, "early years advice for a primary with EYFS is fine");
