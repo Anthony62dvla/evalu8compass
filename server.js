@@ -147,7 +147,7 @@ async function inspector(req, res, account) {
 async function accessRoute(req, res) {
   if (req.method === "GET") {
     const w = access.who(req);
-    return json(res, 200, { required: access.required(), ok: !!w, school: w && w.name ? w.name : "", ai: w && ai.hasKey() ? usage.status(w.open ? "open" : w.id) : null });
+    return json(res, 200, { required: access.required(), ok: !!w, school: w && w.name && !w.admin ? w.name : "", ai: w && ai.hasKey() ? usage.status(w.open ? "open" : w.id) : null });
   }
   if (req.method !== "POST") return json(res, 405, { error: "Method not allowed" });
   if (limited(req, "login")) return json(res, 429, { code: "rate_limited", error: "Too many attempts. Wait a minute and try again." });
@@ -170,7 +170,7 @@ async function schoolRoute(req, res, p, url) {
       const cur = schools.get(id);
       // Quick check used for polling: ?rev=N answers {same:true} when nothing has changed
       if (url.searchParams.has("rev") && Number(url.searchParams.get("rev")) === cur.rev) return json(res, 200, { rev: cur.rev, same: true });
-      return json(res, 200, { ...cur, owner: id, school: w.name || "" });
+      return json(res, 200, { ...cur, owner: id, school: w.admin ? "" : w.name || "" });
     }
     if (p === "/api/school" && req.method === "PATCH") {
       const b = await body();
