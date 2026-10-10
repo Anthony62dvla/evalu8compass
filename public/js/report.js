@@ -113,7 +113,7 @@
   function workshopModel(d) {
     const p = d.profile || {}, R = d.results || { areas: [], participants: 0 }, B = [];
     const ROLE = { teacher: "Teachers", ta: "Teaching assistants", support: "Support staff", slt: "Senior leaders", governor: "Governors / trustees", other: "Other" };
-    B.push({ t: "cover", kicker: "Staff workshop report", title: "How well are we doing?", school: p.name || "Our school", logo: p.logo, meta: [
+    B.push({ t: "cover", kicker: d.demo ? "DEMO DATA: staff workshop report" : "Staff workshop report", title: "How well are we doing?", school: p.name || "Our school", logo: p.logo, meta: [
       ["Workshop", d.code], ["Held", d.createdAt ? longDate(d.createdAt) : ""], ["Staff taking part", String(R.participants)],
       ["School type", typeLabel(p.type)], ["Phases", phaseLabels(p.phases)], ["Report generated", today()]] });
 

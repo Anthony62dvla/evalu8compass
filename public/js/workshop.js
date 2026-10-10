@@ -289,7 +289,8 @@
     const joinUrl = BASE_PATH === "/" ? `${location.host}/join/${c}` : `${location.host}${BASE_PATH}workshop.html?code=${c}`;
     $("fCode").textContent = c;
     $("fReport").href = `${BASE_PATH}report.html?workshop=${c}`;
-    setBrand(info.profile, `Facilitating workshop ${c}`);
+    setBrand(info.profile, info.demo ? `Workshop ${c} · DEMO DATA` : `Facilitating workshop ${c}`);
+    fetch(BASE_PATH + "api/admin/me").then(r => r.json()).then(m => { $("fDemo").classList.toggle("hide", !m.signedIn); }).catch(() => {});
     $("brandNav").classList.remove("hide");
     $("fJoinUrl").textContent = joinUrl.replace(/^www\./, "");
     if (window.qrcode) {
@@ -325,6 +326,11 @@
   $("fClosed").addEventListener("change", e => control("status", { value: e.target.checked ? "closed" : "open" }));
   $("fSharePlan").addEventListener("change", e => control("sharePlan", { value: e.target.checked }));
   $("fAgreeAll").addEventListener("click", () => control("agreeAll"));
+  $("fDemo").addEventListener("click", async () => {
+    if (!confirm("Add 10 made-up staff with realistic answers? Use this only for trying the workshop, never in a real school's workshop.")) return;
+    try { const r = await api("POST", `/${code}/demo`, {}, key); setBrand(info.profile, `Workshop ${code} · DEMO DATA`); toast(`Added ${r.added} demo staff`); }
+    catch (err) { toast(err.message); }
+  });
   $("fPresent").addEventListener("click", () => {
     document.body.classList.add("present");
     if (!document.querySelector(".exitpresent")) {

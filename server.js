@@ -83,7 +83,7 @@ const server = http.createServer(async (req, res) => {
         req.hwwdWho = access.who(req);
         if (!req.hwwdWho) return json(res, 401, { code: "access_required", error: "Enter your school access code to start a workshop." });
       }
-      if (p === "/api/w" || p.startsWith("/api/w/")) return workshop.handle(req, res, url, readBody, json);
+      if (p === "/api/w" || p.startsWith("/api/w/")) { req.hwwdIsAdmin = !!admin.who(req); return workshop.handle(req, res, url, readBody, json); }
       return json(res, 404, { error: "Not found" });
     }
 
