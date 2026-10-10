@@ -132,6 +132,7 @@ HOW TO READ IT
 - Earlier-framework reports use Outstanding, Good, Requires improvement and Inadequate, with an overall effectiveness grade, and say whether safeguarding is effective. Report those grades exactly as written; don't convert them to the new scale.
 - Take grades only from what the report states for THIS school. Ignore any section that explains what the grades mean in general (for example "Our grades explained"), the grade key, and the "Facts and figures" data tables: they are not findings about this school.
 - Next steps are the report's own "Next steps" or "What does the school need to do to improve?" points. List each one once, in the report's order. Don't add your own.
+- Keep each next step's meaning exactly. Shorten or simplify the wording, but don't add groups of pupils, outcomes, emphasis or reasons that aren't in that next step.
 - If something isn't in the report, use null or an empty list. Never guess a grade.
 
 TASK

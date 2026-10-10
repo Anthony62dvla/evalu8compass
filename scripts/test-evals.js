@@ -63,3 +63,8 @@ ok(E.checkAdvice({ activities: [1, 2, 3].map(() => ({ lead: "Attendance lead", e
 
 // Every reference report resolves to a checklist and its areas exist in the checklist's vocabulary
 for (const r of E.REFERENCE) ok(C.resolve(r.profile).length >= 6 && r.url.startsWith("https://files.ofsted.gov.uk/"), `reference report ready: ${r.school}`);
+
+// Same count, same order, different words: matched by position and flagged for a wording check
+const pos = E.score({ framework: "renewed", safeguarding: "met", grades: [["Inclusion", "Expected standard"]], nextSteps: ["Make teaching clearer and tackle misconceptions"] },
+  { framework: "renewed", safeguarding: "met", grades: [{ area: "Inclusion", grade: "Expected standard" }], nextSteps: ["Ensure pupils grasp demonstrations and explanations"], findings: [{ itemId: null, type: "concern", finding: "x" }] }, new Set());
+ok(pos.pct === 100 && pos.checks.some(c => /matched by position/.test(c.detail)), "differently worded step in the same position matched and flagged for checking");
