@@ -658,12 +658,26 @@
     }
   }
   boot();
+  // Free term ending, renewal due or invoice overdue: a short note at the top with a link to subscribe
+  function showPlan(pl) {
+    const days = pl.daysLeft, when = days <= 1 ? "tomorrow" : `in ${days} days`;
+    let msg = "";
+    if (pl.status === "trial" && days <= 21) msg = `<b>Your free term ends ${when}.</b> Subscribe to carry on without a break: ${esc(pl.tierLabel.toLowerCase())}, £${pl.price} a year. Your paid year starts when the free term ends.`;
+    else if (pl.status === "overdue") msg = `<b>${esc(pl.label)}.</b> If you've already paid, thank you. Otherwise please pass the invoice to your finance team.`;
+    else if (pl.canRenew && pl.status !== "trial") msg = `<b>Your subscription ends ${when}.</b> Renew for another year to keep your access and saved work.`;
+    if (!msg) return;
+    $("planText").innerHTML = msg;
+    $("planBtn").hidden = pl.status === "overdue";
+    $("planBtn").querySelector("span").textContent = pl.status === "trial" ? "Subscribe" : "Renew";
+    $("planBanner").hidden = false;
+  }
   // The workshop needs the server; hide its link in single-file or artifact copies
   if (location.protocol === "file:" || !document.querySelector('link[href="css/styles.css"]')) { ["workshopLink", "homeLink", "reportLink"].forEach(id => { const w = $(id); if (w) w.hidden = true; }); }
   // School access: show sign-out, and use the school's name if none is set yet
   if (location.protocol !== "file:" && document.querySelector('link[href="css/styles.css"]')) {
     fetch("api/access").then(r => r.json()).then(a => {
       if (a.ai) showAllowance(a.ai);
+      if (a.plan) showPlan(a.plan);
       if (a.required && a.ok) {
         const so = $("signOut"); so.hidden = false;
         so.onclick = e => { e.preventDefault(); fetch("api/access/logout", { method: "POST" }).finally(() => { location.href = "index.html"; }); };

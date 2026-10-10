@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Subscribe · Evalu8 Compass</title>
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/account.css">
+</head>
+<body>
+<header class="brandbar">
+  <div class="brandbar-in">
+    <div class="brand-logo"><i data-icon="compass" data-size="26"></i></div>
+    <div class="brand-text"><b>Evalu8 Compass</b><span>School self-evaluation</span></div>
+    <nav class="brand-nav" aria-label="Main"><a href="index.html"><i data-icon="home"></i>Home</a><a href="index.html#pricing"><i data-icon="coin-pound"></i>Pricing</a><a href="enter.html"><i data-icon="lock"></i>Sign in</a></nav>
+  </div>
+</header>
+<main class="acct-wrap">
+  <form class="acct" id="codeForm" novalidate>
+    <span class="tile"><i data-icon="receipt" data-size="24"></i></span>
+    <h1>Subscribe or renew</h1>
+    <p class="lead">Enter your school's access code. It's in the email you got when you signed up.</p>
+    <div class="f"><label for="code">Access code</label><input type="text" id="code" class="mono" placeholder="ABCD-EFGH-JKLM" maxlength="20" spellcheck="false" autocapitalize="characters" autocomplete="off"></div>
+    <p class="err" id="codeErr" role="alert"></p>
+    <button class="btn primary wide" type="submit" id="codeGo"><i data-icon="arrow-right"></i>Continue</button>
+    <p class="small">Lost your code? <a href="enter.html#lost">Get it again by email</a>.</p>
+  </form>
+
+  <form class="acct" id="subForm" novalidate hidden tabindex="-1" aria-labelledby="subTitle">
+    <span class="tile"><i data-icon="receipt" data-size="24"></i></span>
+    <h1 id="subTitle">Subscribe</h1>
+    <div class="summary-box" id="quote"></div>
+    <h2>Who should we invoice?</h2>
+    <div class="row2">
+      <div class="f"><label for="bName">Name on the invoice</label><input type="text" id="bName" maxlength="100" autocomplete="name" placeholder="For example the school business manager"></div>
+      <div class="f"><label for="bEmail">Email for the invoice</label><input type="email" id="bEmail" maxlength="200" autocomplete="email"></div>
+    </div>
+    <div class="f"><label for="address">School postal address</label><textarea id="address" maxlength="400" autocomplete="street-address"></textarea></div>
+    <div class="f"><label for="po">Purchase order number (optional)</label><input type="text" id="po" maxlength="40"></div>
+    <label class="agree"><input type="checkbox" id="agree"><span>I agree to the <a href="terms.html#pricing" target="_blank" rel="noopener">terms of use and pricing terms</a>, and I'm authorised to subscribe on behalf of the school.</span></label>
+    <p class="err" id="subErr" role="alert"></p>
+    <button class="btn primary wide" type="submit" id="subGo"><i data-icon="circle-check"></i>Subscribe</button>
+    <p class="small"><button class="linkbtn" type="button" id="back">Use a different code</button></p>
+  </form>
+
+  <section class="acct done" id="done" hidden tabindex="-1" aria-labelledby="doneTitle">
+    <span class="tile"><i data-icon="circle-check" data-size="26"></i></span>
+    <h1 id="doneTitle">You're subscribed</h1>
+    <p class="lead" id="doneText"></p>
+    <a class="btn primary wide" href="enter.html"><i data-icon="arrow-right"></i>Go to your self-evaluation</a>
+  </section>
+</main>
+<script src="js/icons.js"></script>
+<script src="js/subscribe.js"></script>
+</body>
+</html>

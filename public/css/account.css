@@ -1,0 +1,36 @@
+/* Sign-up and subscribe pages — builds on styles.css */
+body { min-height: 100vh; display: flex; flex-direction: column }
+.acct-wrap { flex: 1; width: 100%; max-width: 640px; margin: 0 auto; padding-inline: 16px; padding-block: 32px 64px }
+.acct { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 24px 20px; display: grid; gap: 18px }
+.acct h1 { font-size: clamp(24px, 5vw, 30px); margin: 0; line-height: 1.15 }
+.acct h2 { font-size: 18px; margin: 0 }
+.acct .lead { margin: 0; color: var(--muted) }
+.acct a { color: var(--accent); font-weight: 600 }
+.acct fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; min-width: 0 }
+.acct legend { font-weight: 700; font-size: 15px; margin-bottom: 8px; padding: 0 }
+.f { display: grid; gap: 6px; min-width: 0 }
+.f > label { font-weight: 700; font-size: 15px }
+.f .hint { font-size: 13.5px; color: var(--muted); margin: 0 }
+.f input[type=text], .f input[type=email], .f textarea { width: 100%; font: inherit; padding: 10px 12px; min-height: 46px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink) }
+.f textarea { min-height: 96px; resize: vertical }
+.f input.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 20px; letter-spacing: .12em; text-transform: uppercase }
+.row2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px }
+.choice { display: flex; gap: 12px; align-items: flex-start; border: 1px solid var(--line); background: var(--bg); border-radius: 12px; padding: 12px 14px; cursor: pointer; min-height: 48px }
+.choice input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--brand); flex: none }
+.choice span { display: grid; gap: 2px; min-width: 0 }
+.choice b { font-size: 15px }
+.choice small { color: var(--muted); font-size: 13.5px }
+.choice:has(input:checked) { border-color: var(--brand); background: var(--accent-soft) }
+.agree { display: flex; gap: 10px; align-items: flex-start; font-size: 14.5px }
+.agree input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--brand); flex: none }
+.summary-box { background: var(--accent-soft); border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px }
+.summary-box b { font-family: var(--display); font-size: 17px }
+.summary-box p { margin: 0; font-size: 14.5px }
+.err { color: var(--no); font-size: 14.5px; margin: 0; font-weight: 600 }
+.err:empty { display: none }
+.btn.primary.wide { min-height: 50px; font-size: 16px; width: 100% }
+.done { text-align: left }
+.done .tile { width: 52px; height: 52px }
+.hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden }
+.small { font-size: 13.5px; color: var(--muted); margin: 0 }
+.linkbtn { background: none; border: 0; padding: 0; color: var(--accent); font-weight: 600; text-decoration: underline; min-height: 24px }

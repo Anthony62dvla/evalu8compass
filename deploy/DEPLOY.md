@@ -94,6 +94,50 @@ SCHOOL_RETENTION_DAYS=365
 Then run `systemctl restart hwwd`. Any you leave blank use neutral wording.
 Ask a data protection adviser to review the pages before you sign up schools.
 
+## Sign-up, email and invoices
+
+Schools sign up at `/signup.html` and get their access code by email. The first term is free (until
+the end of the term they join in; join after half-term and the next term is free too). When it ends
+the code pauses, and subscribing at `/subscribe.html` reactivates it for 12 months and emails an
+invoice payable within 30 days. Reminders go out two weeks before a free term ends, when it ends,
+30 days before renewal, a week after an invoice falls overdue, and when a subscription ends.
+
+1. **A mailbox to send from.** In hPanel, create `support@evalu8compass.app` under Emails (if you
+   haven't already). Hostinger sets up the DNS records (SPF and DKIM) that stop your emails going to
+   junk when the domain's DNS is at Hostinger. Check under Emails → your domain → DNS settings.
+2. **Add these lines** to `/opt/hwwd/.env` with `nano /opt/hwwd/.env` (use the mailbox's real password; never paste it into chat):
+
+```
+SMTP_HOST=smtp.hostinger.com
+SMTP_PORT=465
+SMTP_USER=support@evalu8compass.app
+SMTP_PASS=the-mailbox-password
+MAIL_FROM=Evalu8 Compass <support@evalu8compass.app>
+ADMIN_EMAIL=your-own@email.address
+OPERATOR_NAME=Your name or company
+OPERATOR_ADDRESS=Your postal address, shown on invoices
+BANK_ACCOUNT_NAME=Name on the account
+BANK_SORT_CODE=12-34-56
+BANK_ACCOUNT_NUMBER=12345678
+```
+
+3. `systemctl restart hwwd`, then sign up a test school at `/signup.html` with your own email address.
+   The code should arrive in a minute. In the admin console, **Free terms and subscriptions** shows it.
+
+Leave `VAT_NUMBER` blank until you're VAT registered. The pricing page and invoices then say no VAT
+is charged. Once it's set, invoices add VAT at `VAT_RATE` (20%).
+
+**In the admin console:** when a payment reaches your bank, click **Mark paid** (the school gets a
+receipt). **Send invoice** sends or resends it. **Cancel** ends a subscription now. **Free term**
+changes the last free day. Codes you made by hand can be moved onto a plan with **Put on a plan**.
+Invoices are numbered EC-year-0001 and kept in `data/invoices.jsonl` (keep them for six years).
+Academy trusts send an enquiry instead of signing up: you get an email, and it's listed in the console.
+For a trust, create each school's code by hand under **Create an access code** and agree the price directly.
+To pause a school whose invoice is long overdue, **Revoke** its code (work is kept); **Reactivate** once it pays.
+
+If codes don't arrive, check `journalctl -u hwwd -n 50` for "Sign-up email failed". The usual causes are a
+wrong mailbox password, or the VPS blocking outgoing port 465 (try `SMTP_PORT=587`).
+
 ## AI allowance
 
 Each school can make `AI_MONTHLY_REQUESTS` AI requests a month (default 200), counted in UK time and

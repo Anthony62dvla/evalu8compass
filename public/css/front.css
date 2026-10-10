@@ -93,3 +93,14 @@
 .guide-card h3 { margin: 0 0 4px; font-size: 18px }
 .guide-card p { margin: 0; color: var(--muted) }
 .guide-card .tile { background: var(--surface) }
+.prices { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px }
+.price { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; display: grid; gap: 8px; align-content: start; min-width: 0 }
+.price h3 { margin: 0; font-size: 18px }
+.price .amount { margin: 0; color: var(--muted); font-size: 15px }
+.price .amount b { font-family: var(--display); font-size: 34px; color: var(--ink); margin-right: 4px }
+.price p { margin: 0; color: var(--muted); font-size: 14.5px }
+.price.trust { background: var(--accent-soft); border-color: transparent }
+.price.trust .amount b { font-size: 26px }
+.price a { color: var(--accent); font-weight: 600; min-height: 24px }
+.price-notes { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px }
+.price-notes .ticks { flex: 1 1 420px; min-width: 0 }

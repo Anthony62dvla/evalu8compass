@@ -8,3 +8,12 @@
       location.href = "workshop.html?code=" + encodeURIComponent(i.value);
     });
   })();
+
+/* Pricing: today's free period and the VAT wording come from the server */
+(function () {
+  fetch("/api/pricing").then(function (r) { return r.json(); }).then(function (d) {
+    var f = document.getElementById("freeNow"), v = document.getElementById("vatNote");
+    if (f && d.freeNow) f.textContent = "Sign up today and it's free until " + d.freeNow.untilLabel + ".";
+    if (v && d.vat) v.textContent = d.vat;
+  }).catch(function () {});
+})();

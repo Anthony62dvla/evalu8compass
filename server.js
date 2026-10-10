@@ -26,6 +26,7 @@ const admin = require("./lib/admin");
 const schools = require("./lib/schools");
 const usage = require("./lib/usage");
 const evals = require("./lib/evals");
+const billing = require("./lib/billing");
 access.setAdminCheck(req => admin.who(req));
 
 const PORT = Number(process.env.PORT || 3000);
@@ -37,6 +38,7 @@ const LIMITS = {
   api: Number(process.env.API_LIMIT_PER_MIN || 600),  // other API calls per IP per minute
   login: 10,                                          // access-code attempts per IP per minute
   admin: 5,                                           // superadmin sign-in attempts per IP per minute
+  signup: Number(process.env.SIGNUP_LIMIT_PER_MIN || 20), // sign-up and subscribe form posts per IP per minute (hourly limits in lib/billing.js)
 };
 // Pages that need a school access code (staff joining a workshop never do)
 const PROTECTED_PAGES = new Set(["/checklist.html", "/report.html"]);
@@ -72,6 +74,7 @@ const server = http.createServer(async (req, res) => {
       const isAI = p === "/api/inspector" || /\/(report|themes|plan)$/.test(p);
       if (limited(req, isAI ? "ai" : "api")) return json(res, 429, { code: "rate_limited", error: "Too many requests. Wait a minute and try again." });
       if (p === "/api/access") return accessRoute(req, res);
+      if (p === "/api/pricing" || p.startsWith("/api/signup") || p.startsWith("/api/subscribe")) return billingRoute(req, res, p);
       if (p === "/api/access/logout" && req.method === "POST") { access.logout(req, res); return json(res, 200, { ok: true }); }
       if (p === "/api/inspector" && req.method === "POST") {
         const w = access.who(req);
@@ -90,6 +93,8 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method !== "GET" && req.method !== "HEAD") return json(res, 405, { error: "Method not allowed" });
     // Friendly join links: /join/ABC123 → workshop page
+    const inv = p.match(/^\/invoice\/(EC-\d{4}-\d{4,})$/);
+    if (inv) return invoicePage(req, res, inv[1], url.searchParams.get("t") || "");
     if (/^\/join\/[A-Za-z0-9]{6}$/.test(p)) { res.writeHead(302, { location: "/workshop.html?code=" + p.slice(6).toUpperCase() }); return res.end(); }
     if (PROTECTED_PAGES.has(p) && !access.who(req)) {
       res.writeHead(302, { location: "/enter.html?next=" + encodeURIComponent(p + url.search) }); return res.end();
@@ -122,6 +127,10 @@ function retention() {
 }
 setTimeout(retention, 5000).unref();
 setInterval(retention, 24 * 3600e3).unref();
+// Free-term, renewal and payment reminder emails (each is sent once)
+function reminders() { billing.reminders({ audit: (a, d) => admin.audit(a, d, null) }).catch(e => console.error("Reminders:", e.message)); }
+setTimeout(reminders, 60e3).unref();
+setInterval(reminders, 3 * 3600e3).unref();
 for (const sig of ["SIGINT", "SIGTERM"]) process.on(sig, () => { store.flushAll(); usage.flush(); process.exit(0); });
 
 /* Single-user AI inspector used by the self-assessment page */
@@ -148,14 +157,24 @@ async function inspector(req, res, account) {
 async function accessRoute(req, res) {
   if (req.method === "GET") {
     const w = access.who(req);
-    return json(res, 200, { required: access.required(), ok: !!w, school: w && w.name && !w.admin ? w.name : "", ai: w && ai.hasKey() ? usage.status(w.open ? "open" : w.id) : null });
+    const entry = w && w.id && !w.admin ? access.list().find(c => c.id === w.id) : null;
+    return json(res, 200, { required: access.required(), ok: !!w, school: w && w.name && !w.admin ? w.name : "", ai: w && ai.hasKey() ? usage.status(w.open ? "open" : w.id) : null, plan: billing.forSchool(entry) });
   }
   if (req.method !== "POST") return json(res, 405, { error: "Method not allowed" });
   if (limited(req, "login")) return json(res, 429, { code: "rate_limited", error: "Too many attempts. Wait a minute and try again." });
   let body;
   try { body = JSON.parse(await readBody(req, 4096)); } catch { return json(res, 400, { error: "Invalid request" }); }
   const c = access.login(req, res, body && body.code);
-  if (!c) return json(res, 401, { code: "bad_code", error: "That access code isn't recognised. Check it and try again." });
+  if (!c) {
+    // A known code whose free term or subscription has ended: explain, and point to subscribing
+    const known = access.lookup(body && body.code);
+    if (known && !known.revoked && known.tier && known.tier !== "trust") {
+      const st = billing.status(known);
+      if (["trial_ended", "lapsed", "cancelled"].includes(st.key)) return json(res, 403, { code: "paused", subscribe: true, error: `${known.name}'s ${st.key === "trial_ended" ? "free term has ended" : "subscription has ended"}, so this code is paused. Your saved work is kept: subscribe and the code works again straight away.` });
+    }
+    if (known && !known.revoked) return json(res, 403, { code: "expired", error: "This access code has expired. Email support@evalu8compass.app to renew it." });
+    return json(res, 401, { code: "bad_code", error: "That access code isn't recognised. Check it and try again." });
+  }
   return json(res, 200, { ok: true, school: c.name });
 }
 
@@ -221,6 +240,51 @@ function sameSite(req) {
   try { return new URL(req.headers.origin).host === req.headers.host; } catch { return false; }
 }
 
+/* Pricing, sign-up and subscribing (see lib/billing.js) */
+function clientIp(req) { return (process.env.TRUST_PROXY === "1" && String(req.headers["x-forwarded-for"] || "").split(",")[0].trim()) || req.socket.remoteAddress || "?"; }
+const billingHooks = req => ({
+  audit: (a, d) => admin.audit(a, d, req),
+  // Start the school's checklist with its name and type, so leaders don't type them twice
+  prefill: (id, profile) => { try { if (!schools.get(id).state) schools.replace(id, { profile }); } catch (e) {} },
+});
+async function billingRoute(req, res, p) {
+  if (p === "/api/pricing" && req.method === "GET") return json(res, 200, billing.pricing());
+  if (req.method !== "POST") return json(res, 405, { error: "Method not allowed" });
+  if (!sameSite(req)) return json(res, 403, { error: "Cross-site request refused." });
+  if (limited(req, "signup")) return json(res, 429, { error: "Too many attempts. Wait a minute and try again." });
+  let b;
+  try { b = JSON.parse((await readBody(req, 16384)) || "{}"); } catch (e) { return json(res, 400, { error: "Invalid request" }); }
+  if (!b || typeof b !== "object" || Array.isArray(b)) return json(res, 400, { error: "Invalid request" });
+  try {
+    if (p === "/api/signup") return json(res, 200, await billing.signup(b, clientIp(req), billingHooks(req)));
+    if (p === "/api/signup/resend") return json(res, 200, await billing.resend(b.email, clientIp(req), billingHooks(req)));
+    if (p === "/api/subscribe/quote") {
+      if (limited(req, "login")) return json(res, 429, { error: "Too many attempts. Wait a minute and try again." });
+      const q = billing.quote(b.code);
+      return q ? json(res, 200, q) : json(res, 404, { error: "That access code isn't recognised. It's in the email you got when you signed up." });
+    }
+    if (p === "/api/subscribe") return json(res, 200, await billing.subscribe(b, clientIp(req), billingHooks(req)));
+    return json(res, 404, { error: "Not found" });
+  } catch (e) {
+    if (e instanceof billing.BillingError) return json(res, e.status, { error: e.message });
+    console.error(e);
+    return json(res, 500, { error: "Something went wrong. Try again, or email support@evalu8compass.app." });
+  }
+}
+/* An invoice as a printable page: the link in the invoice email carries a signature */
+function invoicePage(req, res, num, t) {
+  const expect = billing.invoiceToken(num);
+  const a = Buffer.from(t), e = Buffer.from(expect);
+  const okSig = a.length === e.length && require("crypto").timingSafeEqual(a, e);
+  const r = okSig || admin.who(req) ? billing.findInvoice(num) : null;
+  if (!r) { res.writeHead(404, { "content-type": "text/plain; charset=utf-8" }); return res.end("Invoice not found."); }
+  const c = access.list().find(x => x.id === r.codeId);
+  const sub = c ? [c.sub, ...(c.history || [])].find(x => x && x.invoice && x.invoice.number === num) : null;
+  const paidAt = sub ? sub.paidAt : null;
+  res.writeHead(200, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "x-robots-tag": "noindex" });
+  res.end(billing.invoiceHtml(r, paidAt));
+}
+
 /* Superadmin console API (see lib/admin.js) */
 async function adminRoute(req, res, p) {
   const body = async () => { try { return JSON.parse((await readBody(req, 8192)) || "{}"); } catch { return null; } };
@@ -275,6 +339,20 @@ async function adminRoute(req, res, p) {
     return json(res, 200, { ok: true, erased: had, workshops: ws });
   }
   if (p.startsWith("/api/admin/evals")) return evalRoute(req, res, p);
+  if (p === "/api/admin/billing" && req.method === "GET") return json(res, 200, billing.overview());
+  const bl = p.match(/^\/api\/admin\/codes\/([a-f0-9]{8})\/billing\/(send-invoice|mark-paid|mark-unpaid|cancel|set-trial)$/);
+  if (bl && req.method === "POST") {
+    const b = (await body()) || {};
+    try {
+      const r = await billing.adminAction(bl[1], bl[2], b);
+      const c = access.list().find(x => x.id === bl[1]);
+      admin.audit(`billing.${bl[2]}`, `${c ? c.name : bl[1]} (${bl[1]})${r.invoice ? ", invoice " + r.invoice : ""}${b.date ? ", " + b.date : ""}`, req);
+      return json(res, 200, r);
+    } catch (e) {
+      if (e instanceof billing.BillingError) return json(res, e.status, { error: e.message });
+      return json(res, 502, { error: e.message });
+    }
+  }
   const al = p.match(/^\/api\/admin\/codes\/([a-f0-9]{8})\/allowance$/);
   if (al && req.method === "POST") {
     const c = access.list().find(x => x.id === al[1]);
@@ -303,7 +381,7 @@ async function adminRoute(req, res, p) {
 
 /* Policy pages: details that differ per installation come from .env (see .env.example) */
 const POLICY_PAGES = new Set(["privacy.html", "terms.html", "dpia.html", "accessibility.html"]);
-const POLICY_DATE = "9 October 2026";
+const POLICY_DATE = "10 October 2026";
 function policyValues() {
   const e = k => String(process.env[k] || "").trim();
   const h = v => v.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -315,7 +393,8 @@ function policyValues() {
     HOSTING: h(region ? `a Hostinger data centre in ${region}` : "a data centre run by our hosting provider, Hostinger"),
     BACKUP: h(backup ? `separate off-site storage provided by ${backup}` : "separate off-site storage"),
     BACKUP_PROVIDER: h(backup || "Our off-site backup storage provider"),
-    EMAIL_HOST: h(!mail ? "" : /hostinger/i.test(mail) ? " and our support email" : ` (our support email is provided by ${mail})`),
+    EMAIL_HOST: h(!mail ? " and sends our emails (access codes, invoices and reminders)" : /hostinger/i.test(mail) ? " and our email, which sends access codes, invoices and reminders" : ` (our email, including access codes, invoices and reminders, is provided by ${mail})`),
+    VAT_LINE: h(billing.pricing().vat),
     RETENTION_DAYS: String(SCHOOL_RETENTION_DAYS),
     UPDATED: h(e("POLICY_UPDATED") || POLICY_DATE),
   };

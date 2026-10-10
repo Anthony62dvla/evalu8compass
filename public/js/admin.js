@@ -11,7 +11,72 @@
     "admin.setup": "Superadmin set up", "admin.login": "Signed in", "admin.logout": "Signed out", "admin.login_failed": "Failed sign-in attempt",
     "code.create": "Code created", "code.revoke": "Code revoked", "code.reactivate": "Code reactivated", "code.extend": "Expiry changed",
     "data.erase": "School data deleted", "ai.allowance": "AI allowance changed", "data.retention_delete": "Deleted under retention policy",
+    "signup.code": "School signed up", "signup.resend": "New code emailed", "signup.trust_enquiry": "Trust enquiry",
+    "billing.subscribe": "School subscribed", "billing.send-invoice": "Invoice sent", "billing.mark-paid": "Marked paid", "billing.mark-unpaid": "Marked unpaid",
+    "billing.cancel": "Subscription cancelled", "billing.set-trial": "Free term set", "billing.reminder": "Reminder emailed",
   };
+  const TIER = { independent: "Independent £99", primary: "Primary £149", secondary: "Secondary £199", trust: "Trust" };
+  const gbp = n => "£" + (Math.round(n * 100) / 100).toLocaleString("en-GB", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
+  const ymd = d => new Date(d + "T12:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+  const before = d => { const x = new Date(d + "T12:00:00Z"); x.setUTCDate(x.getUTCDate() - 1); return x.toISOString().slice(0, 10); };
+  const STATE_CLASS = { trial: "active", paid: "active", invoiced: "active", invoice_to_send: "expired", overdue: "revoked", trial_ended: "expired", lapsed: "expired", cancelled: "revoked", revoked: "revoked", none: "active" };
+
+  async function loadBilling() {
+    const d = await api("GET", "/billing"), T = d.totals;
+    $("billSys").innerHTML = `<span><i class="dot" style="background:${d.mail ? "var(--met)" : "var(--no)"}"></i>${d.mail ? "Email set up: sign-up codes and reminders are sent automatically" + (d.adminEmail ? ` · notifications to ${esc(d.adminEmail)}` : "") : "Email not set up: add SMTP_HOST and the other SMTP settings to .env, or schools can't sign up"}</span>
+      <span><i class="dot" style="background:${d.canInvoice ? "var(--met)" : "var(--part)"}"></i>${d.canInvoice ? "Invoices are sent automatically when a school subscribes" : "Invoices aren't automatic yet: add OPERATOR_NAME and bank details to .env"}</span>
+      <span>${d.vat ? "VAT added to invoices" : "No VAT charged"}</span>`;
+    $("billStats").innerHTML = [
+      ["gift", T.trial, "In their free term"], ["circle-check", T.subscribed, "Subscribed"], ["receipt", T.toInvoice, "Invoices to send"],
+      ["alert-triangle", T.overdue, "Overdue"], ["coin-pound", gbp(T.invoicedThisYear), "Invoiced this year"], ["history", gbp(T.outstanding), "Unpaid"],
+    ].map(([ic, n, l]) => `<div class="stat"><span class="tile">${I(ic, 22)}</span><div><b>${esc(n)}</b><span>${esc(l)}</span></div></div>`).join("");
+    const order = { overdue: 0, invoice_to_send: 1, invoiced: 2, trial_ended: 3, trial: 4, paid: 5, lapsed: 6, cancelled: 7, revoked: 8, none: 9 };
+    const rows = d.rows.slice().sort((a, b) => (order[a.status.key] ?? 9) - (order[b.status.key] ?? 9) || a.name.localeCompare(b.name));
+    $("subs").innerHTML = `<thead><tr><th>School</th><th>Plan</th><th>Status</th><th>Free term</th><th>Paid year</th><th>Invoice</th><th>Actions</th></tr></thead><tbody>${
+      rows.length ? rows.map(r => {
+        const s = r.sub, inv = s && s.invoice, unpaid = s && s.status !== "cancelled" && !s.paidAt;
+        return `<tr>
+        <td><b>${esc(r.name)}</b>${r.contact ? `<span class="sub">${esc(r.contact.name)}${r.contact.role ? ", " + esc(r.contact.role) : ""}</span>` : ""}${r.email ? `<span class="sub">${esc(r.email)}</span>` : ""}${r.urn ? `<span class="sub">URN ${esc(r.urn)}</span>` : ""}<span class="sub">id ${esc(r.id)} · joined ${day(r.createdAt)}</span></td>
+        <td>${esc(TIER[r.tier] || r.tier)}</td>
+        <td><span class="state state-${STATE_CLASS[r.status.key] || "active"}">${esc(r.status.label)}</span></td>
+        <td>${r.trialEndsAt ? `until ${ymd(before(r.trialEndsAt))}` : "–"}</td>
+        <td>${s ? `${ymd(s.periodStart)} to ${ymd(before(s.periodEnd))}${s.billing ? `<span class="sub">Invoice to ${esc(s.billing.name)}, ${esc(s.billing.email)}</span>${s.billing.po ? `<span class="sub">Purchase order ${esc(s.billing.po)}</span>` : ""}` : ""}` : "–"}</td>
+        <td>${inv ? `<a href="/invoice/${encodeURIComponent(inv.number)}" target="_blank" rel="noopener">${esc(inv.number)}</a><span class="sub">${gbp(inv.total)} · due ${ymd(inv.dueAt)}</span>${s.paidAt ? `<span class="sub">Paid ${ymd(s.paidAt)}</span>` : ""}` : s && s.status !== "cancelled" ? `<span class="sub">Not sent yet</span>` : "–"}</td>
+        <td><div class="acts">
+          ${s && s.status !== "cancelled" ? `<button class="btn" data-bill="send-invoice" data-id="${r.id}">${I("mail", 16)}${inv ? "Resend invoice" : "Send invoice"}</button>` : ""}
+          ${unpaid ? `<button class="btn" data-bill="mark-paid" data-id="${r.id}" data-name="${esc(r.name)}">${I("circle-check", 16)}Mark paid</button>` : ""}
+          ${s && s.paidAt ? `<button class="btn" data-bill="mark-unpaid" data-id="${r.id}">Mark unpaid</button>` : ""}
+          <button class="btn" data-bill="set-trial" data-id="${r.id}" data-name="${esc(r.name)}" data-cur="${esc(r.trialEndsAt ? before(r.trialEndsAt) : "")}">${I("calendar-check", 16)}Free term</button>
+          ${s && s.status !== "cancelled" ? `<button class="btn" data-bill="cancel" data-id="${r.id}" data-name="${esc(r.name)}">${I("x", 16)}Cancel</button>` : ""}
+        </div></td></tr>`;
+      }).join("") : `<tr class="empty-row"><td colspan="7">No schools have signed up yet. The sign-up page is ${esc(SITE)}/signup.html.</td></tr>`
+    }</tbody>`;
+    $("enqBox").hidden = !d.enquiries.length; $("enqN").textContent = d.enquiries.length;
+    $("enq").innerHTML = d.enquiries.map(q => `<li><time datetime="${esc(q.at)}">${esc(when(q.at))}</time><span><b>${esc(q.trust)}</b>${q.schools ? ` (${esc(q.schools)} schools)` : ""}: ${esc(q.name)}${q.role ? ", " + esc(q.role) : ""}, <a href="mailto:${esc(q.email)}">${esc(q.email)}</a>${q.message ? `<br><span class="muted">${esc(q.message)}</span>` : ""}</span></li>`).join("");
+  }
+
+  document.addEventListener("click", async e => {
+    const b = e.target.closest("[data-bill]"); if (!b) return;
+    const { bill, id, name } = b.dataset;
+    let body = {};
+    if (bill === "mark-paid") {
+      const v = prompt(`Date ${name}'s payment arrived (YYYY-MM-DD). A receipt is emailed to the school.`, new Date().toISOString().slice(0, 10));
+      if (v === null) return; body = { date: v.trim() };
+    }
+    if (bill === "set-trial") {
+      const v = prompt(`Last day of ${name}'s free term (YYYY-MM-DD). Access pauses after this day unless the school subscribes.`, b.dataset.cur || "");
+      if (v === null || !/^\d{4}-\d{2}-\d{2}$/.test(v.trim())) return;
+      const nd = new Date(v.trim() + "T12:00:00Z"); nd.setUTCDate(nd.getUTCDate() + 1);
+      body = { date: nd.toISOString().slice(0, 10) };
+    }
+    if (bill === "cancel" && !confirm(`Cancel ${name}'s subscription now? Their access pauses straight away; saved work is kept for the retention period. Cancel or credit the invoice yourself if needed.`)) return;
+    b.disabled = true;
+    try {
+      await api("POST", `/codes/${id}/billing/${bill}`, body);
+      toast({ "send-invoice": "Invoice emailed", "mark-paid": "Marked paid, receipt emailed", "mark-unpaid": "Marked unpaid", cancel: "Subscription cancelled", "set-trial": "Free term updated" }[bill]);
+      await load();
+    } catch (err) { toast(err.message); b.disabled = false; }
+  });
   function toast(m) { const t = $("toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("on"), 2400); }
   async function api(method, path, body) {
     const r = await fetch("api/admin" + path, { method, headers: { "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
@@ -63,10 +128,12 @@
           : `<button class="btn" data-act="revoke" data-id="${c.id}" data-name="${esc(c.name)}">${I("x", 16)}Revoke</button>`}
           <button class="btn" data-act="allowance" data-id="${c.id}" data-name="${esc(c.name)}" data-cur="${c.ai.limit == null ? "unlimited" : c.ai.limit}">${I("sparkles", 16)}AI allowance</button>
           <button class="btn" data-act="extend" data-id="${c.id}" data-days="365">${I("calendar-check", 16)}+1 year</button>
+          ${!c.tier && c.state !== "revoked" ? `<button class="btn" data-act="plan" data-id="${c.id}" data-name="${esc(c.name)}">${I("receipt", 16)}Put on a plan</button>` : ""}
           ${c.expiresAt ? `<button class="btn" data-act="extend" data-id="${c.id}" data-days="0">No expiry</button>` : ""}
           ${c.saved || c.workshops ? `<button class="btn" data-act="erase" data-id="${c.id}" data-name="${esc(c.name)}">${I("trash", 16)}Delete data</button>` : ""}</div></td>
       </tr>`).join("") : `<tr class="empty-row"><td colspan="9">No school codes yet. Create the first one above.</td></tr>`
     }</tbody>`;
+    await loadBilling().catch(e => { $("billSys").textContent = e.message; });
     $("audit").innerHTML = d.audit.length ? d.audit.map(a => `<li><time datetime="${esc(a.at)}">${esc(when(a.at))}</time><span class="${a.action === "admin.login_failed" ? "fail" : ""}">${esc(ACTION[a.action] || a.action)}${a.detail ? ": " + esc(a.detail) : ""} <span class="muted small">(${esc(a.ip)})</span></span></li>`).join("") : `<li><span class="muted">Nothing yet.</span></li>`;
   }
 
@@ -87,6 +154,17 @@
       if (v === null) return;
       b.disabled = true;
       try { const st = await api("POST", `/codes/${id}/allowance`, { limit: v.trim() === "" ? null : v.trim() }); toast(st.limit == null ? "AI unlimited for this school" : st.limit === 0 ? "AI switched off for this school" : `Allowance set to ${st.limit} a month`); await load(); }
+      catch (err) { toast(err.message); b.disabled = false; }
+      return;
+    }
+    if (act === "plan") {
+      const tier = (prompt(`Plan for ${b.dataset.name}: type independent, primary or secondary.`, "primary") || "").trim().toLowerCase();
+      if (!["independent", "primary", "secondary"].includes(tier)) return;
+      const v = prompt("Last day of the free term (YYYY-MM-DD). After this, the school is asked to subscribe.", "");
+      if (v === null || !/^\d{4}-\d{2}-\d{2}$/.test(v.trim())) return;
+      const nd = new Date(v.trim() + "T12:00:00Z"); nd.setUTCDate(nd.getUTCDate() + 1);
+      b.disabled = true;
+      try { await api("POST", `/codes/${id}/billing/set-trial`, { date: nd.toISOString().slice(0, 10), tier }); toast("Plan set"); await load(); }
       catch (err) { toast(err.message); b.disabled = false; }
       return;
     }

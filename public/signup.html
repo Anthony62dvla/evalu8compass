@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Start your free term · Evalu8 Compass</title>
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/account.css">
+</head>
+<body>
+<header class="brandbar">
+  <div class="brandbar-in">
+    <div class="brand-logo"><i data-icon="compass" data-size="26"></i></div>
+    <div class="brand-text"><b>Evalu8 Compass</b><span>School self-evaluation</span></div>
+    <nav class="brand-nav" aria-label="Main"><a href="index.html"><i data-icon="home"></i>Home</a><a href="index.html#pricing"><i data-icon="coin-pound"></i>Pricing</a><a href="enter.html"><i data-icon="lock"></i>Sign in</a></nav>
+  </div>
+</header>
+<main class="acct-wrap">
+  <form class="acct" id="form" novalidate>
+    <span class="tile"><i data-icon="gift" data-size="24"></i></span>
+    <h1 id="title">Start your free term</h1>
+    <p class="lead" id="lead">Tell us about your school and we'll email your access code straight away. Nothing is charged unless you choose to subscribe.</p>
+
+    <fieldset>
+      <legend>Type of school</legend>
+      <label class="choice"><input type="radio" name="type" value="independent"><span><b>Independent school</b><small>£99 a year after your free term</small></span></label>
+      <label class="choice"><input type="radio" name="type" value="maintained"><span><b>Maintained school</b><small>£149 primary or £199 secondary a year after your free term</small></span></label>
+      <label class="choice"><input type="radio" name="type" value="academy"><span><b>Academy or free school</b><small>£149 primary or £199 secondary a year after your free term</small></span></label>
+      <label class="choice"><input type="radio" name="type" value="trust"><span><b>Academy trust with two or more schools</b><small>We'll contact you about pricing for the trust</small></span></label>
+    </fieldset>
+
+    <fieldset id="phaseSet" hidden>
+      <legend>Phase</legend>
+      <label class="choice"><input type="radio" name="phase" value="primary"><span><b>Primary</b><small>Including nursery, infant and junior schools</small></span></label>
+      <label class="choice"><input type="radio" name="phase" value="secondary"><span><b>Secondary</b><small>Including all-through schools and 16 to 19</small></span></label>
+      <p class="small">Special schools and alternative provision: choose by the oldest pupils you teach.</p>
+    </fieldset>
+
+    <div class="f"><label for="school" id="schoolLbl">School name</label><input type="text" id="school" autocomplete="organization" maxlength="120"></div>
+    <div class="f" id="urnRow"><label for="urn">URN (optional)</label><p class="hint" id="urnHint">Your 6-digit unique reference number, from your Ofsted report or Get Information about Schools.</p><input type="text" id="urn" inputmode="numeric" maxlength="7" aria-describedby="urnHint"></div>
+    <div class="row2">
+      <div class="f"><label for="name">Your name</label><input type="text" id="name" autocomplete="name" maxlength="100"></div>
+      <div class="f"><label for="role">Your role</label><input type="text" id="role" autocomplete="organization-title" maxlength="100" placeholder="For example Headteacher"></div>
+    </div>
+    <div class="f"><label for="email">Email address</label><p class="hint" id="emailHint">Your access code goes here. A school email address helps us confirm your school.</p><input type="email" id="email" autocomplete="email" maxlength="200" aria-describedby="emailHint"></div>
+    <div id="trustRows" hidden>
+      <div class="f"><label for="schools">How many schools are in the trust?</label><input type="text" id="schools" inputmode="numeric" maxlength="6"></div>
+      <div class="f" style="margin-top:14px"><label for="message">Anything you'd like us to know (optional)</label><textarea id="message" maxlength="1500"></textarea></div>
+    </div>
+    <div class="hp" aria-hidden="true"><label for="website">Leave this empty</label><input type="text" id="website" tabindex="-1" autocomplete="off"></div>
+
+    <div class="summary-box" id="summary" hidden aria-live="polite"></div>
+
+    <label class="agree"><input type="checkbox" id="agree"><span>I agree to the <a href="terms.html" target="_blank" rel="noopener">terms of use</a>, including the pricing terms, and I've read the <a href="privacy.html" target="_blank" rel="noopener">privacy notice</a>.</span></label>
+    <p class="err" id="err" role="alert"></p>
+    <button class="btn primary wide" type="submit" id="go"><i data-icon="mail"></i><span id="goText">Email my access code</span></button>
+    <p class="small">Already signed up? <a href="enter.html">Sign in</a>, or <a href="enter.html#lost">get your code again</a>.</p>
+  </form>
+
+  <section class="acct done" id="done" hidden tabindex="-1" aria-labelledby="doneTitle">
+    <span class="tile"><i data-icon="mail" data-size="26"></i></span>
+    <h1 id="doneTitle">Check your email</h1>
+    <p class="lead" id="doneText"></p>
+    <p class="small">It can take a few minutes. If it hasn't arrived, check your junk folder, then email <a href="mailto:support@evalu8compass.app">support@evalu8compass.app</a>.</p>
+    <a class="btn primary wide" href="enter.html" id="doneBtn"><i data-icon="arrow-right"></i>Enter my access code</a>
+  </section>
+</main>
+<script src="js/icons.js"></script>
+<script src="js/signup.js"></script>
+</body>
+</html>

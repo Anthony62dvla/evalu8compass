@@ -90,3 +90,7 @@ code { padding: 1px 6px; font-size: .92em }
 .rate textarea { width: 100%; font: inherit; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink) }
 .pill2 { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--na-soft) }
 .newgrid input[type=checkbox], .newgrid input[type=radio] { width: auto; min-height: 0; padding: 0; width: 18px; height: 18px }
+.small-stats .stat b { font-size: 22px }
+.enq { margin-top: 14px }
+.enq summary { cursor: pointer; font-weight: 700; min-height: 32px }
+#subs a { color: var(--accent); font-weight: 600 }

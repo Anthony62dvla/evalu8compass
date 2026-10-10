@@ -1,6 +1,6 @@
 {
   "name": "how-well-are-we-doing",
-  "version": "4.3.0",
+  "version": "4.4.0",
   "description": "Ofsted self-assessment with live staff workshops and an AI education inspector, for maintained, academy and independent schools from EYFS to post-16.",
   "private": true,
   "license": "UNLICENSED",
@@ -10,8 +10,8 @@
   "scripts": {
     "start": "node server.js",
     "build": "node build.js",
-    "check": "node --check server.js && node --check build.js && node --check public/js/criteria.js && node --check public/js/prompts.js && node --check public/js/inspector.js && node --check public/js/store.js && node --check public/js/app.js && node --check public/js/workshop.js && node --check public/js/plan.js && node --check public/js/report.js && node --check lib/access.js && node --check lib/admin.js && node --check public/js/admin.js && node --check scripts/access.js && node --check lib/store.js && node --check lib/aggregate.js && node --check lib/ai.js && node --check lib/workshop.js && node scripts/validate-criteria.js && node --check lib/schools.js && node --check public/js/statediff.js && node --check public/js/sync.js && node --check public/js/progress.js && node --check scripts/test-schools.js && node --check lib/usage.js && node --check scripts/test-ai-allowance.js && node --check lib/evals.js && node --check public/js/admin-eval.js && node --check scripts/test-evals.js && node --check lib/demo.js && node --check scripts/test-demo.js && node --check scripts/build-guide.js && node --check scripts/guide/shots.js && node --check scripts/guide/mock-ai.js && node --check public/js/newschool.js",
-    "test": "node scripts/test-workshop.js && node scripts/test-access.js && node scripts/test-admin.js && node scripts/test-schools.js && node scripts/test-ai-allowance.js && node scripts/test-evals.js && node scripts/test-demo.js",
+    "check": "node --check server.js && node --check build.js && node --check public/js/criteria.js && node --check public/js/prompts.js && node --check public/js/inspector.js && node --check public/js/store.js && node --check public/js/app.js && node --check public/js/workshop.js && node --check public/js/plan.js && node --check public/js/report.js && node --check lib/access.js && node --check lib/admin.js && node --check public/js/admin.js && node --check scripts/access.js && node --check lib/store.js && node --check lib/aggregate.js && node --check lib/ai.js && node --check lib/workshop.js && node scripts/validate-criteria.js && node --check lib/schools.js && node --check public/js/statediff.js && node --check public/js/sync.js && node --check public/js/progress.js && node --check scripts/test-schools.js && node --check lib/usage.js && node --check scripts/test-ai-allowance.js && node --check lib/evals.js && node --check public/js/admin-eval.js && node --check scripts/test-evals.js && node --check lib/demo.js && node --check scripts/test-demo.js && node --check scripts/build-guide.js && node --check scripts/guide/shots.js && node --check scripts/guide/mock-ai.js && node --check public/js/newschool.js && node --check lib/mail.js && node --check lib/billing.js && node --check public/js/signup.js && node --check public/js/subscribe.js && node --check scripts/test-billing.js",
+    "test": "node scripts/test-workshop.js && node scripts/test-access.js && node scripts/test-admin.js && node scripts/test-schools.js && node scripts/test-ai-allowance.js && node scripts/test-evals.js && node scripts/test-demo.js && node scripts/test-billing.js",
     "guide": "node scripts/build-guide.js"
   }
 }
