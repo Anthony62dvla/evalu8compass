@@ -2,7 +2,7 @@
 (function (root) {
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const boxes = (name, list, chosen, max) => list.map(([id, label]) =>
-    `<label class="tick"><input type="checkbox" name="${name}" value="${esc(id)}"${(chosen || []).includes(id) ? " checked" : ""}><span>${esc(label)}</span></label>`).join("");
+    `<label class="ctick"><input type="checkbox" name="${name}" value="${esc(id)}"${(chosen || []).includes(id) ? " checked" : ""}><span>${esc(label)}</span></label>`).join("");
 
   /** Fills `el` with the profile fields. v = current values (or {}). */
   function render(el, o, v) {

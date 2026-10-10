@@ -37,9 +37,9 @@ body { min-height: 100vh; display: flex; flex-direction: column }
 .acct-wrap.wide { max-width: 780px }
 .f select, .f input[type=number] { width: 100%; font: inherit; padding: 10px 12px; min-height: 46px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink) }
 .ticks2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px }
-.tick { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 10px 12px; cursor: pointer; font-size: 14.5px; min-height: 44px }
-.tick input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--brand); flex: none }
-.tick:has(input:checked) { border-color: var(--brand); background: var(--accent-soft) }
+.ctick { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 10px 12px; cursor: pointer; font-size: 14.5px; min-height: 44px }
+.ctick input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--brand); flex: none }
+.ctick:has(input:checked) { border-color: var(--brand); background: var(--accent-soft) }
 .acct legend .hint, .acct h2 .hint { font-weight: 400; color: var(--muted); font-size: 13.5px }
 .acct h2 { margin-top: 6px }
 .steps-list { margin: 0; padding-left: 22px; display: grid; gap: 8px }
