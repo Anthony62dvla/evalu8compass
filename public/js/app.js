@@ -16,9 +16,11 @@
   const GRADE_COLOR = {
     "exceptional": "var(--g-exc)", "strong standard": "var(--g-strong)", "expected standard": "var(--g-exp)",
     "needs attention": "var(--g-att)", "urgent improvement": "var(--g-urg)", "met": "var(--met)", "not met": "var(--no)",
+    "likely to be met": "var(--met)", "at risk": "var(--no)", "insufficient evidence": "var(--na)",
   };
 
-  const Y = window.HWWD.sync, G = window.HWWD.progress;
+  const Y = window.HWWD.sync, G = window.HWWD.progress, NS = window.HWWD.newschool;
+  const isNew = () => state.profile.type === "independent" && !!state.profile.newSchool;
   let state = S.DEFAULT();
   let view = [];
   let filter = "all";
@@ -36,6 +38,12 @@
     $("pBy").value = p.by || "";
     $("pDate").value = p.date || "";
     $("pSpecial").checked = !!p.special;
+    $("pNewRow").classList.toggle("hide", p.type !== "independent");
+    $("pNew").checked = !!p.newSchool;
+    $("pOpenedRow").classList.toggle("hide", !isNew());
+    $("pOpened").value = p.opened || "";
+    $("pDue").textContent = isNew() ? (p.opened ? `First standard inspection expected by ${NS.dueBy(p.opened)}, within the first year of operation.` : "Your first standard inspection comes within your first year of operation.") : "";
+    const rb = $("reviewBtn"); if (rb) rb.innerHTML = I("sparkles", 20) + (isNew() ? "First inspection readiness" : "Inspector review");
     applyAI();
     $("types").innerHTML = C.SCHOOL_TYPES.map(t => `<button class="opt" data-type="${t.id}" aria-pressed="${p.type === t.id}">${I(TYPE_ICON[t.id], 24)}<span>${esc(t.label)}<small>${esc(t.hint)}</small></span></button>`).join("");
     renderBrand();
@@ -63,14 +71,14 @@
     const f = ofFindings(id); if (!f.length) return "";
     return f.map(x => `<div class="of-flag indent ${x.type === "strength" ? "strength" : ""}">${I(x.type === "strength" ? "circle-check" : "alert-triangle", 16)}<span><b>Ofsted ${x.type === "strength" ? "strength" : "concern"}:</b> ${esc(x.finding)}</span></div>`).join("");
   }
-  const gradeKey = g => { g = String(g || "").toLowerCase(); return /exceptional/.test(g) ? "exceptional" : /strong/.test(g) ? "strong" : /attention/.test(g) ? "attention" : /urgent/.test(g) ? "urgent" : /outstanding/.test(g) ? "outstanding" : /requires/.test(g) ? "ri" : /inadequate/.test(g) ? "inadequate" : /^good/.test(g) ? "good" : /not met|not effective/.test(g) ? "notmet" : /met|effective/.test(g) ? "met" : "expected"; };
+  const gradeKey = g => { g = String(g || "").toLowerCase(); return /unlikely/.test(g) ? "notmet" : /likely to be met/.test(g) ? "met" : /exceptional/.test(g) ? "exceptional" : /strong/.test(g) ? "strong" : /attention/.test(g) ? "attention" : /urgent/.test(g) ? "urgent" : /outstanding/.test(g) ? "outstanding" : /requires/.test(g) ? "ri" : /inadequate/.test(g) ? "inadequate" : /^good/.test(g) ? "good" : /not met|not effective/.test(g) ? "notmet" : /met|effective/.test(g) ? "met" : "expected"; };
   function renderOfsted() {
     const box = $("ofstedBody"); if (!box) return;
     if (Y.mode() !== "server") { box.innerHTML = `<p class="of-intro">Uploading your Ofsted report needs a connection to your school's account.</p>`; return; }
     if (ofBusy) { box.innerHTML = `<div class="thinking">Reading your report. This usually takes under a minute…</div>`; return; }
     const r = ofReading();
     if (r) {
-      const o = state.ofsted, fw = { renewed: "renewed framework", earlier: "earlier framework" }[r.framework] || r.framework || "";
+      const o = state.ofsted, fw = { renewed: "renewed framework", earlier: "earlier framework", "pre-registration": "pre-registration inspection" }[r.framework] || r.framework || "";
       const concerns = (r.findings || []).filter(f => f.type === "concern" && f.itemId).length;
       box.innerHTML = `<div class="of-meta">${o.filename ? `<span>${I("file-text", 16)} <b>${esc(o.filename)}</b></span>` : ""}${r.inspectionDate ? `<span>Inspected <b>${esc(r.inspectionDate)}</b></span>` : ""}${fw ? `<span>${esc(fw)}</span>` : ""}${r.safeguarding ? `<span>Safeguarding <b>${esc(r.safeguarding)}</b></span>` : ""}</div>
         ${(r.grades || []).length ? `<div class="of-grades">${r.grades.map(g => `<span class="of-grade" data-g="${gradeKey(g.grade)}">${esc(g.area)}<b>${esc(g.grade)}</b></span>`).join("")}</div>` : ""}
@@ -78,6 +86,15 @@
         ${(r.nextSteps || []).length ? `<div><b>Next steps in the report</b><ol class="of-steps">${r.nextSteps.map(x => `<li>${esc(x)}</li>`).join("")}</ol></div>` : ""}
         <p class="of-intro">${concerns ? `${concerns} concern${concerns === 1 ? " is" : "s are"} linked to checklist lines and marked <b>Ofsted concern</b> below. ` : ""}Your staff workshops and AI suggestions use this report too. Read by AI: check it against the report.</p>
         <div class="of-row"><button class="btn" id="ofReplace">${I("file-upload", 18)}Replace with a newer report</button><button class="btn" id="ofRemove">${I("trash", 18)}Remove</button></div>`;
+      return;
+    }
+    if (isNew()) {
+      box.innerHTML = `<p class="of-intro">As a new school, upload your <b>pre-registration inspection report</b>. The AI reads which independent school standards were judged likely or unlikely to be met, and links anything unlikely to be met to your checklist. Your first-inspection readiness and AI suggestions then take it into account.</p>
+      <div class="of-row"><label class="btn filebtn">${I("file-upload", 18)}Choose PDF<input type="file" id="ofFile" accept="application/pdf"></label><span class="muted" id="ofName">${ofFile ? esc(ofFile.name) : "No file chosen"}</span></div>
+      <details><summary>Or paste the report text</summary><textarea id="ofText" placeholder="Paste the full report text here"></textarea></details>
+      <div class="of-row"><button class="btn ai" id="ofRead"${aiOn() ? "" : " disabled"}>${I("sparkles", 18)}Read the report</button>
+        <span class="muted">${aiOn() ? "Uses one AI request." : "Reading the report needs AI suggestions switched on in Step 1."}</span></div>
+      <p class="error" id="ofErr" role="alert"></p>`;
       return;
     }
     box.innerHTML = `<p class="of-intro">Upload your most recent Ofsted report and the AI will read it for you: the grades, the next steps, and which checklist lines it raised. You only need to do this once: your staff workshops and improvement plans use it too.</p>
@@ -119,6 +136,52 @@
     if (b.id === "ofRemove") {
       const keep = state.ofsted; state.ofsted = null; save(); renderOfsted(); renderAreas();
       undo("Ofsted report removed", () => { state.ofsted = keep; save(); renderOfsted(); renderAreas(); });
+    }
+  });
+
+  /* ---------- New independent school: first standard inspection readiness ---------- */
+  const STAGE_ICON = { open: "lock", ht1: "calendar-check", t1: "list-check", first: "file-certificate" };
+  function firstItems() { return isNew() && view.length ? NS.evaluate(view, state.answers) : []; }
+  function renderFirst() {
+    const box = $("firstInsp"); if (!box) return;
+    if (!isNew()) { box.innerHTML = ""; return; }
+    const items = firstItems(); if (!items.length) { box.innerHTML = ""; return; }
+    const done = items.filter(i => i.status === "met").length, p = state.profile, m = NS.monthsOpen(p.opened), shut = !!state.collapsed._first;
+    const lineName = id => { for (const a of view) { const i = a.items.find(x => x.id === id); if (i) return i.text.length > 60 ? i.text.slice(0, 58) + "…" : i.text; } return id; };
+    box.innerHTML = `<section class="first" aria-labelledby="firstTitle">
+      <div class="first-head"><span class="tile">${I("school", 24)}</span>
+        <div><h2 id="firstTitle">Ready for your first standard inspection?</h2>
+        <p>Your pre-registration inspection checked your plans. Your first standard inspection, ${p.opened ? `expected by ${esc(NS.dueBy(p.opened))}` : "within your first year"}, checks that every standard is met in practice. This is what must be up and running, in order${m != null && m >= 0 ? `. You've been open about ${m} month${m === 1 ? "" : "s"}` : ""}.</p></div>
+        <span class="spacer"></span><span class="first-count">${done} of ${items.length}<small>in place</small></span>
+        <button class="btn" id="firstToggle" aria-expanded="${!shut}" aria-controls="firstBody">${I("chevron-down", 18, shut ? "" : "flip")}${shut ? "Show the list" : "Hide the list"}</button></div>
+      <div class="first-body${shut ? " hide" : ""}" id="firstBody">
+        ${NS.STAGES.map(st => {
+          const list = items.filter(i => i.stage === st.id); if (!list.length) return "";
+          return `<h3 class="first-stage">${I(STAGE_ICON[st.id], 20)}${esc(st.label)}</h3>` + list.map(i => `<div class="first-item">
+            <span class="fstat ${i.status}">${esc(i.statusLabel)}</span><b>${esc(i.title)}</b>
+            <span class="ev">${esc(i.evidence)}</span><span class="ref">${esc(i.ref)}</span>
+            <span class="lines">${i.lines.map(id => `<button data-goline="${id}">${esc(lineName(id))}</button>`).join("")}</span></div>`).join("");
+        }).join("")}
+        <div class="row" style="margin-top:10px"><button class="btn" id="firstActions">${I("target", 18)}Add actions for what isn't in place yet</button>
+          <span class="small muted">Statuses come from your ratings of the linked lines. Rate them to keep this up to date.</span></div>
+      </div></section>`;
+  }
+  $("firstInsp").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.goline) {
+      const li = document.querySelector(`.item[data-k="${b.dataset.goline}"]`); if (!li) return;
+      const area = li.dataset.area; if (state.collapsed[area]) { state.collapsed[area] = false; save(); $("a-" + area).classList.remove("collapsed"); }
+      li.scrollIntoView({ behavior: "smooth", block: "center" }); const t = li.querySelector(".st"); if (t) t.focus({ preventScroll: true });
+      return;
+    }
+    if (b.id === "firstToggle") { state.collapsed._first = !state.collapsed._first; if (!state.collapsed._first) delete state.collapsed._first; save(); renderFirst(); return; }
+    if (b.id === "firstActions") {
+      const have = new Set((state.actions || []).filter(a => a.source === "first").map(a => a.title));
+      const todo = firstItems().filter(i => i.status !== "met" && !have.has(i.title));
+      if (!todo.length) return toast("Everything not yet in place already has an action.");
+      const weeks = { open: 1, ht1: 4, t1: 10, first: 26 };
+      todo.forEach(i => P.add({ title: i.title, detail: `${i.evidence}\n(${i.ref})`, itemId: i.lines[0], source: "first", due: new Date(Date.now() + weeks[i.stage] * 7 * 864e5).toISOString().slice(0, 10) }, true));
+      P.render(); toast(`Added ${todo.length} action${todo.length === 1 ? "" : "s"} to your action plan`);
     }
   });
 
@@ -195,6 +258,7 @@
       .map(([k, l, n]) => `<span><i style="background:var(--${k})"></i>${l} ${n}</span>`).join("") +
       `<span><i style="background:var(--na-soft);outline:1px solid var(--line)"></i>To assess ${c.todo}</span>`;
     applyFilter();
+    renderFirst();
   }
   function applyFilter() {
     document.querySelectorAll(".item").forEach(li => {
@@ -269,7 +333,13 @@
     $("review").innerHTML = '<section class="review"><div class="review-body"><div class="thinking">The inspector is reading your self-assessment. This can take up to a minute…</div></div></section>';
     if ($("review").scrollIntoView) $("review").scrollIntoView({ behavior: "smooth", block: "start" });
     try {
-      const r = await AI.ask("review", reviewData());
+      let r;
+      if (isNew()) {
+        const d = reviewData(), p = state.profile, o = ofReading();
+        r = await AI.ask("first", { ctx: d.ctx, areas: d.areas, opened: p.opened, monthsOpen: NS.monthsOpen(p.opened), dueBy: NS.dueBy(p.opened), items: firstItems(),
+          ofsted: o ? { date: o.inspectionDate, framework: o.framework, grades: o.grades || [], nextSteps: o.nextSteps || [], summary: o.summary || "" } : null });
+        r = { ...r, kind: "first" };
+      } else r = await AI.ask("review", reviewData());
       state.review = { ...r, at: new Date().toISOString() };
       save(); renderReview();
     } catch (e) {
@@ -281,14 +351,15 @@
     if (!r) { $("review").innerHTML = ""; return; }
     const areas = Array.isArray(r.areas) ? r.areas : [], pr = Array.isArray(r.priorities) ? r.priorities : [], str = Array.isArray(r.strengths) ? r.strengths : [];
     $("review").innerHTML = `<section class="review" aria-labelledby="revTitle">
-      <div class="review-head"><span class="tile ai">${I("sparkles", 24)}</span><div><h2 id="revTitle">Inspector readiness review</h2>${r.notice ? `<p>${esc(r.notice)}</p>` : ""}<p>${esc(r.overall)}</p></div>
+      <div class="review-head"><span class="tile ai">${I("sparkles", 24)}</span><div><h2 id="revTitle">${r.kind === "first" ? "First standard inspection readiness" : "Inspector readiness review"}</h2>${r.readiness ? `<span class="readiness">${esc(r.readiness)}</span>` : ""}${r.notice ? `<p>${esc(r.notice)}</p>` : ""}<p>${esc(r.overall)}</p></div>
         <button class="btn" id="closeReview">${I("x", 18)}Hide review</button></div>
       <div class="review-body">
-        <div><h3>Indicative grades</h3><div class="grades">${areas.map(g => `<div class="gcard" style="--gc:${GRADE_COLOR[String(g.grade).toLowerCase()] || "var(--na)"}"><b>${esc(g.area)}</b><span class="gl">${esc(g.grade)}</span><p>${esc(g.why)}</p></div>`).join("")}</div></div>
+        ${areas.length ? `<div><h3>${r.kind === "first" ? "Independent school standards (indicative)" : "Indicative grades"}</h3><div class="grades">${areas.map(g => `<div class="gcard" style="--gc:${GRADE_COLOR[String(g.grade).toLowerCase()] || "var(--na)"}"><b>${esc(g.area)}</b><span class="gl">${esc(g.grade)}</span><p>${esc(g.why)}</p></div>`).join("")}</div></div>` : ""}
+        ${Array.isArray(r.evidenceToGather) && r.evidenceToGather.length ? `<div><h3>Evidence to build up before the inspection</h3><ul>${r.evidenceToGather.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
         ${pr.length ? `<div><h3>Improvement priorities</h3><ol class="prio">${pr.map((p, n) => `<li><b>${esc(p.title)}</b><span class="meta2">${esc(p.area)}${p.lead ? " · Lead: " + esc(p.lead) : ""}${p.timescale ? " · " + esc(p.timescale) : ""}</span>
           <ul>${(p.actions || []).map(a => `<li>${esc(a)}</li>`).join("")}</ul>${p.successLooksLike ? `<span class="meta2">Success looks like: ${esc(p.successLooksLike)}</span>` : ""}
           <button class="advice-add" data-addprio="${n}">${I("target", 14)}Add to action plan</button></li>`).join("")}</ol></div>` : ""}
-        ${Array.isArray(r.complianceChecks) && r.complianceChecks.length ? `<div><h3>Compliance checks (fix now)</h3><ul>${r.complianceChecks.map(c => `<li>${esc(c.item)}${c.lead ? ` <span class="meta2">${esc(c.lead)}</span>` : ""}</li>`).join("")}</ul></div>` : ""}
+        ${Array.isArray(r.complianceChecks) && r.complianceChecks.length ? `<div><h3>Compliance checks (fix now)</h3><ul>${r.complianceChecks.map(c => `<li>${esc(c.item)}${c.lead ? ` <span class="meta2">(${esc(c.lead)})</span>` : ""}</li>`).join("")}</ul></div>` : ""}
         ${str.length ? `<div><h3>Strengths to showcase</h3><p>${str.map(esc).join(" · ")}</p></div>` : ""}
         <p class="disclaimer">${r.offline ? "Worked out from your ratings because the AI inspector isn't connected." : "Generated by the AI inspector"}${r.at ? " on " + new Date(r.at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) : ""}. Indicative only, not an Ofsted judgement.</p>
       </div></section>`;
@@ -506,6 +577,8 @@
     r.readAsDataURL(f);
   });
   $("pLogoRemove").onclick = () => { delete state.profile.logo; save(); renderBrand(); };
+  $("pNew").addEventListener("change", e => { state.profile.newSchool = e.target.checked; save(); renderSetup(); renderOfsted(); renderFirst(); });
+  $("pOpened").addEventListener("change", e => { state.profile.opened = e.target.value; save(); renderSetup(); renderFirst(); });
   $("pSpecial").addEventListener("change", e => { state.profile.special = e.target.checked; save(); renderAreas(); });
   $("pAI").addEventListener("change", e => { state.profile.ai = e.target.checked; save(); applyAI(); if (!ofReading()) renderOfsted(); P.render(); toast(e.target.checked ? "AI suggestions switched on" : "AI suggestions switched off. Nothing will be sent to the AI."); });
   $("planCopy").onclick = () => copyText(planText(), $("copyBox"), $("copyPanel"), $("copyMsg"));

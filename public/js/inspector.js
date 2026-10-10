@@ -22,8 +22,8 @@
         kind: "artifact",
         label: "AI inspector (your Claude account)",
         run: (task, data) => {
-          const build = { item: P().itemPrompt, review: P().reviewPrompt, action: P().actionPrompt, draft: P().draftPrompt }[task];
-          return sample.json(P().withSystem(build(data)), { modelTier: task === "review" || task === "draft" ? "complex" : "default", cache: false });
+          const build = { item: P().itemPrompt, review: P().reviewPrompt, action: P().actionPrompt, draft: P().draftPrompt, first: P().firstPrompt }[task];
+          return sample.json(P().withSystem(build(data)), { modelTier: task === "item" || task === "action" ? "default" : "complex", cache: false });
         },
       };
     } catch (e) { return null; }
@@ -67,6 +67,21 @@
     }
     if (task === "draft") {
       return Promise.resolve({ offline: true, actions: data.gaps.slice(0, 12).map(g => ({ itemId: g.id, title: g.text, steps: fallbackFor(g.id).slice(0, 3), owner: "Area lead", dueInWeeks: g.status === "no" ? 6 : 12, success: "This line can be rated Met with evidence to hand." })) });
+    }
+    if (task === "first") {
+      const items = data.items || [], gaps = items.filter(i => i.status === "no" || i.status === "part" || i.status === "todo");
+      const order = { no: 0, part: 1, todo: 2 };
+      gaps.sort((a, b) => order[a.status] - order[b.status]);
+      const notYet = items.filter(i => i.status === "no").length;
+      return Promise.resolve({
+        offline: true,
+        overall: `Worked out from your ratings. ${items.length - gaps.length} of ${items.length} things that must be running by your first standard inspection are in place${notYet ? `, and ${notYet} ${notYet === 1 ? "is" : "are"} not yet in place` : ""}.`,
+        readiness: notYet > 2 ? "Significant gaps" : gaps.length ? "Some gaps to close" : "On track",
+        areas: [],
+        priorities: gaps.slice(0, 4).map(i => ({ title: i.title, area: i.ref, actions: [i.evidence], lead: "Headteacher", timescale: i.stage === "open" ? "Now" : i.stage === "ht1" ? "This half-term" : i.stage === "t1" ? "This term" : "Before the inspection", successLooksLike: i.evidence })),
+        evidenceToGather: items.filter(i => i.stage === "first" || i.stage === "t1").map(i => i.evidence),
+        strengths: items.filter(i => i.status === "met").map(i => i.title),
+      });
     }
     if (task === "item") {
       const area = C.AREAS.find(a => a.name === data.area);

@@ -425,7 +425,7 @@
   function reportHTML(r) {
     const con = (r.findings || []).filter(f => f.type === "concern"), str = (r.findings || []).filter(f => f.type === "strength");
     return `<div class="out">
-      <p><b>${esc(r.filename || "Ofsted report")}</b>${r.inspectionDate ? ` · inspected ${esc(r.inspectionDate)}` : ""}${r.framework ? ` · ${esc(({ renewed: "renewed framework", earlier: "earlier framework" }[r.framework] || r.framework))}` : ""}${r.safeguarding ? ` · safeguarding ${esc(r.safeguarding)}` : ""}</p>
+      <p><b>${esc(r.filename || "Ofsted report")}</b>${r.inspectionDate ? ` · inspected ${esc(r.inspectionDate)}` : ""}${r.framework ? ` · ${esc(({ renewed: "renewed framework", earlier: "earlier framework", "pre-registration": "pre-registration inspection" }[r.framework] || r.framework))}` : ""}${r.safeguarding ? ` · safeguarding ${esc(r.safeguarding)}` : ""}</p>
       ${r.summary ? `<p>${esc(r.summary)}</p>` : ""}
       ${(r.grades || []).length ? `<div><h4>Grades</h4><ul>${r.grades.map(g => `<li>${esc(g.area)}: <b>${esc(g.grade)}</b></li>`).join("")}</ul></div>` : ""}
       ${(r.nextSteps || []).length ? `<div><h4>Next steps in the report</h4><ul>${r.nextSteps.map(s => `<li>${esc(s)}</li>`).join("")}</ul></div>` : ""}

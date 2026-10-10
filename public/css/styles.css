@@ -136,10 +136,11 @@ header p { margin: 0; color: var(--muted); max-width: 62ch }
 .gcard .gl { font-size: 12.5px; font-weight: 700; color: var(--gc, var(--na)) }
 .gcard p { margin: 4px 0 0; font-size: 13px; color: var(--muted) }
 .prio { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; counter-reset: p }
-.prio li { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px 10px 46px; position: relative; counter-increment: p }
-.prio li::before { content: counter(p); position: absolute; left: 12px; top: 10px; width: 24px; height: 24px; border-radius: 50%; background: var(--ai); color: var(--surface); font-size: 12px; font-weight: 700; display: grid; place-items: center }
+.prio > li { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px 10px 46px; position: relative; counter-increment: p }
+.prio > li::before { content: counter(p); position: absolute; left: 12px; top: 10px; width: 24px; height: 24px; border-radius: 50%; background: var(--ai); color: var(--surface); font-size: 12px; font-weight: 700; display: grid; place-items: center }
 .prio b { display: block }
-.prio ul { margin: 6px 0; padding-left: 18px; font-size: 13.5px }
+.prio ul { margin: 6px 0; padding-left: 18px; font-size: 13.5px; list-style: disc }
+.prio ul li { margin-bottom: 3px }
 .prio .meta2 { font-size: 12.5px; color: var(--muted) }
 .disclaimer { font-size: 12px; color: var(--muted); margin: 0 }
 
@@ -327,3 +328,31 @@ footer a { color: var(--accent); font-weight: 600 }
 .of-flag .ic { flex: none; color: var(--part); margin-top: 1px }
 .of-flag.strength { background: var(--met-soft) } .of-flag.strength .ic { color: var(--met) }
 .of-flag b { font-weight: 700 }
+
+/* New independent schools: first standard inspection readiness */
+.newschool { display: grid; gap: 8px; border-left: 3px solid var(--accent); padding-left: 12px }
+.newschool-date { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center }
+.newschool-date label { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted) }
+.newschool-date input { min-height: 44px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink); font: inherit }
+.first { margin-top: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden }
+.first-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 16px 18px; background: var(--accent-soft) }
+.first-head h2 { margin: 0; font-size: 19px }
+.first-head p { margin: 2px 0 0; color: var(--muted); font-size: 14px }
+.first-head .spacer { flex: 1 }
+.first-count { font: 700 26px var(--display); color: var(--accent); white-space: nowrap }
+.first-count small { font: 600 12px var(--body); color: var(--muted); display: block }
+.first-body { padding: 6px 18px 18px; display: grid; gap: 4px }
+.first-stage { margin: 12px 0 4px; font-size: 15px; display: flex; gap: 8px; align-items: center }
+.first-stage .ic { color: var(--icon) }
+.first-item { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; padding: 10px 0; border-top: 1px solid var(--line) }
+.first-item b { font-size: 15px }
+.first-item .ev { grid-column: 2; color: var(--muted); font-size: 13.5px }
+.first-item .ref { grid-column: 2; font-size: 12.5px; color: var(--accent); font-weight: 600 }
+.first-item .lines { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px }
+.first-item .lines button { border: 0; background: none; padding: 0; color: var(--accent); text-decoration: underline; font: 600 12.5px var(--body); cursor: pointer }
+.fstat { font: 700 12px var(--body); border-radius: 999px; padding: 3px 9px; white-space: nowrap; align-self: start; margin-top: 1px }
+.fstat.met { background: var(--met-soft); color: var(--met) } .fstat.part { background: var(--part-soft); color: var(--part) }
+.fstat.no { background: var(--no-soft); color: var(--no) } .fstat.todo { background: var(--na-soft); color: var(--muted) }
+.readiness { font: 700 13px var(--body); border-radius: 999px; padding: 4px 10px; background: var(--accent-soft); color: var(--accent) }
+.ic.flip { transform: rotate(180deg) }
+.first-item .lines { gap: 4px 12px } .first-item .lines button { min-height: 24px; min-width: 24px; padding: 3px 0; text-align: left }

@@ -40,7 +40,7 @@ const LIMITS = {
 };
 // Pages that need a school access code (staff joining a workshop never do)
 const PROTECTED_PAGES = new Set(["/checklist.html", "/report.html"]);
-const AI_TASKS = ["item", "review", "action", "draft"];
+const AI_TASKS = ["item", "review", "action", "draft", "first"];
 const hits = new Map();
 // Browser security headers for every response. Scripts may only come from this site
 // (no inline scripts, no third-party anything): fonts are served from this site too.
@@ -130,12 +130,12 @@ async function inspector(req, res, account) {
   try { body = JSON.parse(await readBody(req)); } catch { return json(res, 400, { error: "Invalid JSON body" }); }
   const { task, data } = body || {};
   if (!data || !data.ctx || !AI_TASKS.includes(task)) return json(res, 400, { error: "Expected { task: " + AI_TASKS.join("|") + ", data }" });
-  const build = { item: prompts.itemPrompt, review: prompts.reviewPrompt, action: prompts.actionPrompt, draft: prompts.draftPrompt }[task];
+  const build = { item: prompts.itemPrompt, review: prompts.reviewPrompt, action: prompts.actionPrompt, draft: prompts.draftPrompt, first: prompts.firstPrompt }[task];
   try {
     const result = await ai.askJson({
       system: prompts.SYSTEM,
       content: build(data),
-      maxTokens: { item: 1500, review: 3000, action: 1200, draft: 4000 }[task],
+      maxTokens: { item: 1500, review: 3000, action: 1200, draft: 4000, first: 5000 }[task],
       account,
     });
     return json(res, 200, { result, allowance: usage.status(account) });

@@ -8,7 +8,7 @@
 (function (root) {
   const STATUS = { todo: "Not started", doing: "In progress", done: "Done" };
   const STATUS_ICON = { todo: "circle-minus", doing: "circle-half-2", done: "circle-check" };
-  const SOURCE = { gap: "From a gap", ai: "AI draft", review: "From inspector review", advice: "From AI suggestion", workshop: "From staff workshop", manual: "Added by you" };
+  const SOURCE = { gap: "From a gap", ai: "AI draft", review: "From inspector review", advice: "From AI suggestion", workshop: "From staff workshop", first: "First inspection readiness", manual: "Added by you" };
   let H, I, esc, el;            // host helpers, set in init
   let filter = "all";
   const busy = new Set();

@@ -136,6 +136,7 @@ ${hasPdf ? "The school's most recent Ofsted report is attached." : `The school's
 
 HOW TO READ IT
 - Renewed-framework report cards (from November 2025) grade each evaluation area on the scale Exceptional, Strong standard, Expected standard, Needs attention, Urgent improvement. Areas are usually: Inclusion; Curriculum and teaching; Achievement; Attendance and behaviour; Personal development and well-being; Leadership and governance; plus Early years and/or Post-16 provision where the school has them. Safeguarding is "met" or "not met". There is no overall effectiveness grade.
+- Pre-registration inspection reports (for proposed independent schools, before they open) have no grades. They judge whether each independent school standard is "likely to be met" or "unlikely to be met". For these, set framework to "pre-registration", put each part of the standards the report covers in grades as {"area": "Part 3: Welfare, health and safety", "grade": "Likely to be met"} (or "Unlikely to be met", naming any paragraph that is unlikely to be met), and put the overall outcome in summary. Treat every standard unlikely to be met as a concern. Use nextSteps for anything the report says must be put right; otherwise leave it empty.
 - Earlier-framework reports use Outstanding, Good, Requires improvement and Inadequate, with an overall effectiveness grade, and say whether safeguarding is effective. Report those grades exactly as written; don't convert them to the new scale.
 - Report every grade and next step the report gives, including early years or post-16, even if the school's phases above don't list them (the school's settings may be out of date). The rule about phases applies to your advice, not to reading the report.
 - Take grades only from what the report states for THIS school. Ignore any section that explains what the grades mean in general (for example "Our grades explained"), the grade key, and the "Facts and figures" data tables: they are not findings about this school.
@@ -147,7 +148,7 @@ HOW TO READ IT
 TASK
 Read the report and extract what matters for improvement planning. Map each finding to the checklist line it relates to most closely, using the ids above. Paraphrase findings in your own words; never copy long passages.
 Reply with only JSON in this shape:
-{"inspectionDate":"as stated, or null","framework":"renewed|earlier",
+{"inspectionDate":"as stated, or null","framework":"renewed|earlier|pre-registration",
  "grades":[{"area":"area name exactly as in the report","grade":"grade exactly as in the report"}],
  "safeguarding":"met|not met|effective|not effective|null",
  "summary":"3-4 sentence overview",
@@ -222,10 +223,45 @@ Reply with only JSON in this shape:
  "staffMessage":"a short, warm message (80-120 words) the headteacher can share with staff, thanking them and explaining how their views shaped the plan"}`;
   }
 
+  /** New independent school → what must be in place for the first standard inspection. */
+  function firstPrompt({ ctx, opened, monthsOpen, dueBy, items, areas, ofsted }) {
+    const STAGE = { open: "Before pupils start", ht1: "First half-term", t1: "By the end of the first term", first: "Before the first standard inspection" };
+    const rows = (items || []).map(i => `  [${STAGE[i.stage] || i.stage}] ${i.title} (${i.ref}): ${i.statusLabel}`).join("\n");
+    const gaps = (areas || []).map(a => {
+      const g = a.items.filter(i => i.status === "no" || i.status === "part").map(i => `  - [${i.status === "no" ? "Not yet" : "Partly"}] ${i.text}${i.note ? ` (note: ${String(i.note).slice(0, 200)})` : ""}`).join("\n");
+      return g ? `${a.name}\n${g}` : "";
+    }).filter(Boolean).join("\n\n");
+    return `SCHOOL
+${describe(ctx)} It is a NEW independent school: it has had its pre-registration inspection and has not yet had its first standard inspection, which takes place within its first year of operation.
+${opened ? `Opened (or due to open): ${opened}. ${monthsOpen != null ? (monthsOpen < 0 ? "Not yet open." : `Open for about ${monthsOpen} month${monthsOpen === 1 ? "" : "s"}.`) : ""} First standard inspection expected by ${dueBy || "the end of its first year"}.` : "Opening date not given."}
+
+PRE-REGISTRATION OR LATEST REPORT
+${ofsted ? `${ofsted.framework || ""} ${ofsted.date ? "dated " + ofsted.date : ""}. Outcomes: ${(ofsted.grades || []).map(g => `${g.area}: ${g.grade}`).join("; ") || "not given"}. ${ofsted.summary || ""} Points to put right: ${(ofsted.nextSteps || []).join(" | ") || "none listed"}` : "Not provided."}
+
+WHAT MUST BE RUNNING BY THE FIRST STANDARD INSPECTION (status from the school's own ratings)
+${rows}
+
+GAPS IN THE SCHOOL'S SELF-EVALUATION
+${gaps || "(none recorded)"}
+
+TASK
+Act as an experienced inspector of independent schools. Evaluate how ready this new school is for its first standard inspection. A pre-registration inspection only checked policies and plans; the first standard inspection checks that every independent school standard is met in practice and evaluates the toolkit areas from what is actually happening. Focus on what must be in place and working, and what evidence of implementation the school needs to build up before the inspection. Take account of how long the school has been open: don't expect a year of outcomes after one term, but do expect registers, the single central record, safeguarding records, the curriculum being taught as written, and assessment records from the start.
+Give an indicative judgement for each part of the independent school standards and for safeguarding: "Likely to be met", "At risk" or "Insufficient evidence".
+Reply with only JSON in this shape:
+{"overall":"2-3 sentence summary of readiness for the first standard inspection",
+ "readiness":"On track|Some gaps to close|Significant gaps",
+ "areas":[{"area":"e.g. Part 3: Welfare, health and safety","grade":"Likely to be met|At risk|Insufficient evidence","why":"one sentence"}],
+ "priorities":[{"title":"short title","area":"area or standard","actions":["action 1","action 2"],"lead":"role","timescale":"e.g. before the end of the first term","successLooksLike":"what an inspector would see in operation"}],
+ "evidenceToGather":["evidence of implementation to build up before the inspection"],
+ "complianceChecks":[{"item":"policy or statutory item to put right now","lead":"role"}],
+ "strengths":["what is already working well"]}
+Give exactly 4 priorities, ordered by risk of a standard not being met. Anything that puts pupils' safety or a standard at risk comes first.`;
+  }
+
   /** For providers with no separate system prompt (artifact mode): persona + task in one message. */
   function withSystem(body) { return SYSTEM + "\n\n" + body; }
 
-  const api = { SYSTEM, itemPrompt, reviewPrompt, actionPrompt, draftPrompt, reportPrompt, themesPrompt, planPrompt, describe, withSystem };
+  const api = { SYSTEM, firstPrompt, itemPrompt, reviewPrompt, actionPrompt, draftPrompt, reportPrompt, themesPrompt, planPrompt, describe, withSystem };
   root.HWWD = Object.assign(root.HWWD || {}, { prompts: api });
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : globalThis);

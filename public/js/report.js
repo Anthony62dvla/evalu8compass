@@ -56,9 +56,21 @@
     B.push({ t: "table", widths: [34, 9, 9, 9, 8, 12, 19], head: ["Evaluation area", "Met", "Partly", "Not yet", "N/A", "Not assessed", "Status"],
       rows: view.map(a => { const ac = cnt(a.items); return [a.name, num(ac.met), num(ac.part), num(ac.no), num(ac.na), num(ac.todo), status(a, ac)]; }) });
 
+    const NS = window.HWWD.newschool;
+    if (p.type === "independent" && p.newSchool && NS) {
+      const items = NS.evaluate(view, st.answers), done = items.filter(i => i.status === "met").length;
+      B.push({ t: "h1", text: "First standard inspection readiness", pb: true });
+      B.push({ t: "p", text: `${p.name || "The school"} is a new independent school. Its pre-registration inspection checked its plans; its first standard inspection, ${p.opened ? "expected by " + NS.dueBy(p.opened) : "within its first year of operation"}, checks that every independent school standard is met in practice. ${done} of ${items.length} things that must be running by then are in place.` });
+      const tone2 = s => tone(NS.LABEL[s], s === "todo" ? "na" : s);
+      NS.STAGES.forEach(stg => {
+        const list = items.filter(i => i.stage === stg.id); if (!list.length) return;
+        B.push({ t: "h2", text: stg.label });
+        B.push({ t: "table", widths: [36, 16, 48], head: ["What must be in place", "Status", "What inspectors will look for"], rows: list.map(i => [{ text: i.title, sub: i.ref }, tone2(i.status), i.evidence]) });
+      });
+    }
     const of = st.ofsted && st.ofsted.reading;
     if (of) {
-      const fw = { renewed: "renewed framework", earlier: "earlier framework" }[of.framework] || of.framework || "";
+      const fw = { renewed: "renewed framework", earlier: "earlier framework", "pre-registration": "pre-registration inspection" }[of.framework] || of.framework || "";
       B.push({ t: "h2", text: "Latest Ofsted report" });
       B.push({ t: "p", text: [of.inspectionDate ? "Inspected " + of.inspectionDate : "", fw, of.safeguarding ? "Safeguarding " + of.safeguarding : ""].filter(Boolean).join(" · "), muted: true });
       if ((of.grades || []).length) B.push({ t: "table", widths: [60, 40], head: ["Area", "Grade"], rows: of.grades.map(g => [g.area, g.grade]) });
@@ -80,7 +92,8 @@
 
     const r = st.review;
     if (opts.ai && r && Array.isArray(r.areas)) {
-      B.push({ t: "h2", text: "AI inspector readiness review (indicative)" });
+      B.push({ t: "h2", text: r.kind === "first" ? "AI first standard inspection readiness (indicative)" : "AI inspector readiness review (indicative)" });
+      if (r.readiness) B.push({ t: "p", text: "Readiness: " + r.readiness, strong: true });
       if (r.overall) B.push({ t: "p", text: r.overall });
       B.push({ t: "table", widths: [30, 22, 48], head: ["Area", "Indicative grade", "Why"], rows: r.areas.map(g => [g.area, tone(g.grade, "ai"), g.why]) });
       if (Array.isArray(r.strengths) && r.strengths.length) { B.push({ t: "h2", text: "Strengths to showcase" }); B.push({ t: "list", items: r.strengths }); }
@@ -113,6 +126,7 @@
       if (opts.ai && r && Array.isArray(r.priorities) && r.priorities.length) {
         B.push({ t: "h2", text: "AI inspector review: suggested priorities" });
         B.push({ t: "list", items: r.priorities.map(x => `${x.title}${x.timescale ? " (" + x.timescale + ")" : ""}: ${(x.actions || []).join("; ")}`) });
+        if (Array.isArray(r.evidenceToGather) && r.evidenceToGather.length) { B.push({ t: "h2", text: "Evidence to build up before the inspection" }); B.push({ t: "list", items: r.evidenceToGather }); }
         if (Array.isArray(r.complianceChecks) && r.complianceChecks.length) { B.push({ t: "h2", text: "Compliance checks (fix now)" }); B.push({ t: "list", items: r.complianceChecks.map(c => c.item + (c.lead ? ` (${c.lead})` : "")) }); }
       }
     }
