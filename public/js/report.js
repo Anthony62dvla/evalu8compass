@@ -104,6 +104,7 @@
       if (opts.ai && r && Array.isArray(r.priorities) && r.priorities.length) {
         B.push({ t: "h2", text: "AI inspector review: suggested priorities" });
         B.push({ t: "list", items: r.priorities.map(x => `${x.title}${x.timescale ? " (" + x.timescale + ")" : ""}: ${(x.actions || []).join("; ")}`) });
+        if (Array.isArray(r.complianceChecks) && r.complianceChecks.length) { B.push({ t: "h2", text: "Compliance checks (fix now)" }); B.push({ t: "list", items: r.complianceChecks.map(c => c.item + (c.lead ? ` (${c.lead})` : "")) }); }
       }
     }
     B.push({ t: "note", text: DISCLAIMER });
@@ -160,7 +161,7 @@
     }
     if (opts.plan && d.plan) {
       const pl = d.plan;
-      B.push({ t: "h1", text: "Improvement plan", pb: true });
+      B.push({ t: "h1", text: "Improvement plan for this term", pb: true });
       if (pl.summary) B.push({ t: "p", text: pl.summary });
       (pl.priorities || []).forEach((x, n) => {
         B.push({ t: "h2", text: `${n + 1}. ${x.title}` });
@@ -170,6 +171,7 @@
         if (x.successCriteria) B.push({ t: "p", text: "Success looks like: " + x.successCriteria });
         if (x.monitoring) B.push({ t: "p", text: "Monitoring: " + x.monitoring });
       });
+      if ((pl.complianceChecks || []).length) { B.push({ t: "h2", text: "Compliance checks (fix now)" }); B.push({ t: "list", items: pl.complianceChecks.map(c => c.item + (c.lead ? ` (${c.lead}${c.by ? ", " + c.by : ""})` : "")) }); }
       if ((pl.quickWins || []).length) { B.push({ t: "h2", text: "Quick wins" }); B.push({ t: "list", items: pl.quickWins }); }
       if (pl.staffMessage) { B.push({ t: "h2", text: "Message to staff" }); B.push({ t: "p", text: pl.staffMessage }); }
     }

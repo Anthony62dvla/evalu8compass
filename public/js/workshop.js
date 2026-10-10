@@ -425,18 +425,20 @@
         ${fac && x.successCriteria ? `<span class="small"><b>Success looks like:</b> ${esc(x.successCriteria)}</span>` : ""}
         ${fac && x.monitoring ? `<span class="small"><b>Monitoring:</b> ${esc(x.monitoring)}</span>` : ""}
       </li>`).join("")}</ol>
+      ${fac && (p.complianceChecks || []).length ? `<div><h4>Compliance checks (fix now, alongside the plan)</h4><ul>${p.complianceChecks.map(c => `<li>${esc(c.item)}${c.lead ? ` <span class="muted small">(${esc(c.lead)}${c.by ? ", " + esc(c.by) : ""})</span>` : ""}</li>`).join("")}</ul></div>` : ""}
       ${(p.quickWins || []).length ? `<div><h4>Quick wins (next two weeks)</h4><ul>${p.quickWins.map(q => `<li>${esc(q)}</li>`).join("")}</ul></div>` : ""}
       ${fac && p.staffMessage ? `<div><h4>Message for staff (shown when you share the plan)</h4><div class="staffmsg">${esc(p.staffMessage)}</div></div>` : ""}
       <p class="muted small">${fac ? "AI draft for the headteacher to edit and adopt. Not an Ofsted judgement." : "Shared by your leadership team."}</p></div>`;
   }
   function planText(p) {
-    let t = `SCHOOL IMPROVEMENT PLAN – ${info.profile.name || "Our school"}\nFrom staff workshop ${code}, ${new Date().toLocaleDateString("en-GB")}\n\n${p.summary || ""}\n`;
+    let t = `SCHOOL IMPROVEMENT PLAN: THIS TERM – ${info.profile.name || "Our school"}\nFrom staff workshop ${code}, ${new Date().toLocaleDateString("en-GB")}\n\n${p.summary || ""}\n`;
     (p.priorities || []).forEach((x, n) => {
       t += `\n${n + 1}. ${x.title} (${x.area || ""})${(x.sources || []).length ? ` [${x.sources.join(", ")}]` : ""}\n${x.why || ""}\n`;
       (x.actions || []).forEach(a => { t += `   - ${a.action} | Lead: ${a.lead || "-"} | By: ${a.by || "-"} | Evidence: ${a.evidence || "-"}\n`; });
       if (x.successCriteria) t += `   Success: ${x.successCriteria}\n`;
       if (x.monitoring) t += `   Monitoring: ${x.monitoring}\n`;
     });
+    if ((p.complianceChecks || []).length) t += `\nCOMPLIANCE CHECKS (fix now)\n` + p.complianceChecks.map(c => `- ${c.item}${c.lead ? ` | Lead: ${c.lead}` : ""}${c.by ? ` | By: ${c.by}` : ""}`).join("\n") + "\n";
     if ((p.quickWins || []).length) t += `\nQUICK WINS\n` + p.quickWins.map(q => `- ${q}`).join("\n") + "\n";
     if (p.staffMessage) t += `\nMESSAGE FOR STAFF\n${p.staffMessage}\n`;
     return t;
@@ -458,6 +460,10 @@
       detail: [pr.title ? "Priority: " + pr.title : "", x.by ? "By: " + x.by : "", x.evidence ? "Evidence: " + x.evidence : ""].filter(Boolean).join("\n"),
       itemId: (pr.lines || [])[0] || "", owner: x.lead || "", due: "", success: pr.successCriteria || "", status: "todo", source: "workshop", createdAt: new Date().toISOString(),
     })));
+    ((aiState.plan && aiState.plan.complianceChecks) || []).forEach(c => actions.push({
+      id: Math.random().toString(36).slice(2, 10), title: c.item, detail: "Compliance check from the workshop plan" + (c.by ? "\nBy: " + c.by : ""),
+      itemId: "", owner: c.lead || "", due: "", success: "", status: "todo", source: "workshop", createdAt: new Date().toISOString(),
+    }));
     return { answers, notes, actions };
   }
   $("fExportChecklist").addEventListener("click", () => {

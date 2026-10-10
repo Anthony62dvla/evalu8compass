@@ -68,8 +68,9 @@ Reply with only JSON in this shape:
 {"overall":"2-3 sentence readiness summary",
  "areas":[{"area":"exact area name","grade":"Exceptional|Strong standard|Expected standard|Needs attention|Urgent improvement|Met|Not met|Insufficient evidence","why":"one sentence"}],
  "priorities":[{"title":"short title","area":"area name","actions":["action 1","action 2","action 3"],"lead":"role","timescale":"e.g. by half-term","successLooksLike":"what inspectors would see"}],
- "strengths":["strength to showcase", "..."]}
-Give 3 to 5 priorities, most urgent first. Safeguarding or statutory breaches always come first.`;
+ "strengths":["strength to showcase", "..."],
+ "complianceChecks":[{"item":"policy or statutory gap to put right","lead":"role"}]}
+Give 4 priorities for the coming term, ordered by the difference they will make to pupils. Any gap in safeguarding comes first; other policy or statutory gaps go in complianceChecks, not in priorities.`;
   }
 
   /* ---------- Action plan ---------- */
@@ -200,14 +201,18 @@ THEMES IN STAFF COMMENTS
 ${th}
 
 TASK
-Write a school improvement plan the headteacher can adopt. Base it on the agreed ratings first, then where staff and the Ofsted report point to the same issue. Where staff views and the report disagree, say so.
-Safeguarding and statutory compliance gaps come first. Keep to 4-6 priorities a school can realistically deliver in a year.
+Write a school improvement plan for the coming term that the headteacher can adopt and put in front of governors.
+- Exactly 4 priorities, ones the school can make real progress on this term. Each has 2 or 3 actions at most.
+- Order by what will make the biggest difference to pupils. Lead with the Ofsted report's next steps, then issues where staff views and agreed ratings point the same way. Where staff views and the report disagree, say so.
+- Policy, documentation and other statutory compliance gaps are NOT priorities. List them separately in complianceChecks: short "fix now" items with a lead. The only exceptions: if the report says safeguarding is not met or that independent school standards are unmet, that comes first as a priority.
+- Be proportionate to the school's grades: a school at Expected standard or above needs focused refinement, not a rebuild.
 For each priority list which sources support it: "agreed" (agreed rating), "staff" (workshop responses or comments), "ofsted" (report), "context" (setting information).
 Reply with only JSON in this shape:
 {"summary":"3-4 sentence overview of where the school is and where the plan takes it",
  "priorities":[{"title":"short title","area":"evaluation area","why":"1-2 sentences","sources":["agreed","staff","ofsted","context"],"lines":["checklist ids"],
    "actions":[{"action":"what will be done","lead":"role","by":"timescale e.g. Dec 2026 or end of spring term","evidence":"what will show it is done"}],
-   "successCriteria":"what inspectors and staff would see when this is achieved","monitoring":"who checks progress, how and how often"}],
+   "successCriteria":"what inspectors and staff would see by the end of term","monitoring":"who checks progress, how and how often"}],
+ "complianceChecks":[{"item":"policy or statutory gap to put right","lead":"role","by":"timescale"}],
  "quickWins":["things to do in the next two weeks"],
  "staffMessage":"a short, warm message (80-120 words) the headteacher can share with staff, thanking them and explaining how their views shaped the plan"}`;
   }
