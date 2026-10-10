@@ -11,6 +11,7 @@
     notes: {},     // { itemId: "evidence or next step" }
     ai: {},        // { itemId: inspector suggestion object }
     review: null,  // last inspector review
+    ofsted: null,  // AI reading of the latest Ofsted report: { reading, filename, at }
     actions: [],   // action plan: { id, title, detail, itemId, owner, due, success, status, source, createdAt }
     collapsed: {}, // { areaId: true }
   });

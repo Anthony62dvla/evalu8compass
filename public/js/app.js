@@ -55,6 +55,73 @@
       : "Choose at least one phase to see the checklist.";
   }
 
+  /* ---------- Step 2: latest Ofsted report ---------- */
+  let ofFile = null, ofBusy = false, ofKeep = null;
+  const ofReading = () => state.ofsted && state.ofsted.reading;
+  function ofFindings(id) { const r = ofReading(); return r && Array.isArray(r.findings) ? r.findings.filter(f => f.itemId === id) : []; }
+  function ofstedFlags(id) {
+    const f = ofFindings(id); if (!f.length) return "";
+    return f.map(x => `<div class="of-flag indent ${x.type === "strength" ? "strength" : ""}">${I(x.type === "strength" ? "circle-check" : "alert-triangle", 16)}<span><b>Ofsted ${x.type === "strength" ? "strength" : "concern"}:</b> ${esc(x.finding)}</span></div>`).join("");
+  }
+  const gradeKey = g => { g = String(g || "").toLowerCase(); return /exceptional/.test(g) ? "exceptional" : /strong/.test(g) ? "strong" : /attention/.test(g) ? "attention" : /urgent/.test(g) ? "urgent" : /outstanding/.test(g) ? "outstanding" : /requires/.test(g) ? "ri" : /inadequate/.test(g) ? "inadequate" : /^good/.test(g) ? "good" : /not met|not effective/.test(g) ? "notmet" : /met|effective/.test(g) ? "met" : "expected"; };
+  function renderOfsted() {
+    const box = $("ofstedBody"); if (!box) return;
+    if (Y.mode() !== "server") { box.innerHTML = `<p class="of-intro">Uploading your Ofsted report needs a connection to your school's account.</p>`; return; }
+    if (ofBusy) { box.innerHTML = `<div class="thinking">Reading your report. This usually takes under a minute…</div>`; return; }
+    const r = ofReading();
+    if (r) {
+      const o = state.ofsted, fw = { renewed: "renewed framework", earlier: "earlier framework" }[r.framework] || r.framework || "";
+      const concerns = (r.findings || []).filter(f => f.type === "concern" && f.itemId).length;
+      box.innerHTML = `<div class="of-meta">${o.filename ? `<span>${I("file-text", 16)} <b>${esc(o.filename)}</b></span>` : ""}${r.inspectionDate ? `<span>Inspected <b>${esc(r.inspectionDate)}</b></span>` : ""}${fw ? `<span>${esc(fw)}</span>` : ""}${r.safeguarding ? `<span>Safeguarding <b>${esc(r.safeguarding)}</b></span>` : ""}</div>
+        ${(r.grades || []).length ? `<div class="of-grades">${r.grades.map(g => `<span class="of-grade" data-g="${gradeKey(g.grade)}">${esc(g.area)}<b>${esc(g.grade)}</b></span>`).join("")}</div>` : ""}
+        ${r.summary ? `<p class="of-intro">${esc(r.summary)}</p>` : ""}
+        ${(r.nextSteps || []).length ? `<div><b>Next steps in the report</b><ol class="of-steps">${r.nextSteps.map(x => `<li>${esc(x)}</li>`).join("")}</ol></div>` : ""}
+        <p class="of-intro">${concerns ? `${concerns} concern${concerns === 1 ? " is" : "s are"} linked to checklist lines and marked <b>Ofsted concern</b> below. ` : ""}Your staff workshops and AI suggestions use this report too. Read by AI: check it against the report.</p>
+        <div class="of-row"><button class="btn" id="ofReplace">${I("file-upload", 18)}Replace with a newer report</button><button class="btn" id="ofRemove">${I("trash", 18)}Remove</button></div>`;
+      return;
+    }
+    box.innerHTML = `<p class="of-intro">Upload your most recent Ofsted report and the AI will read it for you: the grades, the next steps, and which checklist lines it raised. You only need to do this once: your staff workshops and improvement plans use it too.</p>
+      <div class="of-row"><label class="btn filebtn">${I("file-upload", 18)}Choose PDF<input type="file" id="ofFile" accept="application/pdf"></label><span class="muted" id="ofName">${ofFile ? esc(ofFile.name) : "No file chosen"}</span></div>
+      <details><summary>Or paste the report text</summary><textarea id="ofText" placeholder="Paste the full report text here"></textarea></details>
+      <div class="of-row"><button class="btn ai" id="ofRead"${aiOn() ? "" : " disabled"}>${I("sparkles", 18)}Read the report</button>
+        <span class="muted">${aiOn() ? "Uses one AI request. No report yet? Skip this step." : "Reading the report needs AI suggestions switched on in Step 1."}</span></div>
+      <p class="error" id="ofErr" role="alert"></p>`;
+  }
+  async function readOfsted() {
+    const text = ($("ofText") && $("ofText").value.trim()) || "";
+    if (!ofFile && text.length < 200) { $("ofErr").textContent = "Choose the report PDF, or paste its full text."; return; }
+    ofBusy = true; renderOfsted();
+    try {
+      await Y.flush(); // make sure the school's type and phases are saved first
+      const r = await fetch("api/school/ofsted", { method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ...(ofFile ? { pdf: ofFile.data, filename: ofFile.name } : { text }), profile: state.profile }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "The report couldn't be read. Try again.");
+      state.ofsted = d.ofsted; ofFile = null; save();
+      ofBusy = false; renderOfsted(); renderAreas();
+      toast("Ofsted report read and saved");
+    } catch (e) { ofBusy = false; renderOfsted(); $("ofErr").textContent = e.message; }
+  }
+  $("ofstedBody").addEventListener("change", e => {
+    if (e.target.id !== "ofFile") return;
+    const f = e.target.files[0]; ofFile = null; $("ofErr").textContent = "";
+    if (!f) { $("ofName").textContent = "No file chosen"; return; }
+    if (f.size > 25 * 1024 * 1024) { $("ofErr").textContent = "That PDF is over 25 MB. Paste the text instead."; return; }
+    const fr = new FileReader();
+    fr.onload = () => { ofFile = { name: f.name, data: fr.result }; $("ofName").textContent = f.name; };
+    fr.readAsDataURL(f);
+  });
+  $("ofstedBody").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.id === "ofRead") return readOfsted();
+    if (b.id === "ofReplace") { ofKeep = state.ofsted; state.ofsted = null; renderOfsted(); $("ofstedBody").insertAdjacentHTML("beforeend", `<button class="btn" id="ofCancel">Keep the current report</button>`); return; }
+    if (b.id === "ofCancel") { state.ofsted = ofKeep; ofKeep = null; renderOfsted(); return; }
+    if (b.id === "ofRemove") {
+      const keep = state.ofsted; state.ofsted = null; save(); renderOfsted(); renderAreas();
+      undo("Ofsted report removed", () => { state.ofsted = keep; save(); renderOfsted(); renderAreas(); });
+    }
+  });
+
   /* ---------- Areas ---------- */
   function renderAreas() {
     view = state.profile.phases.length ? C.resolve(ctx()) : [];
@@ -84,6 +151,7 @@
       </div>
       <div class="states indent">${["met", "part", "no", "na"].map(v => `<button class="st" data-set="${it.id}" data-v="${v}" aria-pressed="${s === v}">${I(STATE_ICON[v], 18)}${LABEL[v]}</button>`).join("")}
         <button class="ask${s === "part" || s === "no" ? "" : " hide"}" data-ask="${it.id}">${I("sparkles", 18)}Ask the AI inspector</button></div>
+      ${ofstedFlags(it.id)}
       <div class="note indent"><textarea id="n-${it.id}" data-note="${it.id}" rows="1" placeholder="Our evidence / next step">${esc(state.notes[it.id] || "")}</textarea></div>
       <div class="indent" id="adv-${it.id}">${state.ai[it.id] ? adviceHTML(it.id, state.ai[it.id]) : ""}</div>
     </li>`;
@@ -158,7 +226,7 @@
     busy.add(id);
     box.innerHTML = '<div class="thinking">The inspector is reviewing this line…</div>';
     try {
-      const result = await AI.ask("item", { ctx: ctx(), area: found.area.name, item: found.item, status: state.answers[id], note: state.notes[id] || "" });
+      const result = await AI.ask("item", { ctx: ctx(), area: found.area.name, item: found.item, status: state.answers[id], note: state.notes[id] || "", ofsted: ofFindings(id).map(f => `${f.type === "strength" ? "Strength" : "Concern"}: ${f.finding}`).join(" ") });
       state.ai[id] = { ...result, at: new Date().toISOString() };
       save();
       box.innerHTML = adviceHTML(id, state.ai[id]);
@@ -183,8 +251,10 @@
 
   /* ---------- AI inspector: whole review ---------- */
   function reviewData() {
+    const r = ofReading();
     return {
       ctx: ctx(),
+      ofsted: r ? { date: r.inspectionDate, framework: r.framework, safeguarding: r.safeguarding, grades: r.grades || [], nextSteps: r.nextSteps || [] } : null,
       areas: view.map(a => ({
         id: a.id, name: a.name, judged: !!a.judged, counts: counts(a.items),
         items: a.items.map(i => ({ text: i.text, status: state.answers[i.id] || "", note: state.notes[i.id] || "" })),
@@ -393,7 +463,7 @@
     const sel = a && typeof a.selectionStart === "number" ? [a.selectionStart, a.selectionEnd] : null;
     const y = window.scrollY;
     state = next;
-    renderSetup(); renderAreas(); renderReview(); P.render();
+    renderSetup(); if (!ofBusy && !ofKeep) renderOfsted(); renderAreas(); renderReview(); P.render();
     if (!$("progressView").classList.contains("hide") && cmpTo === "now") renderCompare();
     if (id && $(id)) { const el = $(id); el.focus({ preventScroll: true }); if (sel && el.setSelectionRange) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) {} }
     window.scrollTo(0, y);
@@ -437,7 +507,7 @@
   });
   $("pLogoRemove").onclick = () => { delete state.profile.logo; save(); renderBrand(); };
   $("pSpecial").addEventListener("change", e => { state.profile.special = e.target.checked; save(); renderAreas(); });
-  $("pAI").addEventListener("change", e => { state.profile.ai = e.target.checked; save(); applyAI(); P.render(); toast(e.target.checked ? "AI suggestions switched on" : "AI suggestions switched off. Nothing will be sent to the AI."); });
+  $("pAI").addEventListener("change", e => { state.profile.ai = e.target.checked; save(); applyAI(); if (!ofReading()) renderOfsted(); P.render(); toast(e.target.checked ? "AI suggestions switched on" : "AI suggestions switched off. Nothing will be sent to the AI."); });
   $("planCopy").onclick = () => copyText(planText(), $("copyBox"), $("copyPanel"), $("copyMsg"));
 
   $("reviewBtn").onclick = runReview;
@@ -499,7 +569,7 @@
   async function boot() {
     const r = await Y.start({ canApply: () => !document.querySelector(".thinking") });
     state = r.state;
-    renderSetup(); renderAreas(); renderReview(); P.render();
+    renderSetup(); renderOfsted(); renderAreas(); renderReview(); P.render();
     if (location.hash === "#plan") showView("planView");
     if (location.hash === "#progress") showView("progressView");
     if (r.mode !== "server") { $("saveNote").textContent = "This copy isn't connected to your school's account, so your answers are saved in this browser only. Use Save / load to keep a copy."; $("progressTab").hidden = true; }

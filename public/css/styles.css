@@ -304,3 +304,26 @@ footer a { color: var(--accent); font-weight: 600 }
 .allowance .ic { color: var(--ai); flex: none; margin-top: 2px }
 .allowance[data-level="low"] { color: var(--part) }
 .allowance[data-level="out"] { color: var(--no) }
+
+/* Steps and the Ofsted report on the checklist */
+.stepnum { margin-left: auto; font: 600 12px var(--display); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 4px 10px; white-space: nowrap }
+.ofsted p { margin: 0 }
+.of-intro { color: var(--muted); max-width: 70ch }
+.of-row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center }
+.of-row .muted { color: var(--muted); font-size: 13.5px }
+.ofsted details summary { cursor: pointer; font-weight: 600; color: var(--accent); font-size: 14px }
+.ofsted textarea { width: 100%; min-height: 120px; margin-top: 8px; font: inherit; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink) }
+.of-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 14px; color: var(--muted) }
+.of-meta b { color: var(--ink) }
+.of-grades { display: flex; flex-wrap: wrap; gap: 8px }
+.of-grade { border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; font-size: 13.5px; background: var(--bg) }
+.of-grade b { display: block; font-size: 14px }
+.of-grade[data-g="strong"] b, .of-grade[data-g="exceptional"] b, .of-grade[data-g="good"] b, .of-grade[data-g="outstanding"] b, .of-grade[data-g="met"] b, .of-grade[data-g="effective"] b { color: var(--met) }
+.of-grade[data-g="attention"] b, .of-grade[data-g="ri"] b { color: var(--part) }
+.of-grade[data-g="urgent"] b, .of-grade[data-g="inadequate"] b, .of-grade[data-g="notmet"] b { color: var(--no) }
+.of-steps { margin: 0; padding-left: 20px; font-size: 14.5px }
+.of-steps li { margin-bottom: 4px }
+.of-flag { display: flex; gap: 6px; align-items: flex-start; margin-top: 6px; font-size: 13px; border-radius: 8px; padding: 6px 8px; background: var(--part-soft); color: var(--ink) }
+.of-flag .ic { flex: none; color: var(--part); margin-top: 1px }
+.of-flag.strength { background: var(--met-soft) } .of-flag.strength .ic { color: var(--met) }
+.of-flag b { font-weight: 700 }

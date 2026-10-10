@@ -17,6 +17,7 @@ const path = require("path");
 
 loadEnv(path.join(__dirname, ".env"));
 const prompts = require("./public/js/prompts.js");
+const criteria = require("./public/js/criteria.js");
 const ai = require("./lib/ai");
 const workshop = require("./lib/workshop");
 const store = require("./lib/store");
@@ -181,6 +182,23 @@ async function schoolRoute(req, res, p, url) {
       if (!b.state || typeof b.state !== "object") return json(res, 400, { error: "Nothing to save" });
       return json(res, 200, schools.replace(id, b.state));
     }
+    // Read the school's latest Ofsted report with the AI and save the reading with the school's work
+    if (p === "/api/school/ofsted" && req.method === "POST") {
+      if (!ai.hasKey()) return json(res, 503, { error: "Reading a report needs the AI, which isn't connected on this server." });
+      let b;
+      try { b = JSON.parse((await readBody(req, 36 * 1024 * 1024)) || "{}"); } catch (e) { return json(res, 400, { error: "Couldn't read that file. PDFs up to 25 MB." }); }
+      const hasPdf = typeof b.pdf === "string" && b.pdf.length > 100;
+      if (!hasPdf && !(typeof b.text === "string" && b.text.trim().length > 200)) return json(res, 400, { error: "Choose the report PDF or paste its full text." });
+      const cur = schools.get(id);
+      const profile = (cur.state && cur.state.profile && cur.state.profile.phases && cur.state.profile.phases.length) ? cur.state.profile : b.profile;
+      if (!profile || !Array.isArray(profile.phases) || !profile.phases.length) return json(res, 400, { error: "Set your school type and phases first, so the report can be matched to your checklist." });
+      const text = prompts.reportPrompt({ ctx: profile, areas: criteria.resolve(profile), hasPdf, text: b.text });
+      const content = hasPdf ? [{ type: "document", source: { type: "base64", media_type: "application/pdf", data: b.pdf.replace(/^data:[^,]+,/, "") } }, { type: "text", text }] : text;
+      const reading = await ai.askJson({ system: prompts.SYSTEM, content, maxTokens: 8000, account: id });
+      const rec = { reading, filename: String(b.filename || "").slice(0, 200), at: new Date().toISOString() };
+      const r = schools.patch(id, cur.rev, { set: { ofsted: rec } });
+      return json(res, 200, { ofsted: rec, rev: r.rev });
+    }
     if (p === "/api/school/snapshots" && req.method === "GET") return json(res, 200, { snapshots: schools.snapshots(id) });
     if (p === "/api/school/snapshots" && req.method === "POST") {
       const b = await body();
@@ -192,6 +210,7 @@ async function schoolRoute(req, res, p, url) {
     return json(res, 404, { error: "Not found" });
   } catch (e) {
     if (e instanceof schools.SchoolError) return json(res, e.status, { error: e.message });
+    if (e instanceof ai.AIError) return json(res, e.status, { error: e.message, code: e.code });
     if (e instanceof SyntaxError) return json(res, 400, { error: "Invalid request" });
     if (e && e.message === "too large") return json(res, 413, { error: "This self-evaluation is too large to save." });
     throw e;

@@ -44,7 +44,7 @@
   </div>
 
   <section class="setup" aria-labelledby="setupTitle">
-    <div class="setup-head"><div class="tile"><i data-icon="building" data-size="24"></i></div><h2 id="setupTitle">Your school</h2></div>
+    <div class="setup-head"><div class="tile"><i data-icon="building" data-size="24"></i></div><h2 id="setupTitle">Your school</h2><span class="stepnum">Step 1</span></div>
     <div class="setup-grid">
       <div class="field"><label for="pName">School or trust name</label><input type="text" id="pName" placeholder="e.g. Athena School"></div>
       <div class="field"><label for="pBy">Completed by</label><input type="text" id="pBy" placeholder="Name and role"></div>
@@ -61,6 +61,11 @@
       <span>PNG, JPG or SVG, under 200 KB. Shown in the bar at the top.</span>
     </div>
     <p class="scope-note" id="scopeNote"></p>
+  </section>
+
+  <section class="setup ofsted" aria-labelledby="ofTitle" id="ofstedBox">
+    <div class="setup-head"><div class="tile"><i data-icon="file-certificate" data-size="24"></i></div><h2 id="ofTitle">Your latest Ofsted report</h2><span class="stepnum">Step 2</span></div>
+    <div id="ofstedBody"></div>
   </section>
 
   <nav class="tabs pagetabs" aria-label="Checklist sections">

@@ -123,6 +123,27 @@
     finally { btn.disabled = false; }
   });
 
+  /* Latest Ofsted report on the start form: the school's saved one, or a PDF just for this workshop */
+  let savedOfsted = null, cReportFile = null;
+  function renderCOfsted() {
+    const box = $("cOfsted"); if (!box) return;
+    const r = savedOfsted && savedOfsted.reading;
+    box.innerHTML = `<div class="ofbox">
+      ${r ? `<label class="switch"><input type="checkbox" id="cUseSaved" ${cReportFile ? "" : "checked"}> Use your saved report${r.inspectionDate ? `: inspected ${esc(r.inspectionDate)}` : ""}${savedOfsted.filename ? ` (${esc(savedOfsted.filename)})` : ""}</label>`
+          : `<p class="muted">Optional. The AI reads it to shape the improvement plan. Saving it on the checklist (Step 2) means every workshop uses it.</p>`}
+      <div class="row"><label class="btn filebtn">${I("file-upload", 18)}${r ? "Use a different PDF" : "Choose PDF"}<input type="file" id="cReport" accept="application/pdf"></label><span class="muted" id="cReportName">${cReportFile ? esc(cReportFile.name) : ""}</span></div>
+    </div>`;
+  }
+  $("cOfsted").addEventListener("change", e => {
+    if (e.target.id === "cUseSaved" && e.target.checked) { cReportFile = null; renderCOfsted(); return; }
+    if (e.target.id !== "cReport") return;
+    const f = e.target.files[0]; if (!f) return;
+    if (f.size > 18 * 1024 * 1024) { toast("That PDF is over 18 MB. You can paste the text in the Improvement plan tab instead."); return; }
+    const fr = new FileReader();
+    fr.onload = () => { cReportFile = { name: f.name, data: fr.result }; renderCOfsted(); };
+    fr.readAsDataURL(f);
+  });
+
   $("createForm").addEventListener("submit", async e => {
     e.preventDefault();
     $("createError").textContent = "";
@@ -131,9 +152,13 @@
     if (!cAreas || !cAreas.size) return void ($("createError").textContent = "Choose at least one area.");
     const btn = $("createBtn"); btn.disabled = true;
     try {
-      const r = await api("POST", "", { profile: cProfile, areaIds: [...cAreas] });
+      const useSaved = !!(savedOfsted && !cReportFile && $("cUseSaved") && $("cUseSaved").checked);
+      const r = await api("POST", "", { profile: cProfile, areaIds: [...cAreas], useSchoolReport: useSaved });
       const fac = ls.get(FAC_KEY, {}); fac[r.code] = { key: r.key, name: cProfile.name, at: new Date().toISOString() }; ls.set(FAC_KEY, fac);
+      const upload = cReportFile; cReportFile = null;
       await startFac(r.code, r.key);
+      // A report chosen just for this workshop is read in the background while staff join
+      if (upload) aiAction($("fReadReport"), $("fReport"), "report", { filename: upload.name, pdf: upload.data }, "Reading the Ofsted report while staff join…");
     } catch (err) {
       $("createError").textContent = err.message;
       if (err.status === 401) { $("createFields").classList.add("hide"); $("createLocked").classList.remove("hide"); }
@@ -513,6 +538,14 @@
       const a = await fetch(BASE_PATH + "api/access").then(r => r.json());
       if (a.required && !a.ok) { $("createFields").classList.add("hide"); $("createLocked").classList.remove("hide"); }
       else if (a.school && !$("cName").value) $("cName").value = a.school;
+      if (a.ok) {
+        const sc = await fetch(BASE_PATH + "api/school").then(r => r.ok ? r.json() : null).catch(() => null);
+        savedOfsted = sc && sc.state && sc.state.ofsted;
+        // Start from the school's own settings when it has them
+        const p = sc && sc.state && sc.state.profile;
+        if (p && p.phases && p.phases.length && !cProfile.phases.length) { cProfile.type = p.type; cProfile.phases = p.phases.slice(); cProfile.special = !!p.special; if (!$("cName").value && p.name) $("cName").value = p.name; $("cSpecial").checked = cProfile.special; cAreas = null; renderLanding(); }
+      }
+      renderCOfsted();
     } catch (e) {}
     const params = new URLSearchParams(location.search);
     const c = (params.get("code") || "").toUpperCase();

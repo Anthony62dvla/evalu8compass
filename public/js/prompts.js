@@ -25,7 +25,7 @@ How you work:
   }
 
   /** One criterion rated Partly or Not yet → improvement activities. */
-  function itemPrompt({ ctx, area, item, status, note }) {
+  function itemPrompt({ ctx, area, item, status, note, ofsted }) {
     return `SCHOOL
 ${describe(ctx)}
 
@@ -35,7 +35,7 @@ Expectation: ${item.text}
 Evidence inspectors look for: ${item.evidence || "not specified"}
 Statutory reference: ${item.ref || "none listed"}
 School's rating: ${status === "no" ? "Not yet in place" : "Partly in place"}
-School's note: ${note ? note.slice(0, 1500) : "(none)"}
+School's note: ${note ? note.slice(0, 1500) : "(none)"}${ofsted ? `\nWhat the school's latest Ofsted report said about this: ${String(ofsted).slice(0, 800)}` : ""}
 
 TASK
 Suggest improvement activities that would move this line to fully met and give inspectors convincing evidence.
@@ -48,7 +48,7 @@ Give 3 or 4 activities, ordered from quickest to longest.`;
   }
 
   /** Whole self-assessment → indicative grades and a priority plan. */
-  function reviewPrompt({ ctx, areas }) {
+  function reviewPrompt({ ctx, areas, ofsted }) {
     const lines = areas.map(a => {
       const gaps = a.items.filter(i => i.status === "no" || i.status === "part")
         .map(i => `  - [${i.status === "no" ? "Not yet" : "Partly"}] ${i.text}${i.note ? ` (note: ${i.note.slice(0, 300)})` : ""}`).join("\n");
@@ -60,8 +60,13 @@ ${describe(ctx)}
 SELF-ASSESSMENT RESULTS
 ${lines}
 
+LATEST OFSTED REPORT
+${ofsted ? `Inspected ${ofsted.date || "(date not given)"} (${ofsted.framework || "framework not given"}). Safeguarding: ${ofsted.safeguarding || "not given"}.
+Grades: ${(ofsted.grades || []).map(g => `${g.area}: ${g.grade}`).join("; ") || "not given"}
+Next steps: ${(ofsted.nextSteps || []).join(" | ") || "none listed"}` : "Not provided."}
+
 TASK
-Act as a lead inspector giving a pre-inspection readiness review based only on this self-assessment.
+Act as a lead inspector giving a pre-inspection readiness review based on this self-assessment${ofsted ? ", taking account of the latest Ofsted report: say where the school's own ratings and the report agree or differ, and lead the priorities with the report's next steps unless the self-assessment shows something more urgent" : ""}.
 Give an indicative grade for each evaluation area listed, and the improvement priorities that would make the biggest difference before inspection.
 Use "Insufficient evidence" for an area where too few lines are assessed to judge. For Safeguarding use "Met", "Not met" or "Insufficient evidence".
 Reply with only JSON in this shape:

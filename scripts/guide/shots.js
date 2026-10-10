@@ -71,6 +71,9 @@ module.exports = async function shots(outDir) {
     await p.fill("#pBy", "Sarah Khan, Deputy Head");
     await p.fill("#pDate", "2026-10-05");
     await snap(p, "setup", "section.setup");
+    await p.click("#ofstedBox summary"); await p.fill("#ofText", MOCK.REPORT_TEXT); await p.click("#ofRead");
+    await p.waitForSelector(".of-grades", { timeout: 15000 });
+    await snap(p, "ofsted", "#ofstedBox");
     const rate = { "sg-culture": "met", "sg-dsl": "met", "sg-follow": "part", "sg-earlyhelp": "met", "sg-scr": "met", "sg-s128": "met", "sg-filter": "part", "sg-pupils": "met" };
     for (const [id, v] of Object.entries(rate)) await p.click(`[data-set="${id}"][data-v="${v}"]`);
     await p.fill("#n-sg-dsl", "DSL and two deputies trained Sept 2025; refresher booked for Sept 2027.");

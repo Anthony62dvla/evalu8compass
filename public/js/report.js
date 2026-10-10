@@ -56,6 +56,15 @@
     B.push({ t: "table", widths: [34, 9, 9, 9, 8, 12, 19], head: ["Evaluation area", "Met", "Partly", "Not yet", "N/A", "Not assessed", "Status"],
       rows: view.map(a => { const ac = cnt(a.items); return [a.name, num(ac.met), num(ac.part), num(ac.no), num(ac.na), num(ac.todo), status(a, ac)]; }) });
 
+    const of = st.ofsted && st.ofsted.reading;
+    if (of) {
+      const fw = { renewed: "renewed framework", earlier: "earlier framework" }[of.framework] || of.framework || "";
+      B.push({ t: "h2", text: "Latest Ofsted report" });
+      B.push({ t: "p", text: [of.inspectionDate ? "Inspected " + of.inspectionDate : "", fw, of.safeguarding ? "Safeguarding " + of.safeguarding : ""].filter(Boolean).join(" · "), muted: true });
+      if ((of.grades || []).length) B.push({ t: "table", widths: [60, 40], head: ["Area", "Grade"], rows: of.grades.map(g => [g.area, g.grade]) });
+      if ((of.nextSteps || []).length) { B.push({ t: "p", text: "Next steps in the report", strong: true }); B.push({ t: "list", items: of.nextSteps }); }
+    }
+
     if (since && since.state && window.HWWD.progress) {
       const g = window.HWWD.progress.compare(view, since.state, st);
       const signed = n => (n > 0 ? "+" : "") + n + " pts";

@@ -22,7 +22,7 @@
       for (const k of Object.keys(b)) if (!same(a[k], b[k])) set[`${m}.${k}`] = b[k];
       for (const k of Object.keys(a)) if (!(k in b)) del.push(`${m}.${k}`);
     }
-    if (!same(p.review || null, c.review || null)) set.review = c.review || null;
+    for (const k of ["review", "ofsted"]) if (!same(p[k] || null, c[k] || null)) set[k] = c[k] || null;
     const pa = new Map((p.actions || []).map(x => [x.id, x])), ca = new Map((c.actions || []).map(x => [x.id, x]));
     const upsert = [...ca.values()].filter(x => !same(pa.get(x.id), x));
     const adel = [...pa.keys()].filter(id => !ca.has(id));
@@ -40,7 +40,7 @@
     for (const m of [...MAPS, "profile"]) if (!s[m] || typeof s[m] !== "object") s[m] = {};
     if (!Array.isArray(s.actions)) s.actions = [];
     for (const [path, v] of Object.entries((patch && patch.set) || {})) {
-      if (path === "review") { s.review = v; continue; }
+      if (path === "review" || path === "ofsted") { s[path] = v; continue; }
       const i = path.indexOf("."); if (i < 0) continue;
       const m = path.slice(0, i), k = path.slice(i + 1);
       if ((MAPS.includes(m) || m === "profile") && k) s[m][k] = v;
