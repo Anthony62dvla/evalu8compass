@@ -36,7 +36,7 @@ const PUBLIC = path.join(__dirname, "public");
 const LIMITS = {
   ai: Number(process.env.RATE_LIMIT_PER_MIN || 20),   // AI calls per IP per minute
   api: Number(process.env.API_LIMIT_PER_MIN || 600),  // other API calls per IP per minute
-  login: 10,                                          // access-code attempts per IP per minute
+  login: Number(process.env.LOGIN_LIMIT_PER_MIN || 10), // access-code attempts per IP per minute
   admin: 5,                                           // superadmin sign-in attempts per IP per minute
   signup: Number(process.env.SIGNUP_LIMIT_PER_MIN || 20), // sign-up and subscribe form posts per IP per minute (hourly limits in lib/billing.js)
 };
@@ -258,12 +258,15 @@ async function billingRoute(req, res, p) {
   try {
     if (p === "/api/signup") return json(res, 200, await billing.signup(b, clientIp(req), billingHooks(req)));
     if (p === "/api/signup/resend") return json(res, 200, await billing.resend(b.email, clientIp(req), billingHooks(req)));
+    // Signed in (within the free term, a paid year or its grace): no need to type the code again
+    const w = b.code ? null : access.who(req), mine = w && w.id && !w.admin ? w.id : null;
+    if (!b.code && !mine && p.startsWith("/api/subscribe")) return json(res, 400, { error: "Enter your school's access code." });
     if (p === "/api/subscribe/quote") {
-      if (limited(req, "login")) return json(res, 429, { error: "Too many attempts. Wait a minute and try again." });
-      const q = billing.quote(b.code);
+      if (b.code && limited(req, "login")) return json(res, 429, { error: "Too many attempts. Wait a minute and try again." });   // guessing codes
+      const q = billing.quote(b.code, mine);
       return q ? json(res, 200, q) : json(res, 404, { error: "That access code isn't recognised. It's in the email you got when you signed up." });
     }
-    if (p === "/api/subscribe") return json(res, 200, await billing.subscribe(b, clientIp(req), billingHooks(req)));
+    if (p === "/api/subscribe") return json(res, 200, await billing.subscribe(b, clientIp(req), billingHooks(req), mine));
     return json(res, 404, { error: "Not found" });
   } catch (e) {
     if (e instanceof billing.BillingError) return json(res, e.status, { error: e.message });

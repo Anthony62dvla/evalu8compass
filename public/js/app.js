@@ -658,17 +658,43 @@
     }
   }
   boot();
-  // Free term ending, renewal due or invoice overdue: a short note at the top with a link to subscribe
+  // Your subscription: always shown for schools on a plan, with the dates, invoice and a Subscribe or Renew button
   function showPlan(pl) {
-    const days = pl.daysLeft, when = days <= 1 ? "tomorrow" : `in ${days} days`;
-    let msg = "";
-    if (pl.status === "trial" && days <= 21) msg = `<b>Your free term ends ${when}.</b> Subscribe to carry on without a break: ${esc(pl.tierLabel.toLowerCase())}, £${pl.price} a year. Your paid year starts when the free term ends.`;
-    else if (pl.status === "overdue") msg = `<b>${esc(pl.label)}.</b> If you've already paid, thank you. Otherwise please pass the invoice to your finance team.`;
-    else if (pl.canRenew && pl.status !== "trial") msg = `<b>Your subscription ends ${when}.</b> Renew for another year to keep your access and saved work.`;
-    if (!msg) return;
-    $("planText").innerHTML = msg;
-    $("planBtn").hidden = pl.status === "overdue";
-    $("planBtn").querySelector("span").textContent = pl.status === "trial" ? "Subscribe" : "Renew";
+    const n = pl.daysLeft, days = n === 1 ? "1 day" : `${n} days`, price = `${esc(pl.tierLabel.toLowerCase())}, £${pl.price} a year`;
+    let tone = "info", title = "", detail = "", btn = "";
+    switch (pl.status) {
+      case "trial":
+        tone = n <= 21 ? "warn" : "info";
+        title = `Free term until ${esc(pl.freeUntil)} <span class="plan-days">(${days} left)</span>`;
+        detail = pl.canSubscribe ? `Then the ${price}. Subscribe whenever you're ready: your paid year starts when the free term ends, so you lose nothing by subscribing early.`
+          : `You've subscribed: your paid year starts on ${esc(pl.nextStart)}.`;
+        if (pl.canSubscribe) btn = "Subscribe";
+        break;
+      case "trial_grace":
+        tone = "warn";
+        title = `Your free term ended on ${esc(pl.freeUntil)}`;
+        detail = `Access continues until <b>${esc(pl.graceUntil)}</b> (${days}) while you subscribe. Your paid year would run from ${esc(pl.nextStart)}.`;
+        btn = "Subscribe";
+        break;
+      case "invoice_to_send": case "invoiced": case "overdue": case "paid": {
+        const period = `${esc(pl.periodStart)} to ${esc(pl.periodEnd)}`;
+        if (pl.status === "paid") { tone = pl.canRenew ? "warn" : "ok"; title = `Subscribed and paid · ${period}`; detail = pl.canRenew ? `Your year ends in ${days}. Renew now: the new year starts when this one ends.` : `Thank you. Payment received ${esc(pl.paidOn)}.`; if (pl.canRenew) btn = "Renew"; }
+        else if (pl.status === "overdue") { tone = "warn"; title = `Subscribed · ${period}`; detail = `Invoice ${esc(pl.invoice.number)} was due on ${esc(pl.invoice.due)} and we haven't received payment yet. If you've paid, thank you; otherwise please pass it to your finance team.`; }
+        else { title = `Subscribed · ${period}`; detail = pl.upcoming ? `Your free term continues until then. ` : ""; detail += pl.invoice ? `Invoice ${esc(pl.invoice.number)} is due on ${esc(pl.invoice.due)}. This shows as paid once we've received payment.` : "Your invoice is on its way by email."; }
+        break;
+      }
+      case "grace":
+        tone = "warn";
+        title = `Your subscription ended on ${esc(pl.periodEnd)}`;
+        detail = `Access continues until <b>${esc(pl.graceUntil)}</b> (${days}) while you renew. Your new year runs from ${esc(pl.nextStart)}, so there's no gap.`;
+        if (pl.canRenew) btn = "Renew"; else detail += " Your last invoice is still unpaid: email support@evalu8compass.app to renew.";
+        break;
+      default: return;
+    }
+    $("planText").innerHTML = `<b>${title}</b><span>${detail}</span>`;
+    $("planBtn").hidden = !btn;
+    if (btn) $("planBtn").querySelector("span").textContent = btn;
+    $("planBanner").dataset.tone = tone;
     $("planBanner").hidden = false;
   }
   // The workshop needs the server; hide its link in single-file or artifact copies

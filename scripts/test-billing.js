@@ -15,7 +15,7 @@ const ok = (c, m) => { console.log((c ? "PASS " : "FAIL ") + m); if (!c) process
 const PORT = 3994, SMTP = 3993, base = `http://127.0.0.1:${PORT}`;
 const ENV = { SMTP_HOST: "127.0.0.1", SMTP_PORT: String(SMTP), SMTP_SECURE: "0", SMTP_USER: "support@evalu8compass.test", SMTP_PASS: "secret-pass",
   MAIL_FROM: "Evalu8 Compass <support@evalu8compass.test>", ADMIN_EMAIL: "owner@example.org", OPERATOR_NAME: "Test Operator", OPERATOR_ADDRESS: "1 High Street, Town, AB1 2CD",
-  BANK_SORT_CODE: "12-34-56", BANK_ACCOUNT_NUMBER: "12345678", SIGNUP_LIMIT_PER_MIN: "200", SIGNUP_LIMIT_PER_HOUR: "50", SMTP_ALLOW_PLAIN: "1", SITE_URL: "https://evalu8compass.test", VAT_NUMBER: "", MAIL_OUTBOX: "" };
+  BANK_SORT_CODE: "12-34-56", BANK_ACCOUNT_NUMBER: "12345678", SIGNUP_LIMIT_PER_MIN: "200", SIGNUP_LIMIT_PER_HOUR: "50", SMTP_ALLOW_PLAIN: "1", LOGIN_LIMIT_PER_MIN: "200", SITE_URL: "https://evalu8compass.test", VAT_NUMBER: "", MAIL_OUTBOX: "" };
 Object.assign(process.env, ENV);
 
 /* ---------- a fake SMTP server that records what it's sent ---------- */
@@ -111,7 +111,7 @@ let srv;
     const db1 = readCodes(), h = db1.codes.find(c => c.name === "Hillside Primary");
     ok(h && h.tier === "primary" && h.urn === "123456" && h.contact.name === "Pat Head" && h.trialEndsAt === billing.freeUntil(billing.today()), "code stored with plan, URN, contact and free-term end");
     ok(!fs.readFileSync(FILES[1], "utf8").includes(code1.replace(/-/g, "")), "code stored only as a hash");
-    ok(h.expiresAt === billing.startOf(h.trialEndsAt), "access set to pause when the free term ends");
+    ok(h.expiresAt === billing.startOf(billing.addDays(h.trialEndsAt, 14)), "access set to pause 14 days after the free term ends");
     const st = JSON.parse(fs.readFileSync(path.join(DATA, "schools", h.id, "state.json"), "utf8"));
     ok(st.state.profile.name === "Hillside Primary" && st.state.profile.type === "maintained", "checklist starts with the school's name and type");
 
@@ -152,7 +152,7 @@ let srv;
 
     /* ---------- the free term ends: the code pauses ---------- */
     const db2 = readCodes(); const hc = db2.codes.find(c => c.name === "Hillside Primary");
-    hc.trialEndsAt = billing.addDays(billing.today(), -2); hc.expiresAt = new Date(Date.now() - 2 * 864e5).toISOString(); writeCodes(db2);
+    hc.trialEndsAt = billing.addDays(billing.today(), -20); hc.expiresAt = billing.startOf(billing.addDays(hc.trialEndsAt, 14)); writeCodes(db2);
     await wait(50);
     const paused = await post("/api/access", { code: code1 });
     const pj = await paused.json();
@@ -178,7 +178,7 @@ let srv;
     ok((await get(link.replace(/t=.+$/, "t=forged"))).status === 404 && (await get(link.split("?")[0])).status === 404, "invoice can't be opened without the signed link");
     ok(mailTo("owner@example.org", /Subscription: Hillside Primary/).length === 1, "owner notified of the subscription");
     const hs = readCodes().codes.find(c => c.name === "Hillside Primary");
-    ok(hs.sub.periodStart === billing.today() && hs.sub.periodEnd === billing.addYear(billing.today()) && hs.expiresAt === billing.startOf(hs.sub.periodEnd), "paid year: today for 12 months, access until then");
+    ok(hs.sub.periodStart === billing.today() && hs.sub.periodEnd === billing.addYear(billing.today()) && hs.expiresAt === billing.startOf(billing.addDays(hs.sub.periodEnd, 30)), "paid year: today for 12 months, access until 30 days after");
     const resub = await post("/api/subscribe", { code: code1, billingName: "Jo", billingEmail: "finance@hillside.sch.uk", address: "Hill Road, Town", agree: true });
     ok(resub.status === 409, "can't subscribe twice for the same year");
 
@@ -213,6 +213,44 @@ let srv;
     ok((await fetch(base + "/api/signup", { method: "POST", headers: { "content-type": "application/json" }, body: "null" })).status === 400, "a null request body is refused cleanly");
     ok((await post("/api/signup", { school: ["x"], type: "independent", name: { a: 1 }, email: "x@y.org", agree: true })).status === 400, "non-text fields refused cleanly");
 
+    /* ---------- the 30-day renewal grace (Hillside is paid) ---------- */
+    const g1 = readCodes(); const hg = g1.codes.find(c => c.id === hid);
+    const oldEnd = billing.addDays(billing.today(), -5);
+    hg.sub.periodStart = billing.addDays(oldEnd, -365); hg.sub.periodEnd = oldEnd; hg.expiresAt = billing.startOf(billing.addDays(oldEnd, 30)); writeCodes(g1); await wait(50);
+    const gl = await post("/api/access", { code: code1 });
+    const gcookie = (gl.headers.get("set-cookie") || "").split(";")[0];
+    ok(gl.status === 200, "5 days after the paid year ends: access continues");
+    const gp = (await (await get("/api/access", gcookie)).json()).plan;
+    ok(gp.status === "grace" && gp.canRenew && gp.daysLeft === 25 && gp.nextStart === billing.longDate(oldEnd), "dashboard: ended, 25 days of grace left, new year from the old end date");
+    ok((await post("/api/subscribe/quote", {})).status === 400, "subscribing without a code or sign-in is refused");
+    const gq = await (await post("/api/subscribe/quote", {}, gcookie)).json();
+    ok(gq.school === "Hillside Primary" && gq.status === "grace" && gq.startsLabel === billing.longDate(oldEnd), "signed in: the subscribe page knows the school without the code");
+    await billing.reminders({}); await wait(200);
+    ok(mailTo("head@hillside.sch.uk", /subscription has ended/).length === 1 && /continues until/.test(mailTo("head@hillside.sch.uk", /subscription has ended/)[0].text), "grace email: ended, access continues until …");
+    const gr = await post("/api/subscribe", { billingName: "Jo Bursar", billingEmail: "finance@hillside.sch.uk", address: "Hill Road, Town", agree: true }, gcookie);
+    const grj = await gr.json(); await wait(300);
+    const hg2 = readCodes().codes.find(c => c.id === hid);
+    ok(gr.status === 200 && !grj.resumed && hg2.sub.periodStart === oldEnd && hg2.sub.periodEnd === billing.addYear(oldEnd), "renewing in the grace: the new year starts on the old end date (the grace counts)");
+    ok(hg2.history.length === 1 && hg2.history[0].paidAt, "the paid year is kept in the history");
+    ok(((await (await get("/api/access", gcookie)).json()).plan || {}).status === "invoiced", "dashboard now shows the new year as invoiced");
+
+    /* ---------- the 14-day grace after the free term ---------- */
+    const g2 = readCodes(); const vg = g2.codes.find(c => c.name === "Valley Academy");
+    // (Valley subscribes and cancels later in this test; here it's still only in its free term)
+    const vEnd = billing.addDays(billing.today(), -3);
+    vg.trialEndsAt = vEnd; vg.expiresAt = billing.startOf(billing.addDays(vEnd, 14)); writeCodes(g2); await wait(50);
+    const vcode0 = codeIn(mailTo("kim@valley.org")[0]);
+    const vl = await post("/api/access", { code: vcode0 });
+    const vcookie = (vl.headers.get("set-cookie") || "").split(";")[0];
+    const vp = (await (await get("/api/access", vcookie)).json()).plan;
+    ok(vl.status === 200 && vp.status === "trial_grace" && vp.daysLeft === 11 && vp.canSubscribe, "3 days after the free term: access continues, 11 days left, can subscribe");
+    await billing.reminders({}); await wait(200);
+    ok(mailTo("kim@valley.org", /free term has ended/).length === 1, "email: free term ended, access continues while you subscribe");
+    const vq = await (await post("/api/subscribe/quote", {}, vcookie)).json();
+    ok(vq.startsLabel === billing.longDate(vEnd), "subscribing in the grace: the paid year starts when the free term ended");
+    // put it back in its free term for the later checks
+    const g3 = readCodes(); const vb = g3.codes.find(c => c.name === "Valley Academy"); vb.trialEndsAt = billing.freeUntil(billing.today()); vb.expiresAt = billing.startOf(billing.addDays(vb.trialEndsAt, 14)); vb.sent = {}; writeCodes(g3); await wait(50);
+
     /* ---------- reminders ---------- */
     const db3 = readCodes(); const v = db3.codes.find(c => c.name === "Valley Academy");
     v.trialEndsAt = billing.addDays(billing.today(), 10); writeCodes(db3);
@@ -243,7 +281,7 @@ let srv;
     const vid = readCodes().codes.find(c => c.name === "Valley Academy").id;
     await post(`/api/admin/codes/${vid}/billing/cancel`, {}, ac); await wait(50);
     const vc = readCodes().codes.find(c => c.id === vid);
-    ok(vc.expiresAt === billing.startOf(vc.trialEndsAt) && billing.status(vc).key === "trial", "cancel during the free term: access continues to the end of it");
+    ok(vc.expiresAt === billing.startOf(billing.addDays(vc.trialEndsAt, 14)) && billing.status(vc).key === "trial", "cancel during the free term: access continues to the end of it");
     ok((await post("/api/access", { code: vcode })).status === 200, "the code still works in the free term after cancelling");
 
     // Cancel
@@ -257,7 +295,7 @@ let srv;
     access.scrubEnded(365);
     const b6 = readCodes().codes.find(c => c.name === "Brook House School");
     ok(!b6.email && !b6.contact && !b6.sub.billing, "retention: contact and invoice contact details removed after access ended");
-    ok(fs.readFileSync(FILES[3], "utf8").split("\n").filter(Boolean).length === 3, "invoices kept for the accounts");
+    ok(fs.readFileSync(FILES[3], "utf8").split("\n").filter(Boolean).length === 4, "invoices kept for the accounts (including the renewal)");
 
     /* ---------- no password over an unencrypted connection ---------- */
     const mail = require("../lib/mail");

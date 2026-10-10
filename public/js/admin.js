@@ -19,7 +19,7 @@
   const gbp = n => "£" + (Math.round(n * 100) / 100).toLocaleString("en-GB", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
   const ymd = d => new Date(d + "T12:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
   const before = d => { const x = new Date(d + "T12:00:00Z"); x.setUTCDate(x.getUTCDate() - 1); return x.toISOString().slice(0, 10); };
-  const STATE_CLASS = { trial: "active", paid: "active", invoiced: "active", invoice_to_send: "expired", overdue: "revoked", trial_ended: "expired", lapsed: "expired", cancelled: "revoked", revoked: "revoked", none: "active" };
+  const STATE_CLASS = { trial: "active", paid: "active", invoiced: "active", invoice_to_send: "expired", overdue: "revoked", trial_ended: "expired", lapsed: "expired", trial_grace: "expired", grace: "expired", cancelled: "revoked", revoked: "revoked", none: "active" };
 
   async function loadBilling() {
     const d = await api("GET", "/billing"), T = d.totals;
@@ -30,7 +30,7 @@
       ["gift", T.trial, "In their free term"], ["circle-check", T.subscribed, "Subscribed"], ["receipt", T.toInvoice, "Invoices to send"],
       ["alert-triangle", T.overdue, "Overdue"], ["coin-pound", gbp(T.invoicedThisYear), "Invoiced this year"], ["history", gbp(T.outstanding), "Unpaid"],
     ].map(([ic, n, l]) => `<div class="stat"><span class="tile">${I(ic, 22)}</span><div><b>${esc(n)}</b><span>${esc(l)}</span></div></div>`).join("");
-    const order = { overdue: 0, invoice_to_send: 1, invoiced: 2, trial_ended: 3, trial: 4, paid: 5, lapsed: 6, cancelled: 7, revoked: 8, none: 9 };
+    const order = { overdue: 0, invoice_to_send: 1, grace: 2, trial_grace: 2, invoiced: 3, trial_ended: 4, trial: 5, paid: 6, lapsed: 7, cancelled: 8, revoked: 9, none: 10 };
     const rows = d.rows.slice().sort((a, b) => (order[a.status.key] ?? 9) - (order[b.status.key] ?? 9) || a.name.localeCompare(b.name));
     $("subs").innerHTML = `<thead><tr><th>School</th><th>Plan</th><th>Status</th><th>Free term</th><th>Paid year</th><th>Invoice</th><th>Actions</th></tr></thead><tbody>${
       rows.length ? rows.map(r => {

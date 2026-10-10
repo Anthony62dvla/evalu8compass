@@ -98,9 +98,13 @@ Ask a data protection adviser to review the pages before you sign up schools.
 
 Schools sign up at `/signup.html` and get their access code by email. The first term is free (until
 the end of the term they join in; join after half-term and the next term is free too). When it ends
-the code pauses, and subscribing at `/subscribe.html` reactivates it for 12 months and emails an
-invoice payable within 30 days. Reminders go out two weeks before a free term ends, when it ends,
-30 days before renewal, a week after an invoice falls overdue, and when a subscription ends.
+access carries on for 14 more days, then the code pauses (work kept). Subscribing (from the dashboard,
+or at `/subscribe.html` with the code) keeps or restores access at once for 12 months and emails an
+invoice payable within 30 days. Once you mark it paid, the school's dashboard shows "Subscribed and
+paid". When a paid year ends, access carries on for 30 days while the school renews; the new year
+starts on the old end date. Reminder emails go out two weeks before a free term ends, when it ends,
+when access pauses, 30 days before renewal, a week after an invoice falls overdue, when a paid year
+ends, and when access pauses after it.
 
 1. **A mailbox to send from.** In hPanel, create `support@evalu8compass.app` under Emails (if you
    haven't already). Hostinger sets up the DNS records (SPF and DKIM) that stop your emails going to

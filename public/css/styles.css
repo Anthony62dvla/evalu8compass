@@ -356,6 +356,12 @@ footer a { color: var(--accent); font-weight: 600 }
 .readiness { font: 700 13px var(--body); border-radius: 999px; padding: 4px 10px; background: var(--accent-soft); color: var(--accent) }
 .ic.flip { transform: rotate(180deg) }
 .first-item .lines { gap: 4px 12px } .first-item .lines button { min-height: 24px; min-width: 24px; padding: 3px 0; text-align: left }
-.panel.plan-banner { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 12px 14px; align-items: center; border-color: var(--accent); background: var(--accent-soft) }
-.panel.plan-banner > span:nth-child(2) { flex: 1 1 260px; min-width: 0; font-size: 14.5px }
-.panel.plan-banner .tile { background: var(--surface) }
+.panel.plan-banner { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 12px 14px; align-items: center; border-color: var(--line); background: var(--surface) }
+.panel.plan-banner[data-tone="warn"] { border-color: var(--part); background: var(--part-soft) }
+.panel.plan-banner[data-tone="ok"] { border-color: var(--met); background: var(--met-soft) }
+.plan-text { flex: 1 1 260px; min-width: 0; display: grid; gap: 2px; font-size: 14px }
+.plan-text b { font-size: 15px }
+.plan-days { font-weight: 400; color: var(--muted) }
+.panel.plan-banner .tile { background: var(--accent-soft) }
+.panel.plan-banner[data-tone="ok"] .tile { background: var(--surface); color: var(--met) }
+.panel.plan-banner[data-tone="warn"] .tile { background: var(--surface); color: var(--part) }

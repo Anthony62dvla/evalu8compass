@@ -9,6 +9,11 @@
   var line = function (box, tag, text) { var el = document.createElement(tag); el.textContent = text; box.appendChild(el); };
 
   $("code").addEventListener("input", function () { $("codeErr").textContent = ""; });
+  // Signed in already? Then we know the school: skip the code step
+  post("/api/subscribe/quote", {}).then(function (x) {
+    if (!x.ok || x.d.manual || x.d.already || x.d.unpaid) return;
+    code = ""; $("back").hidden = true; show(x.d, true);
+  }).catch(function () {});
   $("codeForm").addEventListener("submit", function (e) {
     e.preventDefault();
     var c = $("code").value;
@@ -22,15 +27,22 @@
       if (!q.already && q.unpaid) { $("codeErr").textContent = q.school + "'s last invoice hasn't been paid yet, so we can't renew online. Email support@evalu8compass.app and we'll sort it out."; return; }
       if (q.already) { $("codeErr").textContent = q.school + " is already subscribed (" + q.label + "). You can renew from " + q.already + "."; return; }
       code = c;
-      var box = $("quote"); box.innerHTML = "";
-      line(box, "b", q.school);
-      line(box, "p", q.tierLabel + ": £" + q.price + " a year, " + q.vatNote + ".");
-      line(box, "p", "Your paid year starts on " + q.startsLabel + ". " + (q.status === "trial" ? "You keep using it free until then." : q.status === "trial_ended" || q.status === "lapsed" || q.status === "cancelled" ? "Your access code works again as soon as you subscribe." : ""));
-      line(box, "p", "The invoice is emailed straight away, payable within 30 days (or by the start of your paid year, if that's later).");
-      $("subTitle").textContent = q.status === "trial" || q.status === "trial_ended" ? "Subscribe" : "Renew your subscription";
-      $("codeForm").hidden = true; $("subForm").hidden = false; $("subForm").focus();
+      show(q);
     }).catch(function () { $("codeGo").disabled = false; $("codeErr").textContent = "Couldn't reach the server. Try again."; });
   });
+  function show(q, quiet) {
+    var box = $("quote"); box.innerHTML = "";
+    line(box, "b", q.school);
+    line(box, "p", q.tierLabel + ": £" + q.price + " a year, " + q.vatNote + ".");
+    var note = q.status === "trial" ? "You keep using it free until then."
+      : q.status === "trial_grace" || q.status === "grace" ? "Your access continues meanwhile" + (q.graceUntil ? " (until " + q.graceUntil + " if you don't subscribe)" : "") + "."
+      : q.status === "trial_ended" || q.status === "lapsed" || q.status === "cancelled" ? "Your access code works again as soon as you subscribe." : "";
+    line(box, "p", "Your paid year starts on " + q.startsLabel + ". " + note);
+    line(box, "p", "The invoice is emailed straight away, payable within 30 days (or by the start of your paid year, if that's later).");
+    $("subTitle").textContent = /^trial/.test(q.status) ? "Subscribe" : "Renew your subscription";
+    $("codeForm").hidden = true; $("subForm").hidden = false;
+    if (!quiet) $("subForm").focus();
+  }
   $("back").addEventListener("click", function () { $("subForm").hidden = true; $("codeForm").hidden = false; $("code").focus(); });
 
   function fail(msg, id) { $("subErr").textContent = msg; $("subGo").disabled = false; if (id) $(id).focus(); }
