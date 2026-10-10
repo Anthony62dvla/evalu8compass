@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Find a consultant · Evalu8 Compass</title>
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/consultants.css">
+</head>
+<body>
+<header class="brandbar">
+  <div class="brandbar-in">
+    <div class="brand-logo"><i data-icon="compass" data-size="26"></i></div>
+    <div class="brand-text"><b>Evalu8 Compass</b><span>School self-evaluation</span></div>
+    <nav class="brand-nav" aria-label="Main">
+      <a href="index.html"><i data-icon="compass"></i>Home</a>
+      <a href="checklist.html"><i data-icon="list-check"></i>Checklist</a>
+      <a href="workshop.html"><i data-icon="users-group"></i>Staff workshop</a>
+      <a href="consultants.html" aria-current="page"><i data-icon="user-heart"></i>Find a consultant</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Consultant register</div>
+      <h1>Find a consultant or SIP</h1>
+      <p>Search for a checked consultant or school improvement partner by where you are and what you need help with. Send an enquiry and they'll reply to you directly.</p>
+    </div>
+  </header>
+  <p class="safe-note" role="note"><i data-icon="shield-check" data-size="20"></i><span>Every consultant here has had their identity, enhanced DBS status on the Update Service, the teacher prohibition list, insurance and two references checked by Evalu8 Compass, on the dates shown. <b>Before they work in your school, you must still carry out your own checks</b> as <i>Keeping children safe in education</i> requires, for example seeing their DBS certificate and checking its status yourself. Any work is agreed between your school and the consultant.</span></p>
+
+  <form class="csearch" id="form" novalidate aria-label="Search the register">
+    <div class="cs-row">
+      <div class="field"><label for="postcode">Your postcode</label><input type="text" id="postcode" maxlength="10" autocomplete="postal-code" placeholder="For example LS6 3QS"></div>
+      <div class="field"><label for="region">or region</label><select id="region"><option value="">Anywhere</option></select></div>
+      <div class="field"><label for="phase">Phase</label><select id="phase"><option value="">Any</option></select></div>
+      <div class="field"><label for="type">Type of school</label><select id="type"><option value="">Any</option></select></div>
+    </div>
+    <fieldset class="cs-exp"><legend>What do you need help with?</legend>
+      <p class="hint" id="sugHint" hidden></p>
+      <div class="chips" id="exp"></div>
+    </fieldset>
+    <div class="cs-go"><button class="btn primary" type="submit" id="go"><i data-icon="arrow-right"></i>Search</button><span class="err" id="err" role="alert"></span></div>
+  </form>
+
+  <p class="cs-count" id="count" role="status" aria-live="polite"></p>
+  <div id="results"></div>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="js/icons.js"></script>
+<script src="js/consultants.js"></script>
+</body>
+</html>

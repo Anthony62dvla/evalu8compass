@@ -91,6 +91,7 @@
     $("console").classList.toggle("hide", which !== "console");
     $("signOut").hidden = which !== "console";
     $("evalLink").hidden = which !== "console";
+    $("consultLink").hidden = which !== "console";
     if (which === "login") setTimeout(() => $("pw").focus(), 50);
   }
   async function copy(text, label) {

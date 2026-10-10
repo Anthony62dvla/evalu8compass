@@ -1,0 +1,37 @@
+/* Find a consultant (schools) */
+.safe-note { display: flex; gap: 10px; align-items: flex-start; background: var(--accent-soft); border-radius: 12px; padding: 12px 14px; font-size: 14.5px; margin: 18px 0 0 }
+.safe-note .ic { color: var(--icon); margin-top: 2px }
+.csearch { margin-top: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 14px }
+.cs-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px }
+.field select { width: 100%; font: inherit; padding: 9px 11px; min-height: 44px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink) }
+.cs-exp { border: 0; margin: 0; padding: 0; min-width: 0 }
+.cs-exp legend { font-weight: 700; margin-bottom: 8px; padding: 0 }
+.cs-exp .hint { margin: 0 0 8px; font-size: 13.5px; color: var(--muted) }
+.cs-exp .opt input { position: absolute; opacity: 0; width: 1px; height: 1px }
+.cs-exp .opt:has(input:checked) { background: var(--brand); border-color: var(--brand); color: var(--on-brand) }
+.cs-exp .opt:has(input:focus-visible) { outline: 3px solid var(--brand-bright); outline-offset: 2px }
+.cs-exp .opt .star { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em }
+.cs-go { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center }
+.err { color: var(--no); font-weight: 600; font-size: 14px }
+.cs-count { margin: 18px 0 8px; color: var(--muted) }
+.ccard { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 10px; margin-bottom: 14px }
+.ccard h2 { font-size: 20px; margin: 0 }
+.ccard .head { margin: 0; font-weight: 600 }
+.ccard .where { margin: 0; font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 14px }
+.ccard .where span { display: inline-flex; gap: 5px; align-items: center }
+.ccard .tags { display: flex; flex-wrap: wrap; gap: 6px }
+.ccard .tag { font-size: 12.5px; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: var(--na-soft); color: var(--ink) }
+.ccard .tag.hit { background: var(--accent-soft); color: var(--accent); outline: 1px solid var(--accent) }
+.ccard .meta { margin: 0; font-size: 14px }
+.ccard details summary { cursor: pointer; font-weight: 600; color: var(--accent); min-height: 28px }
+.ccard .bio { white-space: pre-wrap; margin: 8px 0 0; font-size: 14.5px }
+.ccard .checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; color: var(--muted) }
+.ccard .checks li { display: flex; gap: 6px; align-items: flex-start }
+.ccard .checks .ic { color: var(--met); margin-top: 2px }
+.cform { display: grid; gap: 10px; border-top: 1px solid var(--line); padding-top: 12px }
+.cform .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px }
+.cform input, .cform textarea { width: 100%; font: inherit; padding: 9px 11px; min-height: 44px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink) }
+.cform textarea { min-height: 110px; resize: vertical }
+.cform .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center }
+.cform .sent { color: var(--met); font-weight: 600 }
+.empty { background: var(--surface); border: 1px dashed var(--line); border-radius: 14px; padding: 22px; text-align: center; color: var(--muted) }

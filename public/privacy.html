@@ -44,6 +44,7 @@
     <li><a href="#who">Who we are</a></li>
     <li><a href="#roles">Our role and your school's role</a></li>
     <li><a href="#what">What we collect and why</a></li>
+    <li><a href="#consultants">Consultants on our register</a></li>
     <li><a href="#dont">What we don't do</a></li>
     <li><a href="#ai">AI suggestions</a></li>
     <li><a href="#where">Where information is stored</a></li>
@@ -80,7 +81,21 @@
 </table></div>
 <p><b>Please don't enter information about individual pupils, or details that identify staff,</b> in notes, comments or actions. The tool doesn't need it: describe what you see across the school instead. Use roles ("the DSL", "Year 7 team") rather than names where you can.</p>
 
-<h2 id="dont">4. What we don't do</h2>
+<h2 id="consultants">4. Consultants on our register</h2>
+<p>If you apply to our register of consultants and school improvement partners, we are the controller of your information.</p>
+<div class="tblwrap"><table>
+  <thead><tr><th scope="col">Information</th><th scope="col">Why we have it</th><th scope="col">How long we keep it</th></tr></thead>
+  <tbody>
+    <tr><td><b>Your listing</b>: name, summary, bio, background, qualifications, expertise, phases and types of school, town, postcode district, region and how far you travel.</td><td>To show schools signed in to Evalu8 Compass who can help them. Lawful basis: the contract with you.</td><td>While you're listed. Deleted straight away if you leave the register.</td></tr>
+    <tr><td><b>Contact and invoicing details</b>: email, phone, postal address, and your invoices.</td><td>To pass on schools' enquiries, arrange your checks and invoice you. Lawful basis: the contract with you, and our legal obligation to keep financial records.</td><td>While you're listed. Invoices are kept for six years.</td></tr>
+    <tr><td><b>Checks</b>: the dates and outcomes of our identity, DBS Update Service, teacher prohibition, insurance and reference checks, your teacher reference number if you give it, your insurer and insurance end date, and your referees' names, roles and emails.</td><td>To make sure everyone on the register is safe and suitable to work with schools. The outcome of a DBS check is criminal offence data. We process it under the Data Protection Act 2018, Schedule 1, with an appropriate policy document. We see your certificate but never keep a copy or record what it contains.</td><td>While you're listed. Applications we don't approve are deleted after six months. Listings that lapse, or that are approved but never paid for, are deleted after twelve months.</td></tr>
+    <tr><td><b>Enquiries</b>: when a school contacts you, we email you its message and record only the date, the school and you.</td><td>To pass on the enquiry and prevent misuse. Lawful basis: legitimate interests.</td><td>Two years.</td></tr>
+  </tbody>
+</table></div>
+<p><b>Referees:</b> if someone gives your details as a referee, we use them only to ask for a reference, and delete them with the consultant's record.</p>
+<p><b>Postcode lookups:</b> to work out distances, the postcode a consultant gives, or a school searches with, is sent to postcodes.io, a free service run by Ideal Postcodes using open government data. Only the postcode is sent. We store only the district (for example LS6), never a full postcode or address.</p>
+
+<h2 id="dont">5. What we don't do</h2>
 <ul>
   <li>We don't ask for or need pupils' personal information, or any special category data such as health or ethnicity.</li>
   <li>We don't use advertising, analytics, tracking pixels or third-party scripts. Fonts and icons are served from our own server.</li>
@@ -89,30 +104,31 @@
   <li>We don't look at a school's self-evaluation unless the school asks us to help with something. Our admin console shows only counts (for example "42 lines rated"), never content.</li>
 </ul>
 
-<h2 id="ai">5. AI suggestions</h2>
+<h2 id="ai">6. AI suggestions</h2>
 <p>AI suggestions are optional. Your school can switch them off in its settings, and then nothing is sent to the AI. When they're on, AI only runs when someone presses an AI button.</p>
 <p>When you use an AI feature, we send our AI provider only what it needs for that request: for example the checklist line, your rating and evidence note, and your school's type and phases. For workshop features, it's the collated findings, anonymous comments, your context and the Ofsted report text. We don't send access codes or anything that identifies who is using the tool.</p>
 <p>Our AI provider is <b>Anthropic PBC</b>, based in the United States. Under its commercial terms, Anthropic does not train its models on information sent through its API, and it deletes API inputs and outputs within 30 days (unless it must keep them longer to enforce its usage policy or meet a legal requirement). Because this involves sending information to the US, the transfer relies on the safeguards in Anthropic's data processing terms. You can read <a href="https://privacy.claude.com/en/articles/7996866" rel="noopener">Anthropic's retention policy</a> and <a href="https://www.anthropic.com/legal/privacy" rel="noopener">privacy policy</a>.</p>
 <p>AI suggestions are advisory. They are not an Ofsted judgement and don't predict one.</p>
 
-<h2 id="where">6. Where information is stored</h2>
+<h2 id="where">7. Where information is stored</h2>
 <p>The service runs on a server in {{HOSTING}}. Everything is sent over an encrypted (HTTPS) connection.</p>
 <p>We back up the service every day. Backups are encrypted (AES-256) on our server before they're copied anywhere, and are then kept in {{BACKUP}}. Local backups are kept for 14 days and off-site backups for 90 days, so information you delete can remain in an encrypted backup for up to 90 days before it's gone completely.</p>
 <p>A copy of your school's self-evaluation is also kept in the browser of each device that opens it, so work isn't lost if the connection drops. Signing out doesn't remove it: clear your browser's site data for evalu8compass.app on a shared computer.</p>
 
-<h2 id="share">7. Who we share it with</h2>
+<h2 id="share">8. Who we share it with</h2>
 <p>We use a small number of suppliers (sub-processors) to run the service:</p>
 <div class="tblwrap"><table>
   <thead><tr><th scope="col">Supplier</th><th scope="col">What they do</th><th scope="col">What they can see</th></tr></thead>
   <tbody>
     <tr><td>Hostinger</td><td>Hosts our server{{EMAIL_HOST}}</td><td>Stores the service's data on our server. Hostinger provides the infrastructure and doesn't use the data itself.</td></tr>
-    <tr><td>Anthropic PBC (US)</td><td>AI suggestions, only when used</td><td>Only the text sent for each AI request (see section 5).</td></tr>
+    <tr><td>Anthropic PBC (US)</td><td>AI suggestions, only when used</td><td>Only the text sent for each AI request (see section 6).</td></tr>
+    <tr><td>Ideal Postcodes (postcodes.io)</td><td>Postcode lookups for the consultant register</td><td>Only the postcode being looked up.</td></tr>
     <tr><td>{{BACKUP_PROVIDER}}</td><td>Off-site backup storage</td><td>Nothing readable: backups are encrypted before they leave our server.</td></tr>
   </tbody>
 </table></div>
 <p>We'll give schools at least 30 days' notice before adding or replacing a supplier that handles their information. We may also share information if the law requires it.</p>
 
-<h2 id="security">8. Keeping it secure</h2>
+<h2 id="security">9. Keeping it secure</h2>
 <ul>
   <li>Encrypted connections (HTTPS) for everything, with strict browser security settings.</li>
   <li>Access codes are stored only as hashes. Sign-ins use signed cookies that can't be read by scripts, and a revoked code stops working straight away.</li>
@@ -123,7 +139,7 @@
 </ul>
 <p>If something goes wrong that affects your school's information, we'll tell your school without undue delay.</p>
 
-<h2 id="cookies">9. Cookies and device storage</h2>
+<h2 id="cookies">10. Cookies and device storage</h2>
 <p>We only use storage that the service needs to work, so you won't see a cookie banner. There are no advertising or analytics cookies.</p>
 <div class="tblwrap"><table>
   <thead><tr><th scope="col">Name</th><th scope="col">Type</th><th scope="col">Purpose</th><th scope="col">Lasts</th></tr></thead>
@@ -135,7 +151,7 @@
   </tbody>
 </table></div>
 
-<h2 id="rights">10. Your rights</h2>
+<h2 id="rights">11. Your rights</h2>
 <p>You have rights to ask for a copy of your personal information, to have it corrected or deleted, to restrict or object to how it's used, and to have it in a portable format.</p>
 <ul>
   <li><b>For your school's self-evaluation or workshops,</b> contact your school first, because it decides how that information is used. We'll help your school respond.</li>
@@ -144,7 +160,7 @@
 <p>Workshop responses are anonymous, so we usually can't link a response to a particular person.</p>
 <p>If you're unhappy with how we've handled your information, you can complain to the Information Commissioner's Office: <a href="https://ico.org.uk/make-a-complaint/" rel="noopener">ico.org.uk/make-a-complaint</a> or 0303 123 1113. We'd appreciate the chance to put things right first.</p>
 
-<h2 id="changes">11. Changes to this notice</h2>
+<h2 id="changes">12. Changes to this notice</h2>
 <p>We'll update this notice when the service changes and show the date at the top. We'll tell schools by email about any important change.</p>
 </main>
 <footer class="frontfoot">

@@ -365,3 +365,6 @@ footer a { color: var(--accent); font-weight: 600 }
 .panel.plan-banner .tile { background: var(--accent-soft) }
 .panel.plan-banner[data-tone="ok"] .tile { background: var(--surface); color: var(--met) }
 .panel.plan-banner[data-tone="warn"] .tile { background: var(--surface); color: var(--part) }
+.consult-cta { margin: 18px 0 0; display: flex; gap: 10px; align-items: flex-start; background: var(--accent-soft); border-radius: 12px; padding: 12px 14px; font-size: 14.5px }
+.consult-cta .ic { color: var(--icon); margin-top: 2px }
+.consult-cta a { color: var(--accent); font-weight: 600 }

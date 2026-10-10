@@ -142,6 +142,27 @@ To pause a school whose invoice is long overdue, **Revoke** its code (work is ke
 If codes don't arrive, check `journalctl -u hwwd -n 50` for "Sign-up email failed". The usual causes are a
 wrong mailbox password, or the VPS blocking outgoing port 465 (try `SMTP_PORT=587`).
 
+## Consultant register
+
+Consultants and SIPs apply at `/for-consultants.html`. You get an email for each application.
+In the admin console, open **Consultants**:
+
+1. Contact the consultant to see their enhanced DBS certificate, then check its status on the DBS
+   Update Service (gov.uk "Check a DBS certificate", with their consent). Check the teacher prohibition
+   list through the Teaching Regulation Agency, their insurance certificate, two references and ID.
+2. Record each check with the date you made it. Don't record certificate details: a short note such
+   as "certificate seen, status current" is enough.
+3. **Approve**: the £49 listing invoice is emailed. When it's paid, click **Listing fee paid: go live**.
+4. A month before each anniversary the consultant is emailed the £18 annual check invoice. Recheck the
+   DBS status and insurance, record them, then click **Annual check done**.
+
+Listings hide themselves if insurance expires or the annual check is over 30 days late. Changes a
+consultant makes after approval wait for you under **Needs action**. **Email their private link**
+sends a new link and stops the old one working. Only signed-in schools can search the register.
+
+Postcode distances use postcodes.io (free, no key). Only postcodes are sent; consultants' locations
+are stored as the postcode district's centre.
+
 ## AI allowance
 
 Each school can make `AI_MONTHLY_REQUESTS` AI requests a month (default 200), counted in UK time and

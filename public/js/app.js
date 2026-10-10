@@ -698,7 +698,7 @@
     $("planBanner").hidden = false;
   }
   // The workshop needs the server; hide its link in single-file or artifact copies
-  if (location.protocol === "file:" || !document.querySelector('link[href="css/styles.css"]')) { ["workshopLink", "homeLink", "reportLink"].forEach(id => { const w = $(id); if (w) w.hidden = true; }); }
+  if (location.protocol === "file:" || !document.querySelector('link[href="css/styles.css"]')) { ["workshopLink", "homeLink", "reportLink", "consultLink", "consultCta"].forEach(id => { const w = $(id); if (w) w.hidden = true; }); }
   // School access: show sign-out, and use the school's name if none is set yet
   if (location.protocol !== "file:" && document.querySelector('link[href="css/styles.css"]')) {
     fetch("api/access").then(r => r.json()).then(a => {

@@ -11,7 +11,7 @@ body { min-height: 100vh; display: flex; flex-direction: column }
 .f { display: grid; gap: 6px; min-width: 0 }
 .f > label { font-weight: 700; font-size: 15px }
 .f .hint { font-size: 13.5px; color: var(--muted); margin: 0 }
-.f input[type=text], .f input[type=email], .f textarea { width: 100%; font: inherit; padding: 10px 12px; min-height: 46px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink) }
+.f input[type=text], .f input[type=email], .f input[type=tel], .f input[type=date], .f textarea { width: 100%; font: inherit; padding: 10px 12px; min-height: 46px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink) }
 .f textarea { min-height: 96px; resize: vertical }
 .f input.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 20px; letter-spacing: .12em; text-transform: uppercase }
 .row2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px }
@@ -34,3 +34,25 @@ body { min-height: 100vh; display: flex; flex-direction: column }
 .hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden }
 .small { font-size: 13.5px; color: var(--muted); margin: 0 }
 .linkbtn { background: none; border: 0; padding: 0; color: var(--accent); font-weight: 600; text-decoration: underline; min-height: 24px }
+.acct-wrap.wide { max-width: 780px }
+.f select, .f input[type=number] { width: 100%; font: inherit; padding: 10px 12px; min-height: 46px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink) }
+.ticks2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px }
+.tick { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 10px 12px; cursor: pointer; font-size: 14.5px; min-height: 44px }
+.tick input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--brand); flex: none }
+.tick:has(input:checked) { border-color: var(--brand); background: var(--accent-soft) }
+.acct legend .hint, .acct h2 .hint { font-weight: 400; color: var(--muted); font-size: 13.5px }
+.acct h2 { margin-top: 6px }
+.steps-list { margin: 0; padding-left: 22px; display: grid; gap: 8px }
+.steps-list li { padding-left: 4px }
+.fee-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px }
+.fee { background: var(--accent-soft); border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px }
+.fee b { font-family: var(--display); font-size: 26px }
+.fee span { font-size: 14px; color: var(--ink) }
+.status-pill { display: inline-block; font-size: 13px; font-weight: 700; padding: 4px 12px; border-radius: 999px; background: var(--part-soft); color: var(--part) }
+.status-pill.live { background: var(--met-soft); color: var(--met) }
+.checklist-mini { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14.5px }
+.checklist-mini li { display: flex; gap: 8px; align-items: flex-start }
+.checklist-mini .ic { margin-top: 2px; color: var(--met) }
+.checklist-mini li.todo .ic { color: var(--muted) }
+.notice { background: var(--part-soft); color: var(--ink); border-radius: 12px; padding: 12px 14px; font-size: 14.5px; margin: 0 }
+.btnrow { display: flex; flex-wrap: wrap; gap: 10px }

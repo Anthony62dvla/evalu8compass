@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Apply to the consultant register · Evalu8 Compass</title>
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/account.css">
+</head>
+<body>
+<header class="brandbar">
+  <div class="brandbar-in">
+    <div class="brand-logo"><i data-icon="compass" data-size="26"></i></div>
+    <div class="brand-text"><b>Evalu8 Compass</b><span>School self-evaluation</span></div>
+    <nav class="brand-nav" aria-label="Main"><a href="index.html"><i data-icon="home"></i>Home</a><a href="for-consultants.html"><i data-icon="user-heart"></i>For consultants</a></nav>
+  </div>
+</header>
+<main class="acct-wrap wide">
+  <form class="acct" id="form" novalidate>
+    <span class="tile"><i data-icon="user-heart" data-size="24"></i></span>
+    <h1>Apply to the consultant register</h1>
+    <p class="lead">Everything in the first section is what schools will see. The rest is for our checks only.</p>
+
+    <h2>Your listing <span class="hint">(what schools see)</span></h2>
+    <div id="profile"></div>
+
+    <h2>Contact <span class="hint">(not shown to schools)</span></h2>
+    <div class="row2">
+      <div class="f"><label for="email">Email address</label><p class="hint" id="emailHint">Enquiries from schools come here.</p><input type="email" id="email" autocomplete="email" maxlength="200" aria-describedby="emailHint"></div>
+      <div class="f"><label for="phone">Phone (optional)</label><p class="hint" id="phoneHint">Only for us to arrange your checks.</p><input type="tel" id="phone" autocomplete="tel" maxlength="30" aria-describedby="phoneHint"></div>
+    </div>
+    <div class="f"><label for="address">Postal address</label><p class="hint" id="addrHint">For your invoices only.</p><textarea id="address" maxlength="300" rows="3" autocomplete="street-address" aria-describedby="addrHint"></textarea></div>
+
+    <h2>Checks <span class="hint">(not shown to schools)</span></h2>
+    <label class="agree"><input type="checkbox" id="updateService"><span>I have an <b>enhanced DBS certificate (child workforce)</b> registered on the <b>DBS Update Service</b>. I'll show it to Evalu8 Compass and consent to a status check.</span></label>
+    <div class="f"><label for="trn">Teacher reference number, TRN (optional)</label><p class="hint" id="trnHint">7 digits. Helps us check the Teaching Regulation Agency's records.</p><input type="text" id="trn" inputmode="numeric" maxlength="7" aria-describedby="trnHint"></div>
+    <div class="row2">
+      <div class="f"><label for="insProvider">Insurer (professional indemnity and public liability)</label><input type="text" id="insProvider" maxlength="100"></div>
+      <div class="f"><label for="insExpires">Insurance end date</label><input type="date" id="insExpires" class="datein"></div>
+    </div>
+    <fieldset><legend>Referee 1</legend>
+      <div class="row2"><div class="f"><label for="r1n">Name</label><input type="text" id="r1n" maxlength="100"></div><div class="f"><label for="r1r">Role and organisation</label><input type="text" id="r1r" maxlength="120" placeholder="For example Headteacher, Oak Primary"></div></div>
+      <div class="f"><label for="r1e">Email</label><input type="email" id="r1e" maxlength="200"></div>
+    </fieldset>
+    <fieldset><legend>Referee 2</legend>
+      <div class="row2"><div class="f"><label for="r2n">Name</label><input type="text" id="r2n" maxlength="100"></div><div class="f"><label for="r2r">Role and organisation</label><input type="text" id="r2r" maxlength="120"></div></div>
+      <div class="f"><label for="r2e">Email</label><input type="email" id="r2e" maxlength="200"></div>
+    </fieldset>
+    <div class="hp" aria-hidden="true"><label for="website">Leave this empty</label><input type="text" id="website" tabindex="-1" autocomplete="off"></div>
+
+    <div class="summary-box"><b>Fees</b><p>£49 one-off listing fee, invoiced only if your listing is approved. Then £18 a year for the annual compliance check.</p></div>
+    <label class="agree"><input type="checkbox" id="accurate"><span>The information I've given is accurate, and I'll tell Evalu8 Compass straight away if anything changes, including my DBS status or insurance.</span></label>
+    <label class="agree"><input type="checkbox" id="consent"><span>I consent to Evalu8 Compass checking my DBS certificate's status on the Update Service, the Teaching Regulation Agency's records, my insurance and my references.</span></label>
+    <label class="agree"><input type="checkbox" id="agree"><span>I agree to the <a href="consultant-terms.html" target="_blank" rel="noopener">terms for consultants</a> and have read the <a href="privacy.html#consultants" target="_blank" rel="noopener">privacy notice</a>.</span></label>
+    <p class="err" id="err" role="alert"></p>
+    <button class="btn primary wide" type="submit" id="go"><i data-icon="arrow-right"></i>Send my application</button>
+  </form>
+
+  <section class="acct done" id="done" hidden tabindex="-1" aria-labelledby="doneTitle">
+    <span class="tile"><i data-icon="mail" data-size="26"></i></span>
+    <h1 id="doneTitle">Application sent</h1>
+    <p class="lead">Thank you. We've emailed you a private link where you can check progress and update your listing. We'll be in touch to arrange your checks.</p>
+  </section>
+</main>
+<script src="js/icons.js"></script>
+<script src="js/cprofile.js"></script>
+<script src="js/consultant-apply.js"></script>
+</body>
+</html>

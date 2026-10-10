@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Consultants · Evalu8 Compass admin</title>
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+<header class="brandbar">
+  <div class="brandbar-in">
+    <div class="brand-logo"><i data-icon="compass" data-size="26"></i></div>
+    <div class="brand-text"><b>Evalu8 Compass</b><span>Superadmin</span></div>
+    <nav class="brand-nav" aria-label="Main">
+      <a href="admin.html"><i data-icon="building"></i>Access and usage</a>
+      <a href="admin-consultants.html" aria-current="page"><i data-icon="user-heart"></i>Consultants</a>
+      <a href="admin-eval.html"><i data-icon="checks"></i>AI quality check</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+  <section class="acard hide" id="signedOut">
+    <span class="tile"><i data-icon="lock" data-size="24"></i></span>
+    <h1>Sign in first</h1>
+    <p>The consultant register is managed by the superadmin.</p>
+    <a class="btn primary" href="admin.html"><i data-icon="login"></i>Go to superadmin sign-in</a>
+  </section>
+  <div id="console" class="hide">
+    <header class="top">
+      <div><div class="eyebrow">Superadmin</div><h1>Consultant register</h1>
+        <p>Record each check with the date you made it, then approve. Approving emails the £<span id="feeL">49</span> listing invoice; the listing goes live when you mark it paid. The public page is <a href="for-consultants.html">/for-consultants.html</a>.</p></div>
+      <button class="btn" id="refresh"><i data-icon="refresh"></i>Refresh</button>
+    </header>
+    <div class="stats" id="stats"></div>
+    <div class="tools cfilter" role="group" aria-label="Show">
+      <button class="btn" data-f="todo" aria-pressed="true">Needs action</button>
+      <button class="btn" data-f="live" aria-pressed="false">Live</button>
+      <button class="btn" data-f="all" aria-pressed="false">All</button>
+    </div>
+    <div id="list"></div>
+  </div>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="js/icons.js"></script>
+<script src="js/admin-consultants.js"></script>
+</body>
+</html>

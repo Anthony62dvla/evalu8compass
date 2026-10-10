@@ -94,3 +94,19 @@ code { padding: 1px 6px; font-size: .92em }
 .enq { margin-top: 14px }
 .enq summary { cursor: pointer; font-weight: 700; min-height: 32px }
 #subs a { color: var(--accent); font-weight: 600 }
+.cfilter { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px }
+.cadm { margin-top: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px; display: grid; gap: 12px }
+.cadm h2 { font-size: 19px; margin: 0; display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center }
+.cadm .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px 18px; font-size: 14px }
+.cadm .grid2 p { margin: 0 }
+.cadm .grid2 b { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted) }
+.cadm details summary { cursor: pointer; font-weight: 600; color: var(--accent); min-height: 28px }
+.cadm .bio { white-space: pre-wrap; font-size: 14px; margin: 6px 0 0 }
+.cchecks { display: grid; gap: 8px }
+.ccheck { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font-size: 14px }
+.ccheck > span:first-child { flex: 1 1 260px; min-width: 0 }
+.ccheck.done { border-color: var(--met); background: var(--met-soft) }
+.ccheck input[type=date], .ccheck input[type=text] { font: inherit; padding: 6px 8px; min-height: 40px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink) }
+.pending { background: var(--part-soft); border-radius: 10px; padding: 10px 12px; font-size: 14px }
+.pending p { margin: 4px 0 }
+.cadm .acts, #subs .acts { display: flex; gap: 8px; flex-wrap: wrap }

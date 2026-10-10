@@ -27,6 +27,7 @@ const schools = require("./lib/schools");
 const usage = require("./lib/usage");
 const evals = require("./lib/evals");
 const billing = require("./lib/billing");
+const consultants = require("./lib/consultants");
 access.setAdminCheck(req => admin.who(req));
 
 const PORT = Number(process.env.PORT || 3000);
@@ -41,7 +42,7 @@ const LIMITS = {
   signup: Number(process.env.SIGNUP_LIMIT_PER_MIN || 20), // sign-up and subscribe form posts per IP per minute (hourly limits in lib/billing.js)
 };
 // Pages that need a school access code (staff joining a workshop never do)
-const PROTECTED_PAGES = new Set(["/checklist.html", "/report.html"]);
+const PROTECTED_PAGES = new Set(["/checklist.html", "/report.html", "/consultants.html"]);
 const AI_TASKS = ["item", "review", "action", "draft", "first"];
 const hits = new Map();
 // Browser security headers for every response. Scripts may only come from this site
@@ -75,6 +76,7 @@ const server = http.createServer(async (req, res) => {
       if (limited(req, isAI ? "ai" : "api")) return json(res, 429, { code: "rate_limited", error: "Too many requests. Wait a minute and try again." });
       if (p === "/api/access") return accessRoute(req, res);
       if (p === "/api/pricing" || p.startsWith("/api/signup") || p.startsWith("/api/subscribe")) return billingRoute(req, res, p);
+      if (p.startsWith("/api/consultants")) return consultantRoute(req, res, p);
       if (p === "/api/access/logout" && req.method === "POST") { access.logout(req, res); return json(res, 200, { ok: true }); }
       if (p === "/api/inspector" && req.method === "POST") {
         const w = access.who(req);
@@ -96,6 +98,8 @@ const server = http.createServer(async (req, res) => {
     const inv = p.match(/^\/invoice\/(EC-\d{4}-\d{4,})$/);
     if (inv) return invoicePage(req, res, inv[1], url.searchParams.get("t") || "");
     if (/^\/join\/[A-Za-z0-9]{6}$/.test(p)) { res.writeHead(302, { location: "/workshop.html?code=" + p.slice(6).toUpperCase() }); return res.end(); }
+    // The consultant register is only ever for signed-in schools, even when access codes are switched off
+    if (p === "/consultants.html") { const w = access.who(req); if (!w || !(w.id || w.admin)) { res.writeHead(302, { location: w ? "/index.html" : "/enter.html?next=%2Fconsultants.html" }); return res.end(); } }
     if (PROTECTED_PAGES.has(p) && !access.who(req)) {
       res.writeHead(302, { location: "/enter.html?next=" + encodeURIComponent(p + url.search) }); return res.end();
     }
@@ -123,12 +127,17 @@ function retention() {
   gone.forEach(id => admin.audit("data.retention_delete", `saved work for ${id} (access ended over ${SCHOOL_RETENTION_DAYS} days ago)`, null));
   const scrubbed = access.scrubEnded(SCHOOL_RETENTION_DAYS);
   if (scrubbed) admin.audit("data.retention_delete", `contact details removed from ${scrubbed} ended code${scrubbed === 1 ? "" : "s"}`, null);
+  consultants.cleanup({ audit: (a, d) => admin.audit(a, d, null) });
   admin.trimAudit(730);
 }
 setTimeout(retention, 5000).unref();
 setInterval(retention, 24 * 3600e3).unref();
 // Free-term, renewal and payment reminder emails (each is sent once)
-function reminders() { billing.reminders({ audit: (a, d) => admin.audit(a, d, null) }).catch(e => console.error("Reminders:", e.message)); }
+function reminders() {
+  const hooks = { audit: (a, d) => admin.audit(a, d, null) };
+  billing.reminders(hooks).catch(e => console.error("Reminders:", e.message))
+    .then(() => consultants.reminders(hooks)).catch(e => console.error("Consultant reminders:", e.message));
+}
 setTimeout(reminders, 60e3).unref();
 setInterval(reminders, 3 * 3600e3).unref();
 for (const sig of ["SIGINT", "SIGTERM"]) process.on(sig, () => { store.flushAll(); usage.flush(); process.exit(0); });
@@ -283,9 +292,54 @@ function invoicePage(req, res, num, t) {
   if (!r) { res.writeHead(404, { "content-type": "text/plain; charset=utf-8" }); return res.end("Invoice not found."); }
   const c = access.list().find(x => x.id === r.codeId);
   const sub = c ? [c.sub, ...(c.history || [])].find(x => x && x.invoice && x.invoice.number === num) : null;
-  const paidAt = sub ? sub.paidAt : null;
+  const paidAt = sub ? sub.paidAt : consultants.invoicePaid(num);
   res.writeHead(200, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "x-robots-tag": "noindex" });
   res.end(billing.invoiceHtml(r, paidAt));
+}
+
+/* Consultant register (see lib/consultants.js) */
+async function consultantRoute(req, res, p) {
+  try {
+    if (p === "/api/consultants/options" && req.method === "GET")
+      return json(res, 200, { regions: consultants.REGIONS, expertise: consultants.EXPERTISE, phases: consultants.PHASES, types: consultants.TYPES, checks: consultants.CHECKS, fees: { listing: consultants.LISTING_FEE, annual: consultants.ANNUAL_FEE } });
+    if (p === "/api/consultants/suggest" && req.method === "GET") {
+      const w = access.who(req);
+      if (!w || !(w.id || w.admin)) return json(res, 401, { code: "access_required", error: "Sign in with your school's access code." });
+      const st = w.id && !w.admin ? schools.get(w.id).state : null;
+      return json(res, 200, { suggested: consultants.suggestFor(st), type: st && st.profile ? st.profile.type : "" });
+    }
+    if (req.method !== "POST") return json(res, 405, { error: "Method not allowed" });
+    if (!sameSite(req)) return json(res, 403, { error: "Cross-site request refused." });
+    if (limited(req, "signup")) return json(res, 429, { error: "Too many requests. Wait a minute and try again." });
+    let b;
+    try { b = JSON.parse((await readBody(req, 32768)) || "{}"); } catch (e) { return json(res, 400, { error: "Invalid request" }); }
+    if (!b || typeof b !== "object" || Array.isArray(b)) return json(res, 400, { error: "Invalid request" });
+    const hooks = { audit: (a, d) => admin.audit(a, d, req) };
+    if (p === "/api/consultants/apply") return json(res, 200, await consultants.apply(b, clientIp(req), hooks));
+    if (p === "/api/consultants/link") return json(res, 200, await consultants.resendLink(b.email, clientIp(req)));
+    if (p.startsWith("/api/consultants/me")) {
+      const c = consultants.byToken(b.id, b.t);
+      if (!c) return json(res, 403, { error: "That link isn't valid. Ask for a new one from the consultants page." });
+      if (p === "/api/consultants/me") return json(res, 200, consultants.forConsultant(c));
+      if (p === "/api/consultants/me/update") return json(res, 200, await consultants.update(c, b.profile || {}, hooks));
+      if (p === "/api/consultants/me/withdraw") return json(res, 200, consultants.withdraw(c, hooks));
+      return json(res, 404, { error: "Not found" });
+    }
+    // Schools only from here (never open to everyone, even when access codes are switched off)
+    const w = access.who(req);
+    if (!w || !(w.id || w.admin)) return json(res, 401, { code: "access_required", error: "Sign in with your school's access code." });
+    if (p === "/api/consultants/search") return json(res, 200, await consultants.search(b));
+    const m = p.match(/^\/api\/consultants\/([a-f0-9]{10})\/contact$/);
+    if (m) {
+      if (!w.id || w.admin) return json(res, 403, { error: "Sign in as a school to contact consultants." });
+      return json(res, 200, await consultants.contact(m[1], b, { id: w.id, name: w.name }, hooks));
+    }
+    return json(res, 404, { error: "Not found" });
+  } catch (e) {
+    if (e instanceof consultants.ConsultantError || e.name === "GeoError" || (e.status && e.status < 600 && !(e instanceof SyntaxError))) return json(res, e.status || 400, { error: e.message, fields: e.fields || undefined });
+    console.error(e);
+    return json(res, 500, { error: "Something went wrong. Try again, or email support@evalu8compass.app." });
+  }
 }
 
 /* Superadmin console API (see lib/admin.js) */
@@ -343,6 +397,20 @@ async function adminRoute(req, res, p) {
   }
   if (p.startsWith("/api/admin/evals")) return evalRoute(req, res, p);
   if (p === "/api/admin/billing" && req.method === "GET") return json(res, 200, billing.overview());
+  if (p === "/api/admin/consultants" && req.method === "GET") return json(res, 200, consultants.adminList());
+  const ca = p.match(/^\/api\/admin\/consultants\/([a-f0-9]{10})\/([a-z-]+)$/);
+  if (ca && req.method === "POST") {
+    const b = (await body()) || {};
+    try {
+      const r = await consultants.adminAction(ca[1], ca[2], b, { audit: (a, d) => admin.audit(a, d, req) });
+      const c = consultants.find(ca[1]);
+      admin.audit(`consultant.${ca[2]}`, `${c ? c.profile.name : ca[1]} (${ca[1]})${b.check ? ": " + b.check : ""}${b.date ? ", " + b.date : ""}`, req);
+      return json(res, 200, r);
+    } catch (e) {
+      if (e instanceof consultants.ConsultantError) return json(res, e.status, { error: e.message });
+      return json(res, 502, { error: e.message });
+    }
+  }
   const bl = p.match(/^\/api\/admin\/codes\/([a-f0-9]{8})\/billing\/(send-invoice|mark-paid|mark-unpaid|cancel|set-trial)$/);
   if (bl && req.method === "POST") {
     const b = (await body()) || {};
@@ -383,7 +451,7 @@ async function adminRoute(req, res, p) {
 }
 
 /* Policy pages: details that differ per installation come from .env (see .env.example) */
-const POLICY_PAGES = new Set(["privacy.html", "terms.html", "dpia.html", "accessibility.html"]);
+const POLICY_PAGES = new Set(["privacy.html", "terms.html", "dpia.html", "accessibility.html", "consultant-terms.html"]);
 const POLICY_DATE = "10 October 2026";
 function policyValues() {
   const e = k => String(process.env[k] || "").trim();
