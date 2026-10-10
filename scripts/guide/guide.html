@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Evalu8 Compass: how to use it</title>
+<link rel="stylesheet" href="{{ROOT}}/public/css/fonts.css">
+<style>
+  @page { size: A4; margin: 16mm 16mm 18mm }
+  @page :first { margin: 0 }
+  :root { --deep: #04342C; --teal: #0F6E56; --bright: #5DCAA5; --mint: #E1F5EE; --ink: #10231F; --muted: #4B5E59; --line: #D3E6DF; --amber: #854F0B; --amber-soft: #FAEEDA }
+  * { box-sizing: border-box }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact }
+  body { margin: 0; font: 10.5pt/1.55 "Public Sans", Arial, sans-serif; color: var(--ink) }
+  h1, h2, h3, .display { font-family: "Lexend", Arial, sans-serif; color: var(--deep); line-height: 1.2 }
+  h2 { font-size: 21pt; margin: 0 0 4mm; display: flex; align-items: center; gap: 4mm }
+  h3 { font-size: 13pt; margin: 6mm 0 2mm; break-after: avoid }
+  p { margin: 0 0 3mm }
+  ul, ol { margin: 0 0 3mm; padding-left: 6mm }
+  li { margin-bottom: 1.4mm }
+  b { color: var(--deep) }
+  .ic { width: 1em; height: 1em; vertical-align: -.15em }
+  .num { flex: none; width: 13mm; height: 13mm; border-radius: 3.5mm; background: var(--mint); color: var(--teal); display: grid; place-items: center }
+  .num .ic { width: 7mm; height: 7mm }
+  .kicker { font: 600 8.5pt "Lexend"; letter-spacing: .1em; text-transform: uppercase; color: var(--teal); margin-bottom: 1.5mm }
+  section.chapter { break-before: page }
+  .lead { font-size: 12pt; color: var(--muted); margin-bottom: 5mm }
+  .tip { background: var(--mint); border-radius: 3mm; padding: 3mm 4mm; margin: 3mm 0; display: flex; gap: 3mm; break-inside: avoid }
+  .tip .ic { color: var(--teal); width: 5.5mm; height: 5.5mm; flex: none; margin-top: .5mm }
+  .tip.warn { background: var(--amber-soft) } .tip.warn .ic { color: var(--amber) }
+  .tip p:last-child { margin: 0 }
+  figure { margin: 4mm 0; break-inside: avoid }
+  figure img.crop { width: 100%; height: var(--h); object-fit: cover; object-position: top left }
+  figure img { display: block; max-width: 100%; border: 1px solid var(--line); border-radius: 2.5mm; box-shadow: 0 1mm 3mm rgba(4,52,44,.08) }
+  figcaption { font-size: 8.5pt; color: var(--muted); margin-top: 1.5mm }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; align-items: start }
+  .two-narrow { display: grid; grid-template-columns: 62mm 1fr; gap: 7mm; align-items: start }
+  .steps { list-style: none; padding: 0; counter-reset: s }
+  .steps > li { counter-increment: s; position: relative; padding-left: 10mm; margin-bottom: 2.6mm; break-inside: avoid }
+  .steps > li::before { content: counter(s); position: absolute; left: 0; top: -.2mm; width: 6.5mm; height: 6.5mm; border-radius: 50%; background: var(--teal); color: #fff; font: 600 9pt "Lexend"; display: grid; place-items: center }
+  table { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin: 2mm 0 4mm; break-inside: avoid }
+  th, td { text-align: left; vertical-align: top; padding: 2mm 2.5mm; border-bottom: 1px solid var(--line) }
+  th { font: 600 8pt "Lexend"; text-transform: uppercase; letter-spacing: .05em; color: var(--muted) }
+  .pill { display: inline-block; font: 600 8.5pt "Public Sans"; padding: .4mm 2.4mm; border-radius: 99px; white-space: nowrap }
+  .met { background: #EAF3DE; color: #27500A } .part { background: #FAEEDA; color: #633806 } .no { background: #FCEBEB; color: #791F1F } .na { background: #F1EFE8; color: #444441 }
+  .btn { display: inline-block; font: 600 9pt "Public Sans"; border: 1px solid var(--line); border-radius: 1.6mm; padding: 0 1.8mm; background: #fff; color: var(--deep); white-space: nowrap }
+
+  /* Cover */
+  .cover { height: 297mm; background: var(--deep); color: #fff; padding: 28mm 22mm 20mm; display: flex; flex-direction: column; position: relative; overflow: hidden }
+  .cover .logo { width: 16mm; height: 16mm; border-radius: 4mm; background: var(--teal); display: grid; place-items: center; color: #fff }
+  .cover .logo .ic { width: 10mm; height: 10mm }
+  .cover .brand { font: 600 15pt "Lexend"; margin-top: 6mm }
+  .cover h1 { color: #fff; font-size: 40pt; margin: 32mm 0 6mm; max-width: 150mm }
+  .cover .sub { font-size: 14pt; color: #CDEDE2; max-width: 140mm }
+  .cover .who { margin-top: 10mm; display: grid; gap: 2.5mm; font-size: 11pt; color: #CDEDE2 }
+  .cover .who span { display: flex; gap: 3mm; align-items: center } .cover .who .ic { color: var(--bright); width: 6mm; height: 6mm }
+  .cover .art { position: absolute; right: -40mm; bottom: -30mm; color: var(--teal); opacity: .5 }
+  .cover .art .ic { width: 170mm; height: 170mm }
+  .cover .foot { margin-top: auto; font-size: 9.5pt; color: #9FD6C3; position: relative }
+  .toc { list-style: none; padding: 0; margin: 4mm 0 0; columns: 2; column-gap: 10mm }
+  .toc li { display: flex; gap: 3mm; padding: 2.4mm 0; border-bottom: 1px solid var(--line); break-inside: avoid }
+  .toc b { width: 7mm; color: var(--teal) }
+  .card { border: 1px solid var(--line); border-radius: 3mm; padding: 4mm; break-inside: avoid }
+  .card h3 { margin-top: 0 }
+  .staffsheet { border: 2px dashed var(--bright); border-radius: 4mm; padding: 6mm }
+  .big { font: 600 15pt "Lexend"; color: var(--deep) }
+  .back { text-align: center; padding-top: 10mm; break-inside: avoid }
+  .phone img { width: 52mm; margin: 0 auto }
+</style>
+</head>
+<body>
+
+<!-- ============ Cover ============ -->
+<div class="cover">
+  <div class="logo">{{ICON:compass}}</div>
+  <div class="brand">Evalu8 Compass</div>
+  <h1>How to use Evalu8 Compass</h1>
+  <p class="sub">A step-by-step guide to self-evaluation, staff workshops, action planning and reports, for Ofsted's renewed school inspection framework.</p>
+  <div class="who">
+    <span>{{ICON:briefcase}} For headteachers and senior leaders</span>
+    <span>{{ICON:presentation}} For workshop facilitators</span>
+    <span>{{ICON:users-group}} With a one-page sheet for staff (section 10)</span>
+  </div>
+  <div class="art">{{ICON:compass}}</div>
+  <div class="foot">evalu8compass.app · support@evalu8compass.app · Guide updated {{DATE}}<br>Evalu8 Compass is independent and not affiliated with Ofsted or the Department for Education.</div>
+</div>
+
+<!-- ============ Contents ============ -->
+<section>
+  <div class="kicker">Contents</div>
+  <h2>In this guide</h2>
+  <ol class="toc">
+    <li><b>1</b>What Evalu8 Compass is for</li>
+    <li><b>2</b>Getting started: your access code</li>
+    <li><b>3</b>Set up your school</li>
+    <li><b>4</b>Rate the checklist</li>
+    <li><b>5</b>The AI inspector (optional)</li>
+    <li><b>6</b>Build your action plan</li>
+    <li><b>7</b>Termly snapshots and progress</li>
+    <li><b>8</b>Reports: PDF and Word</li>
+    <li><b>9</b>Running a staff workshop</li>
+    <li><b>10</b>Sheet for staff: joining a workshop</li>
+    <li><b>11</b>Your data and privacy</li>
+    <li><b>12</b>Questions and help</li>
+  </ol>
+  <h3>The cycle in one picture</h3>
+  <table>
+    <tr><th>When</th><th>What you do</th><th>What you get</th></tr>
+    <tr><td><b>Start of year</b></td><td>Leaders rate the checklist with evidence notes</td><td>An honest picture, area by area</td></tr>
+    <tr><td><b>A staff meeting</b></td><td>Staff rate the same lines anonymously in a workshop</td><td>Where staff agree, differ, or see it differently from leaders</td></tr>
+    <tr><td><b>That week</b></td><td>Agree ratings, add your Ofsted report and context, generate the plan</td><td>Four priorities for the term, compliance checks and a message for staff</td></tr>
+    <tr><td><b>Through the term</b></td><td>Track actions: owners, deadlines, progress</td><td>An action plan governors can follow</td></tr>
+    <tr><td><b>End of term</b></td><td>Save a snapshot, then compare next term</td><td>Evidence of what has improved</td></tr>
+  </table>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="chapter">
+  <div class="kicker">Section 1</div>
+  <h2><span class="num">{{ICON:compass}}</span>What Evalu8 Compass is for</h2>
+  <p class="lead">Evalu8 Compass helps leaders and staff answer one question honestly: <b>how well are we doing?</b></p>
+  <p>It sets out what inspectors look for under Ofsted's renewed school inspection framework, matched to your school's type (maintained, academy or independent), your phases (EYFS to post-16) and any specialist provision. You rate each expectation, record your evidence, hear from every member of staff, and turn what you find into a plan you can act on.</p>
+  <div class="two">
+    <div class="card"><h3>{{ICON:users-group}} Built for co-creation</h3><p>Self-evaluation is strongest when it is shared. Leaders rate the school, staff rate the same expectations anonymously, and the differences become the most useful conversations.</p></div>
+    <div class="card"><h3>{{ICON:sparkles}} AI is your choice</h3><p>Everything works without AI. If you switch it on, an AI "inspector" suggests improvement ideas and drafts plans. It only runs when you press an AI button, and it never changes your ratings.</p></div>
+  </div>
+  <figure><img class="crop" style="--h:88mm" src="{{IMG:front}}" alt="The Evalu8 Compass home page"><figcaption>The home page at evalu8compass.app. Leaders enter from here; staff join a workshop from the box on the left.</figcaption></figure>
+  <div class="tip warn">{{ICON:alert-triangle}}<p><b>Advisory, not a judgement.</b> Ratings are your own, and AI suggestions are advice. Nothing in Evalu8 Compass is an Ofsted judgement or predicts one. Always check current guidance: requirements change.</p></div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="chapter">
+  <div class="kicker">Section 2</div>
+  <h2><span class="num">{{ICON:lock}}</span>Getting started: your access code</h2>
+  <div class="two-narrow">
+    <figure><img src="{{IMG:enter}}" alt="Entering an access code"><figcaption>Entering your school's access code.</figcaption></figure>
+    <div>
+      <p>Your school is given one <b>access code</b>, in the form <b>ABCD-EFGH-JKLM</b>. It opens your school's checklist, action plan, progress, reports and workshops.</p>
+      <ol class="steps">
+        <li>Go to <b>evalu8compass.app</b> and choose <b>Start the self-evaluation</b>.</li>
+        <li>Type your access code (capitals and dashes don't matter) and choose <b>Enter</b>.</li>
+        <li>You stay signed in on that device for 30 days. Use <b>Sign out</b> in the top bar on a shared computer.</li>
+      </ol>
+      <h3>One copy for your whole team</h3>
+      <p>Everything is saved to your school's account. Everyone who signs in with your code sees and edits <b>the same copy</b>, on any device. Two people can work at once: changes to different lines are kept, and colleagues' changes appear within about 20 seconds.</p>
+      <p>The badge at the top of the checklist shows whether your work is saved: <b>Saved to your school's account</b>, <b>Saving…</b>, or <b>Offline: saved on this device</b>. If the connection drops, keep working; changes are sent when it comes back.</p>
+    </div>
+  </div>
+  <div class="tip">{{ICON:lock}}<div><p><b>Treat the code like a password.</b> Share it only with the leaders who need it. If it is passed on by mistake, email support@evalu8compass.app: we'll replace it straight away and your work is kept.</p><p><b>Staff never need the code.</b> They join workshops with a separate 6-character workshop code.</p></div></div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="chapter">
+  <div class="kicker">Section 3</div>
+  <h2><span class="num">{{ICON:building}}</span>Set up your school</h2>
+  <p class="lead">Do this once. It decides which expectations you see.</p>
+  <figure><img class="crop" style="--h:92mm" src="{{IMG:setup}}" alt="School set-up panel"><figcaption>The <b>Your school</b> panel at the top of the checklist.</figcaption></figure>
+  <table>
+    <tr><th style="width:34%">Setting</th><th>What it does</th></tr>
+    <tr><td><b>School or trust name</b>, <b>Completed by</b>, <b>Date reviewed</b></td><td>Shown on your reports.</td></tr>
+    <tr><td><b>School type</b></td><td>Maintained, academy / free school, or independent. Statutory references change to match (for example the independent school standards).</td></tr>
+    <tr><td><b>Phases you teach</b></td><td>EYFS, KS1–KS4, post-16. Early years and post-16 areas only appear if you choose them.</td></tr>
+    <tr><td><b>Specialist provision</b></td><td>Adds lines for special schools, resourced provision and AP.</td></tr>
+    <tr><td><b>Use AI suggestions</b></td><td>On or off for your whole school. When off, nothing is sent to the AI and AI buttons are hidden. Your monthly AI allowance is shown just below.</td></tr>
+    <tr><td><b>Add school logo</b></td><td>Appears in the top bar and on reports (PNG, JPG or SVG, under 200 KB).</td></tr>
+  </table>
+  <div class="tip">{{ICON:bulb}}<p>Changing your type or phases never loses answers: lines you hide keep their ratings, and come back if you change your mind.</p></div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="chapter">
+  <div class="kicker">Section 4</div>
+  <h2><span class="num">{{ICON:list-check}}</span>Rate the checklist</h2>
+  <p class="lead">Each evaluation area lists what inspectors look for. Rate every line and note your evidence.</p>
+  <table>
+    <tr><th style="width:22%">Rating</th><th>Use it when</th></tr>
+    <tr><td><span class="pill met">Met</span></td><td>You can evidence it consistently, across the school.</td></tr>
+    <tr><td><span class="pill part">Partly</span></td><td>It's in place but not consistent, or not yet embedded.</td></tr>
+    <tr><td><span class="pill no">Not yet</span></td><td>It's a gap.</td></tr>
+    <tr><td><span class="pill na">N/A</span></td><td>It genuinely doesn't apply to your school.</td></tr>
+  </table>
+  <div class="tip">{{ICON:bulb}}<div><p><b>Be honest, and evidence-led.</b> "Partly" with a clear note is more useful than a generous "Met". Inspectors will test what you say.</p><p><b>Keep names out of notes.</b> Describe what happens, not who: "some subject staff log concerns late", not a colleague's name. Never record information about individual pupils.</p></div></div>
+  <figure><img class="crop" style="--h:112mm" src="{{IMG:rate}}" alt="Rating lines in the Safeguarding area"><figcaption>Rating lines in Safeguarding, with evidence notes. Each line shows the evidence inspectors look for and the statutory reference.</figcaption></figure>
+  <h3>Useful tools</h3>
+  <figure><img src="{{IMG:summary}}" alt="Summary bar"><figcaption>The summary bar: overall % met, a breakdown, and tools.</figcaption></figure>
+  <ul>
+    <li><span class="btn">Not yet assessed</span> and <span class="btn">Gaps only</span> filter the list.</li>
+    <li><span class="btn">Collapse all</span> folds the areas so you can work one at a time.</li>
+    <li><span class="btn">Save / load</span> copies your whole self-evaluation as text, as an extra backup.</li>
+  </ul>
+
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="chapter">
+  <div class="kicker">Section 5</div>
+  <h2><span class="num">{{ICON:sparkles}}</span>The AI inspector (optional)</h2>
+  <p class="lead">Two kinds of help, both advisory. Use them only if your school has AI switched on.</p>
+  <h3>Ideas for one line</h3>
+  <p>Rate a line <span class="pill part">Partly</span> or <span class="pill no">Not yet</span> and choose <b>Ask the AI inspector</b>. You get 3–4 activities ordered from quickest to longest, each with a lead, a timescale and the evidence it will produce, plus the question an inspector is likely to ask. Choose <b>Add to action plan</b> on any activity you want to keep.</p>
+  <figure><img class="crop" style="--h:92mm" src="{{IMG:advice}}" alt="AI inspector advice for one line"><figcaption>Example advice for a line rated Partly. (Examples in this guide are from a made-up school, Oakfield Academy.)</figcaption></figure>
+  <h3>Inspector review of the whole checklist</h3>
+  <p>Choose <span class="btn">Inspector review</span> for indicative grades for each area, four priorities for the coming term, strengths to showcase, and a separate list of <b>compliance checks</b> (policies or statutory items to fix now).</p>
+  <figure><img class="crop" style="--h:100mm" src="{{IMG:review}}" alt="Inspector readiness review"><figcaption>An inspector readiness review. Grades are indicative only.</figcaption></figure>
+  <div class="tip">{{ICON:sparkles}}<p><b>Monthly allowance.</b> Each school has a monthly allowance of AI requests, shown under the AI switch. If it runs out, you'll see built-in suggestions until it resets on the 1st of the month. Everything else keeps working.</p></div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="chapter">
+  <div class="kicker">Section 6</div>
+  <h2><span class="num">{{ICON:target}}</span>Build your action plan</h2>
+  <p class="lead">Open the <b>Action plan</b> tab. Every action has an owner, a deadline and what success looks like.</p>
+  <div class="two">
+    <div>
+      <h3>Three ways to add actions</h3>
+      <ul>
+        <li><span class="btn">Add an action</span> to write your own.</li>
+        <li><span class="btn">Add actions for my gaps</span> creates one for every line rated Partly or Not yet.</li>
+        <li><span class="btn">Draft actions with AI</span> drafts a plan from your gaps for you to edit.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Keep it moving</h3>
+      <ul>
+        <li>Set each action to <b>Not started</b>, <b>In progress</b> or <b>Done</b>.</li>
+        <li>Overdue actions are flagged. Use the <b>Overdue</b> filter before a leadership meeting.</li>
+        <li>Link an action to a checklist line so reports show them together.</li>
+      </ul>
+    </div>
+  </div>
+  <figure><img class="crop" style="--h:125mm" src="{{IMG:plan}}" alt="Action plan"><figcaption>The action plan, with progress at the top.</figcaption></figure>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="chapter">
+  <div class="kicker">Section 7</div>
+  <h2><span class="num">{{ICON:history}}</span>Termly snapshots and progress</h2>
+  <p class="lead">Capture where you are at the end of each term, then show what has changed.</p>
+  <ol class="steps">
+    <li>Open the <b>Progress</b> tab. The snapshot name is suggested from the term (for example "Autumn 2026"); change it if you like.</li>
+    <li>Choose <b>Save snapshot</b>. Your ratings and action plan are copied as they are today.</li>
+    <li>Next term, choose <b>Compare with now</b> on that snapshot, or pick any two snapshots to compare.</li>
+  </ol>
+  <figure><img class="crop" style="--h:128mm" src="{{IMG:progress}}" alt="Comparing a snapshot with now"><figcaption>What's changed: % met then and now, lines improved or slipped, actions completed, and the change in each area.</figcaption></figure>
+  <div class="tip">{{ICON:bulb}}<p>Use <b>Report with this comparison</b> to add a "Progress since…" section to your report. It's strong evidence of improvement for governors and inspectors.</p></div>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="chapter">
+  <div class="kicker">Section 8</div>
+  <h2><span class="num">{{ICON:file-export}}</span>Reports: PDF and Word</h2>
+  <p class="lead">Choose <b>Report</b> on the checklist tabs for a formatted self-evaluation report with your logo.</p>
+  <figure><img class="crop" style="--h:100mm" src="{{IMG:report}}" alt="The report page"><figcaption>Choose what to include, then save it.</figcaption></figure>
+  <ul>
+    <li>Tick what to include: lines rated Met, lines not yet assessed, evidence notes, the action plan, the AI review, and progress since a snapshot.</li>
+    <li><span class="btn">Save as PDF</span> opens your browser's print window: choose <b>Save as PDF</b> as the destination.</li>
+    <li><span class="btn">Download Word (.docx)</span> gives an editable document, ideal for governors' papers. It's also the most accessible version for screen-reader users.</li>
+  </ul>
+  <p>Each workshop has its own report too (section 9).</p>
+</section>
+
+<!-- ============ 9 ============ -->
+<section class="chapter">
+  <div class="kicker">Section 9</div>
+  <h2><span class="num">{{ICON:presentation}}</span>Running a staff workshop</h2>
+  <p class="lead">Staff rate the school anonymously on their own phones. You see the collated findings live, then turn them into an improvement plan.</p>
+  <h3>Before: start the workshop</h3>
+  <div class="two-narrow">
+    <figure><img class="crop" style="--h:150mm" src="{{IMG:ws-start}}" alt="Starting a workshop"><figcaption>Starting a workshop.</figcaption></figure>
+    <div>
+      <ol class="steps">
+        <li>Sign in with your access code, then open <b>Staff workshop</b>.</li>
+        <li>Under <b>Run a workshop</b>, check your school's name, type and phases.</li>
+        <li>Choose the <b>areas to cover</b>. Two or three areas suit a 45–60 minute session; the page shows how many lines that is.</li>
+        <li>Choose <b>Start workshop</b>.</li>
+      </ol>
+      <h3>Suggested 60-minute session</h3>
+      <table>
+        <tr><td style="width:18mm"><b>5 min</b></td><td>Why we're doing this. Answers are anonymous, there are no wrong answers, and no names in comments.</td></tr>
+        <tr><td><b>20 min</b></td><td>Staff join and rate the lines on their phones.</td></tr>
+        <tr><td><b>15 min</b></td><td>Share findings. Look at where staff agree and where views differ.</td></tr>
+        <tr><td><b>15 min</b></td><td>Discuss the splits and gaps; agree ratings together.</td></tr>
+        <tr><td><b>5 min</b></td><td>What happens next, and when staff will see the plan.</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="kicker">Section 9 continued</div>
+  <h3 style="margin-top:0">During: staff join and rate</h3>
+  <figure><img src="{{IMG:ws-join}}" alt="Join screen with code and QR code"><figcaption>Put this on the projector. Staff scan the QR code or go to the address and type the 6-character code. The counters show how many have joined and how much has been answered.</figcaption></figure>
+  <ul>
+    <li><b>Share findings with staff</b> sends the collated results to everyone's phone when you're ready to discuss them. <b>Present mode</b> enlarges the findings for the projector.</li>
+    <li><b>Close responses</b> stops new answers when you've finished rating.</li>
+    <li><b>Copy facilitator link</b> lets you reopen the workshop on another device. Keep this link private: it gives full control of the workshop.</li>
+  </ul>
+  <h3>Live findings</h3>
+  <figure><img class="crop" style="--h:118mm" src="{{IMG:ws-findings}}" alt="Live findings with splits and gaps"><figcaption>Live findings, filtered to <b>Splits and gaps</b>. Coloured bars show how staff rated each line. "Staff split" means views are divided. "Leaders 100% · staff 25%" means senior leaders rated a line much higher than other staff did.</figcaption></figure>
+  <div class="tip">{{ICON:users}}<p><b>Anonymity is built in.</b> No names or accounts. A role's breakdown (for example "Teaching assistants") is only shown when at least three people in that role have answered. Comments are shown without names.</p></div>
+</section>
+
+<section class="chapter">
+  <div class="kicker">Section 9 continued</div>
+  <h3 style="margin-top:0">After: agree ratings and generate the plan</h3>
+  <ol class="steps">
+    <li><b>Agree ratings.</b> On each line choose the agreed rating after discussion, and add a note. <b>Agree most common answers</b> fills any you haven't agreed with the staff's most common answer: check these before relying on them.</li>
+    <li>Open the <b>Improvement plan</b> tab and complete the four steps:
+      <ul>
+        <li><b>About your setting</b>: pupil numbers and needs, recent changes, current priorities. No names.</li>
+        <li><b>Latest Ofsted report</b>: <b>Choose PDF</b> (or paste the text), then <b>Read the report</b>. The AI lists the grades and next steps and links each finding to a checklist line.</li>
+        <li><b>Summarise staff comments</b> groups comments into themes.</li>
+        <li><b>Generate plan</b>.</li>
+      </ul>
+    </li>
+  </ol>
+  <figure><img class="crop" style="--h:92mm" src="{{IMG:ws-report}}" alt="The AI's reading of an Ofsted report"><figcaption>The AI's reading of an Ofsted report: grades, safeguarding, next steps and concerns.</figcaption></figure>
+</section>
+
+<section class="chapter">
+  <div class="kicker">Section 9 continued</div>
+  <h3 style="margin-top:0">The improvement plan</h3>
+  <p>The plan has <b>four priorities for the coming term</b>, led by your Ofsted report's next steps and where staff and leaders agree. Each priority is tagged with the evidence behind it (<b>ofsted</b>, <b>staff</b>, <b>agreed</b>, <b>context</b>) and has 2–3 actions with a lead, a date and the evidence each will produce. Policy and statutory gaps are listed separately as <b>compliance checks</b> to fix now. You also get quick wins and a short message to share with staff.</p>
+  <figure><img class="crop" style="--h:150mm" src="{{IMG:ws-plan}}" alt="Generated improvement plan"><figcaption>An example plan. It's a draft for the headteacher to edit and adopt.</figcaption></figure>
+  <h3>Then</h3>
+  <ul>
+    <li><b>Share plan with staff</b> shows the priorities and your message on staff phones.</li>
+    <li><b>Copy plan</b> copies it as text for your school development plan.</li>
+    <li>On the <b>Export</b> tab, <b>Send to our checklist</b> adds the agreed ratings (with the staff split as an evidence note) and the plan's actions to your school's checklist and action plan.</li>
+    <li>The <b>Workshop report</b> gives participation, findings, where views differ, themes, the Ofsted reading and the plan, as PDF or Word.</li>
+  </ul>
+</section>
+
+<!-- ============ 10 ============ -->
+<section class="chapter">
+  <div class="kicker">Section 10 · copy or project this page for staff</div>
+  <h2><span class="num">{{ICON:users-group}}</span>Joining a staff workshop</h2>
+  <div class="staffsheet">
+    <div class="two-narrow">
+      <div>
+        <figure class="phone"><img style="max-height:80mm" src="{{IMG:staff-join}}" alt="Joining on a phone"><figcaption>Joining on a phone.</figcaption></figure>
+        <figure class="phone"><img style="max-height:95mm" src="{{IMG:staff-answer}}" alt="Rating lines on a phone"><figcaption>Rating lines, with an optional comment.</figcaption></figure>
+      </div>
+      <div>
+        <p class="big">It takes about 20 minutes, and it's anonymous.</p>
+        <ol class="steps">
+          <li>On your phone, scan the QR code on the screen, or go to <b>evalu8compass.app</b> and type the <b>6-character code</b>.</li>
+          <li>Choose your role: teacher, teaching assistant, support staff, senior leader, governor/trustee or other.</li>
+          <li>Choose <b>Join</b>. No name, email or account is needed.</li>
+          <li>For each line choose <span class="pill met">Met</span> <span class="pill part">Partly</span> <span class="pill no">Not yet</span> or <span class="pill na">Don't know</span>, from your own experience.</li>
+          <li>Add a comment if you like: what's working, what isn't, an example.</li>
+        </ol>
+        <div class="tip">{{ICON:lock}}<div><p><b>Your answers are anonymous.</b> Your role is only shown when at least three people with that role have answered.</p><p><b>Please don't name pupils or colleagues</b> in comments. Describe what happens, not who.</p></div></div>
+        <p>Answers save as you go. You can change them until the facilitator closes responses. When findings or the plan are shared, they appear on your phone.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 11 ============ -->
+<section class="chapter">
+  <div class="kicker">Section 11</div>
+  <h2><span class="num">{{ICON:shield-check}}</span>Your data and privacy</h2>
+  <ul>
+    <li><b>Your school controls its information.</b> Only people with your school's access code can see your self-evaluation, action plan and snapshots.</li>
+    <li><b>Workshops are anonymous.</b> Staff give a role only. Exports and reports contain collated findings, never individual responses.</li>
+    <li><b>AI is optional</b> and runs only when someone presses an AI button. The AI provider (Anthropic) doesn't train on your information and deletes it within 30 days.</li>
+    <li><b>No advertising, analytics or tracking.</b> Everything runs from our own server over an encrypted connection, with daily encrypted backups.</li>
+    <li><b>Retention:</b> workshops are deleted 90 days after they were last used. Your school's saved work is kept while you have access, then deleted. Ask us at any time to delete it sooner.</li>
+  </ul>
+  <p>For your data protection officer, the <b>DPIA information for schools</b> page at evalu8compass.app/dpia.html sets out how the service works, the risks and how they're reduced. See also the privacy notice, terms and accessibility statement, linked at the foot of every page.</p>
+  <div class="tip warn">{{ICON:alert-triangle}}<p><b>On a shared computer,</b> sign out when you've finished. A copy of your work is kept in that browser for offline use until you clear the site's data.</p></div>
+</section>
+
+<!-- ============ 12 ============ -->
+<section class="chapter">
+  <div class="kicker">Section 12</div>
+  <h2><span class="num">{{ICON:help-circle}}</span>Questions and help</h2>
+  <table>
+    <tr><th style="width:40%">If…</th><th>Then…</th></tr>
+    <tr><td>My access code "isn't recognised"</td><td>Check for typing mistakes (O and 0, I and 1 aren't used). If it still fails it may have expired: email support@evalu8compass.app.</td></tr>
+    <tr><td>The badge says <b>Offline</b></td><td>Keep working: changes are saved on your device and sent when the connection returns.</td></tr>
+    <tr><td>The badge says <b>Signed out</b></td><td>Your 30-day sign-in has ended or the code was replaced. Choose <b>Sign in again</b>; nothing on the device is lost.</td></tr>
+    <tr><td>"This device has an earlier copy"</td><td>Your work was once saved only in this browser. Keep the shared copy unless you know this device has the newer work.</td></tr>
+    <tr><td>A colleague's change appeared while I was typing</td><td>That's expected. Your cursor stays where it was, and both changes are kept.</td></tr>
+    <tr><td>AI says the allowance is used up</td><td>You'll get built-in suggestions until the 1st of next month. Ask us if you need more.</td></tr>
+    <tr><td>Staff see "Results haven't been shared yet"</td><td>The facilitator turns on <b>Share findings with staff</b> when ready.</td></tr>
+    <tr><td>I closed the workshop page</td><td>Open <b>Staff workshop</b> on the same device and choose it under <b>Your recent workshops</b>, or use the facilitator link you copied.</td></tr>
+    <tr><td>Something doesn't work or isn't clear</td><td>Email <b>support@evalu8compass.app</b> with the page and what happened.</td></tr>
+  </table>
+  <div class="back">
+    <div class="num" style="margin:0 auto 4mm;width:16mm;height:16mm">{{ICON:compass}}</div>
+    <p class="big">Evalu8 Compass</p>
+    <p>evalu8compass.app · support@evalu8compass.app</p>
+  </div>
+</section>
+
+</body>
+</html>

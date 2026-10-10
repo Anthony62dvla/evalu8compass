@@ -88,3 +88,8 @@
   .hero-cta .btn { flex: 1 1 100% }
 }
 .frontfoot .legal-nav { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; margin-bottom: 10px }
+.guide-card { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 14px 18px; align-items: center; background: var(--accent-soft); border-radius: 16px; padding: 18px }
+.guide-card > div { flex: 1 1 280px; min-width: 0 }
+.guide-card h3 { margin: 0 0 4px; font-size: 18px }
+.guide-card p { margin: 0; color: var(--muted) }
+.guide-card .tile { background: var(--surface) }
