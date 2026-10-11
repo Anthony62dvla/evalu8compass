@@ -117,3 +117,11 @@ code { padding: 1px 6px; font-size: .92em }
 .collapsible details[open] > summary .chev { transform: rotate(180deg) }
 .collapsible details[open] > summary { margin-bottom: 14px }
 .collapsible details > summary:focus-visible { outline: 3px solid var(--brand-bright); outline-offset: 2px }
+/* Admin pages use the full width of a desktop screen; phones keep the single column */
+body.wide .wrap, body.wide .brandbar-in { max-width: 1480px }
+body.wide .wrap { padding-inline: clamp(16px, 3vw, 40px) }
+body.wide .brandbar-in { padding-inline: clamp(16px, 3vw, 40px) }
+@media (min-width: 1200px) {
+  body.wide .stats { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) }
+  body.wide .cadm .grid2 { grid-template-columns: repeat(4, minmax(0, 1fr)) }
+}
