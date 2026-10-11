@@ -10,7 +10,7 @@
   const ACTION = {
     "admin.setup": "Superadmin set up", "admin.login": "Signed in", "admin.logout": "Signed out", "admin.login_failed": "Failed sign-in attempt",
     "code.create": "Code created", "code.revoke": "Code revoked", "code.reactivate": "Code reactivated", "code.extend": "Expiry changed",
-    "data.erase": "School data deleted", "ai.allowance": "AI allowance changed", "data.retention_delete": "Deleted under retention policy",
+    "data.erase": "School data deleted", "school.delete": "School deleted", "ai.allowance": "AI allowance changed", "data.retention_delete": "Deleted under retention policy",
     "signup.code": "School signed up", "signup.resend": "New code emailed", "signup.trust_enquiry": "Trust enquiry",
     "billing.subscribe": "School subscribed", "billing.send-invoice": "Invoice sent", "billing.mark-paid": "Marked paid", "billing.mark-unpaid": "Marked unpaid",
     "billing.cancel": "Subscription cancelled", "billing.set-trial": "Free term set", "billing.reminder": "Reminder emailed",
@@ -131,7 +131,8 @@
           <button class="btn" data-act="extend" data-id="${c.id}" data-days="365">${I("calendar-check", 16)}+1 year</button>
           ${!c.tier && c.state !== "revoked" ? `<button class="btn" data-act="plan" data-id="${c.id}" data-name="${esc(c.name)}">${I("receipt", 16)}Put on a plan</button>` : ""}
           ${c.expiresAt ? `<button class="btn" data-act="extend" data-id="${c.id}" data-days="0">No expiry</button>` : ""}
-          ${c.saved || c.workshops ? `<button class="btn" data-act="erase" data-id="${c.id}" data-name="${esc(c.name)}">${I("trash", 16)}Delete data</button>` : ""}</div></td>
+          ${c.saved || c.workshops ? `<button class="btn" data-act="erase" data-id="${c.id}" data-name="${esc(c.name)}">${I("trash", 16)}Delete data</button>` : ""}
+          <button class="btn danger" data-act="delete" data-id="${c.id}" data-name="${esc(c.name)}">${I("trash", 16)}Delete school</button></div></td>
       </tr>`).join("") : `<tr class="empty-row"><td colspan="9">No school codes yet. Create the first one above.</td></tr>`
     }</tbody>`;
     await loadBilling().catch(e => { $("billSys").textContent = e.message; });
@@ -166,6 +167,15 @@
       const nd = new Date(v.trim() + "T12:00:00Z"); nd.setUTCDate(nd.getUTCDate() + 1);
       b.disabled = true;
       try { await api("POST", `/codes/${id}/billing/set-trial`, { date: nd.toISOString().slice(0, 10), tier }); toast("Plan set"); await load(); }
+      catch (err) { toast(err.message); b.disabled = false; }
+      return;
+    }
+    if (act === "delete") {
+      const typed = prompt(`Delete ${b.dataset.name} completely?\n\nThis removes the school's access code (it stops working at once), its sign-up and contact details, subscription record, saved self-evaluation, action plan, snapshots and workshops. It can't be undone (backups expire within 90 days). Invoices already issued are kept for your accounts.\n\nType the school's name to confirm:`);
+      if (typed === null) return;
+      if (typed.trim().toLowerCase() !== b.dataset.name.trim().toLowerCase()) { toast("The name didn't match, so nothing was deleted."); return; }
+      b.disabled = true;
+      try { await api("POST", `/codes/${id}/delete`, { confirm: typed }); toast(`${b.dataset.name} deleted`); await load(); }
       catch (err) { toast(err.message); b.disabled = false; }
       return;
     }

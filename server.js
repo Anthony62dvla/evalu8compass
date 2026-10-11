@@ -395,6 +395,20 @@ async function adminRoute(req, res, p) {
     admin.audit("data.erase", `${c.name} (${c.id}): ${had ? "saved work and snapshots" : "no saved work"}, ${ws} workshop${ws === 1 ? "" : "s"}`, req);
     return json(res, 200, { ok: true, erased: had, workshops: ws });
   }
+  // Delete a school completely: code, contact and billing details, saved work, snapshots, workshops
+  const del = p.match(/^\/api\/admin\/codes\/([a-f0-9]{8})\/delete$/);
+  if (del && req.method === "POST") {
+    const c = access.list().find(x => x.id === del[1]);
+    if (!c) return json(res, 404, { error: "No school with that id." });
+    const b = (await body()) || {};
+    const typed = String(b.confirm || "").trim().toLowerCase();
+    if (typed !== c.name.trim().toLowerCase()) return json(res, 400, { error: "Type the school's name exactly to confirm." });
+    const had = schools.erase(c.id), ws = store.removeByCreator(c.id);
+    usage.forget(c.id);
+    access.remove(c.id);
+    admin.audit("school.delete", `${c.name} (${c.id}) deleted: code and details${had ? ", saved work and snapshots" : ""}${ws ? `, ${ws} workshop${ws === 1 ? "" : "s"}` : ""}. Invoices kept for the accounts.`, req);
+    return json(res, 200, { ok: true, erased: had, workshops: ws });
+  }
   if (p.startsWith("/api/admin/evals")) return evalRoute(req, res, p);
   if (p === "/api/admin/billing" && req.method === "GET") return json(res, 200, billing.overview());
   if (p === "/api/admin/consultants" && req.method === "GET") return json(res, 200, consultants.adminList());

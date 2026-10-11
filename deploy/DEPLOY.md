@@ -184,7 +184,7 @@ admin account, not a school. Results are kept in `data/ai-evals.jsonl` (no repor
 Each school's checklist, action plan and snapshots live in `/opt/hwwd/data/schools/<code id>/`,
 and the daily encrypted backup covers them. Saved work is deleted automatically
 `SCHOOL_RETENTION_DAYS` after a school's code is revoked or expires. To delete a school's data
-straight away (for example when a school asks), use **Delete data** next to its code in the admin console.
+straight away (for example when a school asks), use **Delete data** next to its code in the admin console. To remove a school altogether (its code, contact and subscription details, saved work and workshops), use **Delete school** and type the school's name to confirm. Invoices already issued are kept for your accounts.
 
 ## Security
 

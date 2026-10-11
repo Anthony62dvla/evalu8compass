@@ -70,6 +70,21 @@ let srv;
     const acts = ov3.audit.map(a => a.action);
     ok(["admin.login", "admin.login_failed", "code.create", "code.revoke", "code.reactivate", "code.extend"].every(a => acts.includes(a)), "every action is in the audit log");
 
+    // Delete a school completely
+    const cr2 = await (await post("/api/admin/codes", { name: "Delete Me Academy", email: "head@deleteme.sch.uk" }, cookie)).json();
+    const dl = await post("/api/access", { code: cr2.code });
+    const dCookie = (dl.headers.get("set-cookie") || "").split(";")[0];
+    await fetch(base + "/api/school", { method: "PUT", headers: { "content-type": "application/json", cookie: dCookie }, body: JSON.stringify({ state: { profile: { name: "Delete Me Academy", type: "academy", phases: ["ks3"] }, answers: { "sg-dsl": "met" } } }) });
+    ok(fs.existsSync(path.join(DATA, "schools", cr2.id, "state.json")), "the school has saved work");
+    ok((await post(`/api/admin/codes/${cr2.id}/delete`, { confirm: "wrong name" }, cookie)).status === 400, "delete needs the school's name typed exactly");
+    ok((await post(`/api/admin/codes/${cr2.id}/delete`, { confirm: "delete me academy" }, schoolCookie)).status === 401, "a school can't delete schools");
+    const del = await post(`/api/admin/codes/${cr2.id}/delete`, { confirm: "delete me academy" }, cookie);
+    ok(del.status === 200 && (await del.json()).erased, "superadmin deletes the school");
+    ok(!fs.readFileSync(FILES[1], "utf8").includes(cr2.id) && !fs.readFileSync(FILES[1], "utf8").includes("deleteme"), "its code and contact details are gone");
+    ok(!fs.existsSync(path.join(DATA, "schools", cr2.id)), "its saved work is gone");
+    ok((await post("/api/access", { code: cr2.code })).status === 401 && (await get("/checklist.html", dCookie)).status === 302, "its code and sign-ins stop working at once");
+    ok((await get("/api/admin/overview", cookie).then(r => r.json())).audit.some(a => a.action === "school.delete"), "the deletion is in the audit log");
+
     admin.setup(PW + "!");
     ok((await get("/api/admin/overview", cookie)).status === 401, "resetting the password signs out existing admin sessions");
 
