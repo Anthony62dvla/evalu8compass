@@ -172,6 +172,14 @@ In the admin console, **AI allowance** next to a school changes its limit (a num
 off, `unlimited`, or blank for the default). Add `AI_PRICE_INPUT_PER_MTOK` and
 `AI_PRICE_OUTPUT_PER_MTOK` (from Anthropic's pricing page for your model) to see estimated costs.
 
+**Extra AI requests.** When a school has 10 or fewer AI requests left, a **Buy more AI requests** link
+appears next to its allowance. The school chooses a pack (set by `AI_TOPUP_PACKS`, default 50 for £10,
+150 for £25, 400 for £60) and gives invoice details. You get an email; in the admin console under
+**Free terms and subscriptions → AI top-ups**, click **Approve and add** (you can change the number
+of requests or the price), and the requests are added and the invoice emailed. Extra requests are used
+after the monthly allowance and don't expire at the month's end. **Extra AI requests** next to a school
+adds or removes them by hand.
+
 ## AI quality check
 
 Signed in as superadmin, open **AI quality check** (`/admin-eval.html`). Run the AI on the reference

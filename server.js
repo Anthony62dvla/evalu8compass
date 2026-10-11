@@ -167,7 +167,9 @@ async function accessRoute(req, res) {
   if (req.method === "GET") {
     const w = access.who(req);
     const entry = w && w.id && !w.admin ? access.list().find(c => c.id === w.id) : null;
-    return json(res, 200, { required: access.required(), ok: !!w, school: w && w.name && !w.admin ? w.name : "", ai: w && ai.hasKey() ? usage.status(w.open ? "open" : w.id) : null, plan: billing.forSchool(entry) });
+    const st = w && ai.hasKey() ? usage.status(w.open ? "open" : w.id) : null;
+    if (st && entry) st.topup = billing.topupInfo(entry, st);
+    return json(res, 200, { required: access.required(), ok: !!w, school: w && w.name && !w.admin ? w.name : "", ai: st, plan: billing.forSchool(entry) });
   }
   if (req.method !== "POST") return json(res, 405, { error: "Method not allowed" });
   if (limited(req, "login")) return json(res, 429, { code: "rate_limited", error: "Too many attempts. Wait a minute and try again." });
@@ -226,6 +228,13 @@ async function schoolRoute(req, res, p, url) {
       const rec = { reading, filename: String(b.filename || "").slice(0, 200), at: new Date().toISOString() };
       const r = schools.patch(id, cur.rev, { set: { ofsted: rec } });
       return json(res, 200, { ofsted: rec, rev: r.rev });
+    }
+    // Buy extra AI requests (approved by the superadmin, then invoiced)
+    if (p === "/api/school/topup" && req.method === "POST") {
+      if (!w.id || w.admin) return json(res, 403, { error: "Sign in as a school to buy AI requests." });
+      const entry = access.list().find(c => c.id === w.id);
+      try { return json(res, 200, await billing.requestTopup(entry, usage.status(w.id), await body(), { audit: (a, d) => admin.audit(a, d, req) })); }
+      catch (e) { if (e instanceof billing.BillingError) return json(res, e.status, { error: e.message }); throw e; }
     }
     if (p === "/api/school/snapshots" && req.method === "GET") return json(res, 200, { snapshots: schools.snapshots(id) });
     if (p === "/api/school/snapshots" && req.method === "POST") {
@@ -292,7 +301,8 @@ function invoicePage(req, res, num, t) {
   if (!r) { res.writeHead(404, { "content-type": "text/plain; charset=utf-8" }); return res.end("Invoice not found."); }
   const c = access.list().find(x => x.id === r.codeId);
   const sub = c ? [c.sub, ...(c.history || [])].find(x => x && x.invoice && x.invoice.number === num) : null;
-  const paidAt = sub ? sub.paidAt : consultants.invoicePaid(num);
+  const tp = billing.topupPaid(num);
+  const paidAt = sub ? sub.paidAt : tp !== undefined ? tp : consultants.invoicePaid(num);
   res.writeHead(200, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "x-robots-tag": "noindex" });
   res.end(billing.invoiceHtml(r, paidAt));
 }
@@ -408,6 +418,24 @@ async function adminRoute(req, res, p) {
     access.remove(c.id);
     admin.audit("school.delete", `${c.name} (${c.id}) deleted: code and details${had ? ", saved work and snapshots" : ""}${ws ? `, ${ws} workshop${ws === 1 ? "" : "s"}` : ""}. Invoices kept for the accounts.`, req);
     return json(res, 200, { ok: true, erased: had, workshops: ws });
+  }
+  const tu = p.match(/^\/api\/admin\/codes\/([a-f0-9]{8})\/topups\/([a-f0-9]{8})\/(approve|decline|paid)$/);
+  if (tu && req.method === "POST") {
+    const b = (await body()) || {};
+    try {
+      const r = await billing.topupAction(tu[1], tu[2], tu[3], b, usage);
+      const c = access.list().find(x => x.id === tu[1]);
+      admin.audit(`ai.topup_${tu[3]}`, `${c ? c.name : tu[1]} (${tu[1]})${r.credits != null ? `: now ${r.credits} extra requests` : ""}${r.invoice ? ", invoice " + r.invoice : ""}`, req);
+      return json(res, 200, r);
+    } catch (e) { if (e instanceof billing.BillingError) return json(res, e.status, { error: e.message }); return json(res, 502, { error: e.message }); }
+  }
+  const cr = p.match(/^\/api\/admin\/codes\/([a-f0-9]{8})\/credits$/);
+  if (cr && req.method === "POST") {
+    const c = access.list().find(x => x.id === cr[1]);
+    if (!c) return json(res, 404, { error: "No code with that id." });
+    const b = (await body()) || {};
+    try { const st = usage.addCredits(c.id, b.add); admin.audit("ai.credits", `${c.name} (${c.id}): ${Number(b.add) > 0 ? "+" : ""}${Math.trunc(Number(b.add))}, now ${st.credits} extra requests`, req); return json(res, 200, st); }
+    catch (e) { return json(res, 400, { error: e.message }); }
   }
   if (p.startsWith("/api/admin/evals")) return evalRoute(req, res, p);
   if (p === "/api/admin/billing" && req.method === "GET") return json(res, 200, billing.overview());

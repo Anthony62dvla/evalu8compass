@@ -13,6 +13,7 @@
     "data.erase": "School data deleted", "school.delete": "School deleted", "ai.allowance": "AI allowance changed", "data.retention_delete": "Deleted under retention policy",
     "signup.code": "School signed up", "signup.resend": "New code emailed", "signup.trust_enquiry": "Trust enquiry",
     "billing.subscribe": "School subscribed", "billing.send-invoice": "Invoice sent", "billing.mark-paid": "Marked paid", "billing.mark-unpaid": "Marked unpaid",
+    "ai.topup_request": "AI top-up requested", "ai.topup_approve": "AI top-up approved", "ai.topup_decline": "AI top-up declined", "ai.topup_paid": "AI top-up paid", "ai.credits": "Extra AI requests changed",
     "billing.cancel": "Subscription cancelled", "billing.set-trial": "Free term set", "billing.reminder": "Reminder emailed",
   };
   const TIER = { independent: "Independent £99", primary: "Primary £149", secondary: "Secondary £199", trust: "Trust" };
@@ -51,10 +52,38 @@
         </div></td></tr>`;
       }).join("") : `<tr class="empty-row"><td colspan="7">No schools have signed up yet. The sign-up page is ${esc(SITE)}/signup.html.</td></tr>`
     }</tbody>`;
+    const TS = { requested: ["expired", "Waiting for approval"], approved: ["active", "Approved"], declined: ["revoked", "Declined"] };
+    $("topups").innerHTML = `<thead><tr><th>School</th><th>Asked</th><th>Pack</th><th>Invoice to</th><th>Status</th><th>Actions</th></tr></thead><tbody>${
+      d.topups.length ? d.topups.map(t => `<tr>
+        <td><b>${esc(t.school)}</b></td><td>${day(t.at)}</td>
+        <td>${t.credited || t.requests} requests · ${gbp(t.price)}</td>
+        <td>${t.billing ? `${esc(t.billing.name)}<span class="sub">${esc(t.billing.email)}</span>${t.billing.po ? `<span class="sub">Purchase order ${esc(t.billing.po)}</span>` : ""}` : "–"}</td>
+        <td><span class="state state-${TS[t.status][0]}">${TS[t.status][1]}</span>${t.invoice ? `<span class="sub"><a href="/invoice/${encodeURIComponent(t.invoice.number)}" target="_blank" rel="noopener">${esc(t.invoice.number)}</a> · ${t.paidAt ? "paid " + ymd(t.paidAt) : "due " + ymd(t.invoice.dueAt)}</span>` : ""}${t.reason ? `<span class="sub">${esc(t.reason)}</span>` : ""}</td>
+        <td><div class="acts">${t.status === "requested" ? `<button class="btn primary" data-tu="approve" data-id="${t.codeId}" data-tid="${t.id}" data-n="${t.requests}" data-price="${t.price}" data-name="${esc(t.school)}">${I("circle-check", 16)}Approve and add</button><button class="btn" data-tu="decline" data-id="${t.codeId}" data-tid="${t.id}" data-name="${esc(t.school)}">${I("x", 16)}Decline</button>`
+          : t.status === "approved" && t.invoice && !t.paidAt ? `<button class="btn" data-tu="paid" data-id="${t.codeId}" data-tid="${t.id}" data-name="${esc(t.school)}">${I("circle-check", 16)}Mark paid</button>` : ""}</div></td></tr>`).join("")
+        : `<tr class="empty-row"><td colspan="6">No requests yet. Schools can buy more AI requests once ${10} or fewer are left.</td></tr>`}</tbody>`;
     $("enqBox").hidden = !d.enquiries.length; $("enqN").textContent = d.enquiries.length;
     $("enq").innerHTML = d.enquiries.map(q => `<li><time datetime="${esc(q.at)}">${esc(when(q.at))}</time><span><b>${esc(q.trust)}</b>${q.schools ? ` (${esc(q.schools)} schools)` : ""}: ${esc(q.name)}${q.role ? ", " + esc(q.role) : ""}, <a href="mailto:${esc(q.email)}">${esc(q.email)}</a>${q.message ? `<br><span class="muted">${esc(q.message)}</span>` : ""}</span></li>`).join("");
   }
 
+  document.addEventListener("click", async e => {
+    const b = e.target.closest("[data-tu]"); if (!b) return;
+    const { tu, id, tid, name } = b.dataset;
+    let body = {};
+    if (tu === "approve") {
+      const n = prompt(`How many AI requests should ${name} get? (They asked for ${b.dataset.n}.)`, b.dataset.n); if (n === null) return;
+      const pr = prompt(`Price to invoice, in pounds (the pack price is £${b.dataset.price}). Enter 0 for no invoice.`, b.dataset.price); if (pr === null) return;
+      body = { requests: n.trim(), price: pr.trim() };
+    }
+    if (tu === "decline") { const r = prompt(`Reason for declining ${name}'s request (included in the email):`, ""); if (r === null) return; body = { reason: r }; }
+    if (tu === "paid") { const v = prompt(`Date ${name}'s payment arrived (YYYY-MM-DD):`, new Date().toISOString().slice(0, 10)); if (v === null) return; body = { date: v.trim() }; }
+    b.disabled = true;
+    try {
+      const r = await api("POST", `/codes/${id}/topups/${tid}/${tu}`, body);
+      toast(tu === "approve" ? `Added. ${name} now has ${r.credits} extra requests${r.invoice ? "; invoice " + r.invoice + " sent" : ""}` : tu === "decline" ? "Declined" : "Marked paid");
+      await load();
+    } catch (err) { toast(err.message); b.disabled = false; }
+  });
   document.addEventListener("click", async e => {
     const b = e.target.closest("[data-bill]"); if (!b) return;
     const { bill, id, name } = b.dataset;
@@ -128,6 +157,7 @@
           ? `<button class="btn" data-act="reactivate" data-id="${c.id}">${I("refresh", 16)}Reactivate</button>`
           : `<button class="btn" data-act="revoke" data-id="${c.id}" data-name="${esc(c.name)}">${I("x", 16)}Revoke</button>`}
           <button class="btn" data-act="allowance" data-id="${c.id}" data-name="${esc(c.name)}" data-cur="${c.ai.limit == null ? "unlimited" : c.ai.limit}">${I("sparkles", 16)}AI allowance</button>
+          <button class="btn" data-act="credits" data-id="${c.id}" data-name="${esc(c.name)}" data-cur="${c.ai.credits || 0}">${I("sparkles", 16)}Extra AI requests</button>
           <button class="btn" data-act="extend" data-id="${c.id}" data-days="365">${I("calendar-check", 16)}+1 year</button>
           ${!c.tier && c.state !== "revoked" ? `<button class="btn" data-act="plan" data-id="${c.id}" data-name="${esc(c.name)}">${I("receipt", 16)}Put on a plan</button>` : ""}
           ${c.expiresAt ? `<button class="btn" data-act="extend" data-id="${c.id}" data-days="0">No expiry</button>` : ""}
@@ -146,12 +176,20 @@
     const col = a.limit === 0 ? "var(--na)" : a.limit && a.used >= a.limit ? "var(--no)" : pct >= 80 ? "var(--part)" : "var(--met)";
     return `<b style="color:${col}">${a.used}</b> / ${esc(lim)}${a.custom ? "" : ` <span class="sub" style="display:inline">(default)</span>`}
       ${a.limit ? `<span class="meter" aria-hidden="true"><span style="width:${pct}%;background:${col}"></span></span>` : ""}
-      <span class="sub">${a.input + a.output ? Math.round((a.input + a.output) / 1000) + "k tokens" : "no tokens"}${a.cost != null ? ` · about ${esc(window.__cur || "$")}${a.cost.toFixed(2)}` : ""} · last month ${a.lastMonth}</span>`;
+      <span class="sub">${a.input + a.output ? Math.round((a.input + a.output) / 1000) + "k tokens" : "no tokens"}${a.cost != null ? ` · about ${esc(window.__cur || "$")}${a.cost.toFixed(2)}` : ""} · last month ${a.lastMonth}</span>${a.credits ? `<span class="sub"><b>+${a.credits} extra bought</b></span>` : ""}`;
   }
 
   $("codes").addEventListener("click", async e => {
     const b = e.target.closest("[data-act]"); if (!b) return;
     const { act, id } = b.dataset;
+    if (act === "credits") {
+      const v = prompt(`${b.dataset.name} has ${b.dataset.cur} extra AI requests (bought, used after the monthly allowance).\n\nHow many to add? Use a minus number to take some away.`, "");
+      if (v === null || !v.trim()) return;
+      b.disabled = true;
+      try { const st = await api("POST", `/codes/${id}/credits`, { add: v.trim() }); toast(`${b.dataset.name} now has ${st.credits} extra AI requests`); await load(); }
+      catch (err) { toast(err.message); b.disabled = false; }
+      return;
+    }
     if (act === "allowance") {
       const v = prompt(`AI requests per month for ${b.dataset.name} (currently ${b.dataset.cur}).\n\nEnter a number, 0 to switch AI off for this school, "unlimited", or leave blank to use the default.`, "");
       if (v === null) return;

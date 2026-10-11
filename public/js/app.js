@@ -619,16 +619,57 @@
   });
 
   /* ---------- AI allowance ---------- */
+  let lastAllowance = null;
   function showAllowance(st) {
     const el = $("aiAllowance"); if (!el || !st) return;
+    if (st.topup === undefined && lastAllowance && lastAllowance.topup) st = { ...st, topup: lastAllowance.topup };   // AI replies carry the count, not the top-up details
+    lastAllowance = st;
     const resets = new Date(st.resetsOn + "T12:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "long" });
+    const credits = st.credits || 0, extra = credits ? ` Plus ${credits} extra request${credits === 1 ? "" : "s"} you've bought.` : "";
+    const total = (st.left || 0) + credits;
     el.classList.remove("hide");
-    el.dataset.level = st.limit === null ? "ok" : st.limit === 0 || st.left === 0 ? "out" : st.left <= st.limit * 0.2 ? "low" : "ok";
+    el.dataset.level = st.limit === null ? "ok" : st.limit === 0 || total === 0 ? "out" : total <= Math.max(10, st.limit * 0.2) ? "low" : "ok";
+    const tu = st.topup ? { ...st.topup, canBuy: !st.topup.pending && st.limit > 0 && total <= st.topup.threshold } : null;
     el.innerHTML = I("sparkles", 16) + "<span>" + (st.limit === null ? `AI requests this month: ${st.used}.`
       : st.limit === 0 ? "AI suggestions aren't switched on for your school. Built-in suggestions are used instead."
-      : st.left === 0 ? `Your school has used all ${st.limit} AI requests for this month. They reset on ${resets}; built-in suggestions are used until then.`
-      : `AI requests this month: ${st.used} of ${st.limit} used. Resets on ${resets}.`) + "</span>";
+      : st.left === 0 && !credits ? `Your school has used all ${st.limit} AI requests for this month. They reset on ${resets}; built-in suggestions are used until then.`
+      : st.left === 0 ? `This month's ${st.limit} AI requests are used; your ${credits} extra request${credits === 1 ? " is" : "s are"} being used now. The allowance resets on ${resets}.`
+      : `AI requests this month: ${st.used} of ${st.limit} used. Resets on ${resets}.${extra}`)
+      + (tu && tu.pending ? ` <b>${tu.pending.requests} extra requests ordered: we'll add them once the request is approved.</b>` : "")
+      + (tu && tu.canBuy ? ` <button class="linkbtn" type="button" id="topupOpen">Buy more AI requests</button>` : "") + "</span>";
+    const open = $("topupOpen");
+    if (open) open.onclick = () => openTopup(tu);
+    if (!tu || !tu.canBuy) $("topup").classList.add("hide");
   }
+  function openTopup(tu) {
+    const box = $("topup");
+    $("topupPacks").innerHTML = tu.packs.map((p, i) => `<label class="switch"><input type="radio" name="tuPack" value="${i}"${i === 0 ? " checked" : ""}> <span><b>${p.requests} AI requests</b> · £${p.price} (${esc(tu.vatNote)})</span></label>`).join("");
+    $("tuName").value = tu.prefill.name || ""; $("tuEmail").value = tu.prefill.email || ""; $("tuAddress").value = tu.prefill.address || ""; $("tuPo").value = ""; $("tuAgree").checked = false; $("tuErr").textContent = "";
+    box.classList.remove("hide");
+    box.querySelector("input[name=tuPack]").focus();
+  }
+  $("topup").addEventListener("input", () => { $("tuErr").textContent = ""; });
+  $("tuCancel").onclick = () => { $("topup").classList.add("hide"); const o = $("topupOpen"); if (o) o.focus(); };
+  $("tuSend").onclick = async () => {
+    const err = $("tuErr"); err.textContent = "";
+    const pack = (document.querySelector("input[name=tuPack]:checked") || {}).value;
+    const body = { pack, billingName: $("tuName").value, billingEmail: $("tuEmail").value.trim(), address: $("tuAddress").value, po: $("tuPo").value, agree: $("tuAgree").checked };
+    if (body.billingName.trim().length < 2) { err.textContent = "Enter the name to put on the invoice."; $("tuName").focus(); return; }
+    if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(body.billingEmail)) { err.textContent = "Enter a valid email address for the invoice."; $("tuEmail").focus(); return; }
+    if (body.address.trim().length < 8) { err.textContent = "Enter the school's postal address."; $("tuAddress").focus(); return; }
+    if (!body.agree) { err.textContent = "Tick the box to confirm."; $("tuAgree").focus(); return; }
+    $("tuSend").disabled = true;
+    try {
+      const r = await fetch("api/school/topup", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      const d = await r.json();
+      if (!r.ok) { err.textContent = d.error || "That didn't work."; return; }
+      $("topup").classList.add("hide");
+      toast(`Request sent for ${d.requests} AI requests`);
+      const a = await fetch("api/access").then(x => x.json());
+      if (a.ai) showAllowance(a.ai);
+    } catch (e) { err.textContent = "Couldn't reach the server. Try again."; }
+    finally { $("tuSend").disabled = false; }
+  };
   window.addEventListener("hwwd-allowance", e => showAllowance(e.detail));
 
   /* ---------- Start ---------- */

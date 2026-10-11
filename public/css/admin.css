@@ -92,6 +92,9 @@ code { padding: 1px 6px; font-size: .92em }
 .newgrid input[type=checkbox], .newgrid input[type=radio] { width: auto; min-height: 0; padding: 0; width: 18px; height: 18px }
 .small-stats .stat b { font-size: 22px }
 .enq { margin-top: 14px }
+.subhead { font-size: 17px; margin: 22px 0 8px; display: flex; gap: 8px; align-items: center }
+.subhead .ic { color: var(--ai) }
+#topups .acts { display: flex; gap: 8px; flex-wrap: wrap }
 .enq summary { cursor: pointer; font-weight: 700; min-height: 32px }
 #subs a { color: var(--accent); font-weight: 600 }
 .cfilter { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px }

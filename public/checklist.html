@@ -66,6 +66,20 @@
     </div>
     <label class="switch"><input type="checkbox" id="pAI"> Use AI suggestions <span class="muted-inline">(optional; when off, no information is sent to the AI and AI buttons are hidden)</span></label>
     <p class="allowance hide" id="aiAllowance"></p>
+    <div class="topup hide" id="topup" role="region" aria-labelledby="topupTitle">
+      <h3 id="topupTitle">Buy more AI requests</h3>
+      <p class="small">Extra requests are used once your monthly allowance runs out, and don't expire at the end of the month. We'll add them once your request is approved, usually within one working day, and email the invoice, payable within 30 days.</p>
+      <fieldset class="topup-packs"><legend>How many?</legend><div id="topupPacks"></div></fieldset>
+      <div class="topup-grid">
+        <div class="field"><label for="tuName">Name on the invoice</label><input type="text" id="tuName" maxlength="100" autocomplete="name"></div>
+        <div class="field"><label for="tuEmail">Email for the invoice</label><input type="email" id="tuEmail" maxlength="200" autocomplete="email"></div>
+        <div class="field wide"><label for="tuAddress">School postal address</label><textarea id="tuAddress" maxlength="400" rows="3" autocomplete="street-address"></textarea></div>
+        <div class="field"><label for="tuPo">Purchase order number (optional)</label><input type="text" id="tuPo" maxlength="40"></div>
+      </div>
+      <label class="switch"><input type="checkbox" id="tuAgree"> I can order on the school's behalf, and agree to the <a href="terms.html#pricing" target="_blank" rel="noopener">terms</a></label>
+      <p class="tu-err" id="tuErr" role="alert"></p>
+      <div class="row"><button class="btn primary" type="button" id="tuSend"><i data-icon="receipt"></i>Send request</button><button class="btn" type="button" id="tuCancel">Cancel</button></div>
+    </div>
     <div class="logo-row">
       <label class="btn filebtn"><i data-icon="photo"></i>Add school logo<input type="file" id="pLogo" accept="image/png,image/jpeg,image/webp,image/svg+xml"></label>
       <button class="btn hide" id="pLogoRemove"><i data-icon="x"></i>Remove logo</button>
