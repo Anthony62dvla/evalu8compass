@@ -110,3 +110,10 @@ code { padding: 1px 6px; font-size: .92em }
 .pending { background: var(--part-soft); border-radius: 10px; padding: 10px 12px; font-size: 14px }
 .pending p { margin: 4px 0 }
 .cadm .acts, #subs .acts { display: flex; gap: 8px; flex-wrap: wrap }
+.collapsible details > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; border-radius: 10px }
+.collapsible details > summary::-webkit-details-marker { display: none }
+.collapsible details > summary h2 { margin: 0 }
+.collapsible details > summary .chev { color: var(--icon); transition: transform .15s }
+.collapsible details[open] > summary .chev { transform: rotate(180deg) }
+.collapsible details[open] > summary { margin-bottom: 14px }
+.collapsible details > summary:focus-visible { outline: 3px solid var(--brand-bright); outline-offset: 2px }

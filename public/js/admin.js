@@ -136,6 +136,7 @@
       </tr>`).join("") : `<tr class="empty-row"><td colspan="9">No school codes yet. Create the first one above.</td></tr>`
     }</tbody>`;
     await loadBilling().catch(e => { $("billSys").textContent = e.message; });
+    $("actCount").textContent = d.audit.length ? `(latest ${d.audit.length})` : "";
     $("audit").innerHTML = d.audit.length ? d.audit.map(a => `<li><time datetime="${esc(a.at)}">${esc(when(a.at))}</time><span class="${a.action === "admin.login_failed" ? "fail" : ""}">${esc(ACTION[a.action] || a.action)}${a.detail ? ": " + esc(a.detail) : ""} <span class="muted small">(${esc(a.ip)})</span></span></li>`).join("") : `<li><span class="muted">Nothing yet.</span></li>`;
   }
 
@@ -219,6 +220,9 @@
   });
   $("ncCopy").onclick = () => copy($("ncCode").textContent, "Code copied");
   $("ncCopyMsg").onclick = () => copy($("ncMsg").value, "Message copied");
+  // Recent activity: collapsed by default; remember the choice on this device
+  try { $("actBox").open = localStorage.getItem("hwwd-admin-activity") === "open"; } catch (e) {}
+  $("actBox").addEventListener("toggle", () => { try { localStorage.setItem("hwwd-admin-activity", $("actBox").open ? "open" : "closed"); } catch (e) {} });
   $("refresh").onclick = () => load().then(() => toast("Up to date")).catch(e => toast(e.message));
 
   /* ---------- sign in / out ---------- */

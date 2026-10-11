@@ -89,9 +89,11 @@
       <div class="tablewrap"><table class="atable" id="codes"></table></div>
     </section>
 
-    <section class="panel2" aria-labelledby="actTitle">
-      <h2 id="actTitle"><i data-icon="clipboard-list" data-size="22"></i>Recent admin activity</h2>
-      <ul class="audit" id="audit"></ul>
+    <section class="panel2 collapsible" aria-labelledby="actTitle">
+      <details id="actBox">
+        <summary><h2 id="actTitle"><i data-icon="clipboard-list" data-size="22"></i>Recent admin activity <span class="muted small" id="actCount"></span></h2><i data-icon="chevron-down" data-size="22" class="chev"></i></summary>
+        <ul class="audit" id="audit"></ul>
+      </details>
     </section>
   </div>
 </main>
