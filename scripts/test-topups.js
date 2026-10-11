@@ -23,6 +23,9 @@ let srv, mail;
   try {
     /* ---------- the meter itself ---------- */
     const usage = require("../lib/usage");
+    const saved = process.env.AI_MONTHLY_REQUESTS; delete process.env.AI_MONTHLY_REQUESTS;
+    ok(usage.limitFor("brand-new-school") === 50, "the default monthly allowance is 50 AI requests");
+    process.env.AI_MONTHLY_REQUESTS = saved;
     usage.setLimit("u1", 2);
     ok(usage.reserve("u1") && usage.reserve("u1") && usage.reserve("u1") === null, "allowance of 2: the third request is refused");
     usage.addCredits("u1", 3);

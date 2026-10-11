@@ -165,7 +165,7 @@ are stored as the postcode district's centre.
 
 ## AI allowance
 
-Each school can make `AI_MONTHLY_REQUESTS` AI requests a month (default 200), counted in UK time and
+Each school can make `AI_MONTHLY_REQUESTS` AI requests a month (default 50), counted in UK time and
 reset on the 1st. Workshop AI counts against the school that started the workshop. Schools see how
 much is left next to the AI switch; when it runs out they get the built-in suggestions instead.
 In the admin console, **AI allowance** next to a school changes its limit (a number, 0 to switch AI
