@@ -11,7 +11,7 @@
   const STATUS = { todo: "Not started", doing: "In progress", done: "Done" };
   const STATUS_ICON = { todo: "circle-minus", doing: "circle-half-2", done: "circle-check" };
   const RAG = { on: "On track", risk: "At risk", off: "Off track" };
-  const SOURCE = { gap: "From a gap", ai: "AI draft", review: "From inspector review", advice: "From AI suggestion", workshop: "From staff workshop", first: "First inspection readiness", manual: "Added by you" };
+  const SOURCE = { gap: "From a gap", ai: "AI draft", review: "From inspector review", advice: "From AI suggestion", workshop: "From staff workshop", meeting: "From leadership meeting", first: "First inspection readiness", manual: "Added by you" };
   let H, I, esc, el;            // host helpers, set in init
   let filter = "all";
   const busy = new Set();
@@ -195,7 +195,7 @@
     const t = e.target.closest("button"); if (!t) return false;
     const d = t.dataset, list = actions();
     const find = id => list.find(a => a.id === id);
-    if (d.astatus) { const a = find(d.astatus); a.status = d.v; H.save(); render(); return true; }
+    if (d.astatus) { const a = find(d.astatus); a.status = d.v; if (d.v === "done" && !a.doneAt) a.doneAt = new Date().toISOString(); if (d.v !== "done") delete a.doneAt; H.save(); render(); return true; }
     if (d.arag) { const a = find(d.arag); a.rag = a.rag === d.v ? "" : d.v; H.save(); render(); return true; }
     if (d.msadd) { const a = find(d.msadd); const m = { id: uid(), text: "", due: "", done: false }; (a.milestones = a.milestones || []).push(m); H.save(); render(); const f = document.getElementById("mt-" + m.id); if (f) f.focus(); return true; }
     if (d.msdel) { const [aid, mid] = d.msdel.split("|"); const a = find(aid); a.milestones = (a.milestones || []).filter(m => m.id !== mid); H.save(); render(); return true; }

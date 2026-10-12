@@ -100,6 +100,35 @@ let mail;
     ok(head2 && /RATINGS CHANGED SINCE LAST WEEK/.test(head2.text) && /Better: .*Partly → Met/.test(head2.text) && /Slipped|Better/.test(head2.text), "next Monday: what got better and what slipped");
     ok(!mail.inbox.some(m => /SECRET-NOTE/.test(m.text) || /SECRET-NOTE/.test(m.html)), "notes are never included in emails");
 
+    // Leadership meetings: the agenda is written and emailed a week before
+    const AG = require("../public/js/agenda.js"), criteria = require("../public/js/criteria.js");
+    const items = AG.buildAgenda(state, criteria.resolve(state.profile), "2026-10-27");
+    ok(items[0].kind === "safeguarding" && items.some(i => i.kind === "risk") && items.some(i => i.kind === "overdue") && items[items.length - 1].kind === "next", "agenda: safeguarding first, then at risk, overdue … next steps last");
+    ok(items[0].lines.some(l => /Not yet|Partly/.test(l)), "safeguarding item lists the lines not yet met");
+    const withLast = { ...state, answers: { ...state.answers, "ct-coherent": "met" }, meetings: [{ id: "old", status: "done", closedAt: "2026-10-01T16:00:00Z", answersAtClose: { ...state.answers, "ct-coherent": "no" } }] };
+    const ch = AG.buildAgenda(withLast, criteria.resolve(state.profile), "2026-10-27").find(i => i.kind === "changes");
+    ok(ch && ch.lines.some(l => /^Better: .*Not yet → Met/.test(l)), "the next agenda shows what has changed since the last meeting");
+    ok(AG.suggestedDates("2026-09-05").length === 6 && AG.suggestedDates("2026-11-01")[0] === "2026-12-08", "six suggested half-termly dates, only future ones");
+    state.meetings = [{ id: "mt1", title: "Leadership meeting: Autumn second half-term", date: "2026-11-02", time: "16:00", status: "planned", attendees: ["m1", "m3", "m5"], agenda: [], minutes: {}, actions: [] }];
+    schools.replace(code.id, state);
+    const bm = mail.inbox.length;
+    await run(D("2026-10-20")); await new Promise(r => setTimeout(r, 200));
+    ok(!mail.inbox.slice(bm).some(m => /Agenda:/.test(m.subject)), "more than a week before: no agenda yet");
+    await run(D("2026-10-26")); await new Promise(r => setTimeout(r, 300));
+    const ag = mail.inbox.slice(bm).filter(m => /Agenda: Leadership meeting/.test(m.subject));
+    ok(ag.length === 1 && ag[0].to.includes("head@oak.sch.uk") && ag[0].to.includes("dsl@oak.sch.uk") && ag[0].to.length === 2, "a week before: agenda emailed to attendees with email addresses");
+    ok(/1\. Safeguarding/.test(ag[0].text) && /Overdue/.test(ag[0].text), "agenda email lists the items");
+    const saved = schools.get(code.id).state.meetings[0];
+    ok(saved.agenda.length >= 3 && saved.agendaBy === "auto", "the written agenda is saved to the meeting so leaders can edit it");
+    await run(D("2026-10-27")); await new Promise(r => setTimeout(r, 200));
+    ok(mail.inbox.filter(m => /Agenda: Leadership meeting/.test(m.subject)).length === 1, "agenda emailed once");
+    // Minutes
+    const meetings = require("../lib/meetings");
+    const st2 = schools.get(code.id).state, m2 = { ...st2.meetings[0], status: "done", minutes: { [st2.meetings[0].agenda[0].id]: "DSL to audit 10 records by half-term" }, actions: [{ id: "a1", item: st2.meetings[0].agenda[0].id }] };
+    const n = await meetings.sendMeeting("Oak Primary", st2, m2, "minutes"); await new Promise(r => setTimeout(r, 200));
+    const mins = mail.inbox.find(m => /Minutes: Leadership meeting/.test(m.subject));
+    ok(n === 2 && mins && /Decided: DSL to audit 10 records/.test(mins.text) && /Action: Phonics catch-up groups/.test(mins.text), "minutes emailed with decisions and new actions");
+
     // Test email
     const tr = await alerts.test("Oak Primary", team[3]); await new Promise(r => setTimeout(r, 200));
     ok(tr.ok && mail.inbox.some(m => /Test email/.test(m.subject) && m.to[0] === "senco@oak.sch.uk"), "test email works");
