@@ -27,7 +27,7 @@
   const busy = new Set();
   const save = () => Y.changed(state);
   const aiOn = () => state.profile.ai !== false;
-  const P = window.HWWD.plan;
+  const P = window.HWWD.plan, TM = window.HWWD.team;
   function applyAI() { document.body.classList.toggle("no-ai", !aiOn()); $("pAI").checked = aiOn(); }
   const ctx = () => ({ name: state.profile.name, type: state.profile.type, phases: state.profile.phases, special: state.profile.special });
 
@@ -407,11 +407,12 @@
     undo.t = setTimeout(() => bar.classList.add("hide"), 6000);
   }
   function showView(id) {
-    ["evalView", "planView", "progressView"].forEach(v => $(v).classList.toggle("hide", v !== id));
+    ["evalView", "planView", "progressView", "teamView"].forEach(v => $(v).classList.toggle("hide", v !== id));
     document.querySelectorAll("[data-view]").forEach(b => { b.setAttribute("aria-selected", b.dataset.view === id); b.tabIndex = b.dataset.view === id ? 0 : -1; });
     if (id === "planView") P.render();
     if (id === "progressView") renderProgress();
-    history.replaceState(null, "", id === "planView" ? "#plan" : id === "progressView" ? "#progress" : location.pathname);
+    if (id === "teamView") TM.render();
+    history.replaceState(null, "", id === "planView" ? "#plan" : id === "progressView" ? "#progress" : id === "teamView" ? "#team" : location.pathname);
   }
 
   /* ---------- Progress: termly snapshots ---------- */
@@ -534,7 +535,7 @@
     const sel = a && typeof a.selectionStart === "number" ? [a.selectionStart, a.selectionEnd] : null;
     const y = window.scrollY;
     state = next;
-    renderSetup(); if (!ofBusy && !ofKeep) renderOfsted(); renderAreas(); renderReview(); P.render();
+    renderSetup(); if (!ofBusy && !ofKeep) renderOfsted(); renderAreas(); renderReview(); P.render(); TM.render();
     if (!$("progressView").classList.contains("hide") && cmpTo === "now") renderCompare();
     if (id && $(id)) { const el = $(id); el.focus({ preventScroll: true }); if (sel && el.setSelectionRange) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) {} }
     window.scrollTo(0, y);
@@ -679,6 +680,7 @@
     state: () => state, save, view: () => view, ctx, toast, undo, aiOn, icon: I, esc,
     ai: (task, data) => AI.ask(task, data), errorText: e => AI.errorText(e),
   });
+  TM.init({ state: () => state, save, toast, undo, icon: I, esc, flush: () => Y.flush() });
   const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
   async function boot() {
     const r = await Y.start({ canApply: () => !document.querySelector(".thinking") });
@@ -686,6 +688,7 @@
     renderSetup(); renderOfsted(); renderAreas(); renderReview(); P.render();
     if (location.hash === "#plan") showView("planView");
     if (location.hash === "#progress") showView("progressView");
+    if (location.hash === "#team") showView("teamView");
     if (r.mode !== "server") { $("saveNote").textContent = "This copy isn't connected to your school's account, so your answers are saved in this browser only. Use Save / load to keep a copy."; $("progressTab").hidden = true; }
     if (r.legacy) {
       const n = Object.keys(r.legacy.answers || {}).length, m = Object.keys(state.answers || {}).length;
@@ -745,6 +748,7 @@
     fetch("api/access").then(r => r.json()).then(a => {
       if (a.ai) showAllowance(a.ai);
       if (a.plan) showPlan(a.plan);
+      if (typeof a.mail === "boolean") TM.setMail(a.mail);
       if (a.required && a.ok) {
         const so = $("signOut"); so.hidden = false;
         so.onclick = e => { e.preventDefault(); fetch("api/access/logout", { method: "POST" }).finally(() => { location.href = "index.html"; }); };

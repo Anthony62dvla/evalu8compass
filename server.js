@@ -28,6 +28,7 @@ const usage = require("./lib/usage");
 const evals = require("./lib/evals");
 const billing = require("./lib/billing");
 const consultants = require("./lib/consultants");
+const alerts = require("./lib/alerts");
 access.setAdminCheck(req => admin.who(req));
 
 const PORT = Number(process.env.PORT || 3000);
@@ -139,6 +140,9 @@ function reminders() {
     .then(() => consultants.reminders(hooks)).catch(e => console.error("Consultant reminders:", e.message));
 }
 setTimeout(reminders, 60e3).unref();
+// Leadership team alerts: urgent ones within a minute of a save, the Monday 7am emails, and overdue checks
+setInterval(() => alerts.runAll().catch(e => console.error("Alerts:", e.message)), Number(process.env.ALERT_INTERVAL_MS || 10 * 60e3)).unref();
+setTimeout(() => alerts.runAll().catch(e => console.error("Alerts:", e.message)), 90e3).unref();
 setInterval(reminders, 3 * 3600e3).unref();
 for (const sig of ["SIGINT", "SIGTERM"]) process.on(sig, () => { store.flushAll(); usage.flush(); process.exit(0); });
 
@@ -169,7 +173,7 @@ async function accessRoute(req, res) {
     const entry = w && w.id && !w.admin ? access.list().find(c => c.id === w.id) : null;
     const st = w && ai.hasKey() ? usage.status(w.open ? "open" : w.id) : null;
     if (st && entry) st.topup = billing.topupInfo(entry, st);
-    return json(res, 200, { required: access.required(), ok: !!w, school: w && w.name && !w.admin ? w.name : "", ai: st, plan: billing.forSchool(entry) });
+    return json(res, 200, { required: access.required(), ok: !!w, school: w && w.name && !w.admin ? w.name : "", ai: st, plan: billing.forSchool(entry), mail: w ? require("./lib/mail").configured() : undefined });
   }
   if (req.method !== "POST") return json(res, 405, { error: "Method not allowed" });
   if (limited(req, "login")) return json(res, 429, { code: "rate_limited", error: "Too many attempts. Wait a minute and try again." });
@@ -205,12 +209,16 @@ async function schoolRoute(req, res, p, url) {
     }
     if (p === "/api/school" && req.method === "PATCH") {
       const b = await body();
-      return json(res, 200, schools.patch(id, b.baseRev, b.patch));
+      const r = schools.patch(id, b.baseRev, b.patch);
+      alerts.soon(id);
+      return json(res, 200, r);
     }
     if (p === "/api/school" && req.method === "PUT") {
       const b = await body();
       if (!b.state || typeof b.state !== "object") return json(res, 400, { error: "Nothing to save" });
-      return json(res, 200, schools.replace(id, b.state));
+      const r = schools.replace(id, b.state);
+      alerts.soon(id);
+      return json(res, 200, r);
     }
     // Read the school's latest Ofsted report with the AI and save the reading with the school's work
     if (p === "/api/school/ofsted" && req.method === "POST") {
@@ -228,6 +236,16 @@ async function schoolRoute(req, res, p, url) {
       const rec = { reading, filename: String(b.filename || "").slice(0, 200), at: new Date().toISOString() };
       const r = schools.patch(id, cur.rev, { set: { ofsted: rec } });
       return json(res, 200, { ofsted: rec, rev: r.rev });
+    }
+    // Send a test email to one member of the leadership team
+    if (p === "/api/school/team/test" && req.method === "POST") {
+      if (!w.id || w.admin) return json(res, 403, { error: "Sign in as a school to send test emails." });
+      if (limited(req, "signup")) return json(res, 429, { error: "Too many test emails. Wait a minute." });
+      const b = await body();
+      const m = ((schools.get(id).state || {}).team || []).find(x => x.id === b.id);
+      if (!m) return json(res, 404, { error: "Save the team first, then try again." });
+      try { return json(res, 200, await alerts.test(w.name, m)); }
+      catch (e) { return json(res, e.status || 502, { error: e.message }); }
     }
     // Buy extra AI requests (approved by the superadmin, then invoiced)
     if (p === "/api/school/topup" && req.method === "POST") {

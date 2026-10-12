@@ -1,13 +1,16 @@
 /*
  * Evalu8 Compass — action plan
  * Each action: { id, title, detail, itemId, owner, due (yyyy-mm-dd), success,
- *                status: "todo" | "doing" | "done", source, createdAt }
+ *                status: "todo" | "doing" | "done", source, createdAt,
+ *                rag: "" | "on" | "risk" | "off"   (how it's going),
+ *                milestones: [{ id, text, due, done }], impact: "what difference it has made" }
  * AI is only used when someone presses an AI button, and only when the
  * school has AI suggestions switched on.
  */
 (function (root) {
   const STATUS = { todo: "Not started", doing: "In progress", done: "Done" };
   const STATUS_ICON = { todo: "circle-minus", doing: "circle-half-2", done: "circle-check" };
+  const RAG = { on: "On track", risk: "At risk", off: "Off track" };
   const SOURCE = { gap: "From a gap", ai: "AI draft", review: "From inspector review", advice: "From AI suggestion", workshop: "From staff workshop", first: "First inspection readiness", manual: "Added by you" };
   let H, I, esc, el;            // host helpers, set in init
   let filter = "all";
@@ -18,6 +21,7 @@
   const today = () => new Date().toISOString().slice(0, 10);
   const weeksFromNow = w => { const d = new Date(); d.setDate(d.getDate() + 7 * Math.max(1, Math.min(52, Math.round(Number(w) || 6)))); return d.toISOString().slice(0, 10); };
   const overdue = a => a.due && a.status !== "done" && a.due < today();
+  const msOverdue = m => m.due && !m.done && m.due < today();
   const actions = () => H.state().actions || (H.state().actions = []);
 
   function lines() { return H.view().flatMap(a => a.items.map(i => ({ ...i, area: a.name }))); }
@@ -88,8 +92,8 @@
 
   /* ---------- rendering ---------- */
   function counts() {
-    const c = { todo: 0, doing: 0, done: 0, overdue: 0, all: actions().length };
-    actions().forEach(a => { c[a.status]++; if (overdue(a)) c.overdue++; });
+    const c = { todo: 0, doing: 0, done: 0, overdue: 0, risk: 0, all: actions().length };
+    actions().forEach(a => { c[a.status]++; if (overdue(a)) c.overdue++; if (a.status !== "done" && (a.rag === "risk" || a.rag === "off")) c.risk++; });
     return c;
   }
   function render() {
@@ -99,10 +103,10 @@
     el("planSummary").innerHTML = c.all
       ? `<div class="big">${Math.round(c.done / c.all * 100)}%<small>done · ${c.all} action${c.all === 1 ? "" : "s"}</small></div>
          <div class="stack"><div class="bar">${["done", "doing", "todo"].map(k => c[k] ? `<span style="width:${c[k] / c.all * 100}%;background:${k === "done" ? "var(--met)" : k === "doing" ? "var(--part)" : "var(--na)"}"></span>` : "").join("")}</div>
-         <div class="legend"><span><i style="background:var(--met)"></i>Done ${c.done}</span><span><i style="background:var(--part)"></i>In progress ${c.doing}</span><span><i style="background:var(--na)"></i>Not started ${c.todo}</span>${c.overdue ? `<span style="color:var(--no);font-weight:700">${I("alert-triangle", 14)} Overdue ${c.overdue}</span>` : ""}</div></div>`
+         <div class="legend"><span><i style="background:var(--met)"></i>Done ${c.done}</span><span><i style="background:var(--part)"></i>In progress ${c.doing}</span><span><i style="background:var(--na)"></i>Not started ${c.todo}</span>${c.overdue ? `<span style="color:var(--no);font-weight:700">${I("alert-triangle", 14)} Overdue ${c.overdue}</span>` : ""}${c.risk ? `<span style="color:var(--part);font-weight:700">${I("alert-triangle", 14)} At risk or off track ${c.risk}</span>` : ""}</div></div>`
       : "";
     document.querySelectorAll("[data-pf]").forEach(b => b.setAttribute("aria-pressed", b.dataset.pf === filter));
-    const shown = actions().filter(a => filter === "all" || (filter === "overdue" ? overdue(a) : a.status === filter));
+    const shown = actions().filter(a => filter === "all" || (filter === "overdue" ? overdue(a) : filter === "risk" ? a.status !== "done" && (a.rag === "risk" || a.rag === "off") : a.status === filter));
     if (!c.all) {
       box.innerHTML = `<div class="plan-empty"><span class="tile">${I("target", 26)}</span><h3>Turn your gaps into actions</h3>
         <p>Add an action yourself, create one for every line you rated Partly or Not yet${H.aiOn() ? ", or let the AI inspector draft a plan for you to edit" : ""}. Each action gets an owner, a deadline and what success looks like.</p></div>`;
@@ -117,6 +121,7 @@
           <div class="states">${Object.keys(STATUS).map(s => `<button class="st" data-astatus="${a.id}" data-v="${s}" aria-pressed="${a.status === s}">${I(STATUS_ICON[s], 18)}${STATUS[s]}</button>`).join("")}</div>
           <span class="src src-${a.source}">${esc(SOURCE[a.source] || "")}</span>
           ${overdue(a) ? `<span class="flag gap">${I("alert-triangle", 14)}Overdue</span>` : ""}
+          ${a.rag && a.status !== "done" ? `<span class="rag rag-${a.rag}">${RAG[a.rag]}</span>` : ""}
           <span class="spacer"></span>
           <button class="iconbtn" data-adel="${a.id}" aria-label="Delete action">${I("x", 18)}</button>
         </div>
@@ -124,10 +129,28 @@
         <input class="action-title" id="at-${a.id}" data-afield="title" value="${esc(a.title)}" placeholder="What will we do?">
         <div class="action-grid">
           <div class="field wide"><label for="ad-${a.id}">Steps and details</label><textarea id="ad-${a.id}" data-afield="detail" rows="3" placeholder="The steps, who's involved, resources">${esc(a.detail)}</textarea></div>
-          <div class="field"><label for="ao-${a.id}">Owner</label><input type="text" id="ao-${a.id}" data-afield="owner" value="${esc(a.owner)}" placeholder="e.g. DSL, SENCo"></div>
+          <div class="field"><label for="ao-${a.id}">Owner</label><input type="text" id="ao-${a.id}" data-afield="owner" value="${esc(a.owner)}" placeholder="A name or role, e.g. DSL" list="ownerList" autocomplete="off"></div>
           <div class="field"><label for="ae-${a.id}">Due</label><input type="date" id="ae-${a.id}" data-afield="due" value="${esc(a.due)}"></div>
           <div class="field wide"><label for="as-${a.id}">Success looks like</label><textarea id="as-${a.id}" data-afield="success" rows="2" placeholder="What staff, pupils or an inspector would see when it's done">${esc(a.success)}</textarea></div>
           <div class="field wide"><label for="al-${a.id}">Checklist line</label><select id="al-${a.id}" data-afield="itemId"><option value="">Not linked</option>${opts.map(l => `<option value="${l.id}"${l.id === a.itemId ? " selected" : ""}>${esc(l.area)}: ${esc(l.text.length > 90 ? l.text.slice(0, 88) + "…" : l.text)}</option>`).join("")}</select></div>
+        </div>
+        <div class="progress-box">
+          <div class="rag-row" role="group" aria-label="How is it going?"><span class="lbl">How is it going?</span>
+            ${Object.keys(RAG).map(k => `<button class="ragbtn rag-${k}" type="button" data-arag="${a.id}" data-v="${k}" aria-pressed="${a.rag === k}">${RAG[k]}</button>`).join("")}
+          </div>
+          <div class="ms">
+            <span class="lbl" id="msl-${a.id}">Milestones</span>
+            <ul class="ms-list" aria-labelledby="msl-${a.id}">${(a.milestones || []).map(m => `
+              <li class="${m.done ? "done" : msOverdue(m) ? "late" : ""}">
+                <input type="checkbox" id="mc-${m.id}" data-msdone="${a.id}|${m.id}"${m.done ? " checked" : ""} aria-label="Done: ${esc(m.text || "milestone")}">
+                <input type="text" id="mt-${m.id}" data-msfield="${a.id}|${m.id}|text" value="${esc(m.text)}" placeholder="What will be done by when" aria-label="Milestone">
+                <input type="date" id="md-${m.id}" data-msfield="${a.id}|${m.id}|due" value="${esc(m.due)}" aria-label="Milestone date">
+                ${msOverdue(m) ? `<span class="flag gap">${I("alert-triangle", 14)}Late</span>` : ""}
+                <button class="iconbtn" type="button" data-msdel="${a.id}|${m.id}" aria-label="Delete milestone">${I("x", 16)}</button>
+              </li>`).join("")}</ul>
+            <button class="linkbtn" type="button" data-msadd="${a.id}">${I("calendar-check", 16)}Add a milestone</button>
+          </div>
+          <div class="field"><label for="ai-${a.id}">Impact so far</label><textarea id="ai-${a.id}" data-afield="impact" rows="2" placeholder="What difference has it made? What have you seen?">${esc(a.impact || "")}</textarea></div>
         </div>
         <div class="action-foot ai-only">
           ${busy.has(a.id) ? `<span class="thinking">Thinking about this action…</span>` : `<button class="ask" data-asuggest="${a.id}">${I("sparkles", 18)}Suggest improvements with AI</button>`}
@@ -157,10 +180,12 @@
     let t = "\nACTION PLAN\n";
     actions().forEach((a, n) => {
       const l = a.itemId && lineFor(a.itemId);
-      t += `${n + 1}. [${STATUS[a.status]}] ${a.title || "(untitled)"}${a.owner ? " | Owner: " + a.owner : ""}${a.due ? " | Due: " + a.due : ""}${overdue(a) ? " (OVERDUE)" : ""}\n`;
+      t += `${n + 1}. [${STATUS[a.status]}${a.rag && a.status !== "done" ? ", " + RAG[a.rag] : ""}] ${a.title || "(untitled)"}${a.owner ? " | Owner: " + a.owner : ""}${a.due ? " | Due: " + a.due : ""}${overdue(a) ? " (OVERDUE)" : ""}\n`;
       if (l) t += `   Line: ${l.text} [${({ met: "Met", part: "Partly", no: "Not yet", na: "N/A" })[st.answers[l.id]] || "not rated"}]\n`;
       if (a.detail) t += a.detail.split("\n").map(x => "   " + x).join("\n") + "\n";
       if (a.success) t += `   Success: ${a.success}\n`;
+      (a.milestones || []).forEach(m => { t += `   ${m.done ? "[x]" : "[ ]"} ${m.text}${m.due ? " (by " + m.due + ")" : ""}\n`; });
+      if (a.impact) t += `   Impact so far: ${a.impact}\n`;
     });
     return t;
   }
@@ -171,6 +196,9 @@
     const d = t.dataset, list = actions();
     const find = id => list.find(a => a.id === id);
     if (d.astatus) { const a = find(d.astatus); a.status = d.v; H.save(); render(); return true; }
+    if (d.arag) { const a = find(d.arag); a.rag = a.rag === d.v ? "" : d.v; H.save(); render(); return true; }
+    if (d.msadd) { const a = find(d.msadd); const m = { id: uid(), text: "", due: "", done: false }; (a.milestones = a.milestones || []).push(m); H.save(); render(); const f = document.getElementById("mt-" + m.id); if (f) f.focus(); return true; }
+    if (d.msdel) { const [aid, mid] = d.msdel.split("|"); const a = find(aid); a.milestones = (a.milestones || []).filter(m => m.id !== mid); H.save(); render(); return true; }
     if (d.adel) { const i = list.findIndex(a => a.id === d.adel); if (i >= 0) { const [gone] = list.splice(i, 1); H.save(); render(); H.undo(`Action deleted`, () => { list.splice(i, 0, gone); H.save(); render(); }); } return true; }
     if (d.asuggest) { suggest(d.asuggest); return true; }
     if (d.ause) { const a = find(d.ause); applySuggestion(a, pending[d.ause]); delete pending[d.ause]; H.save(); render(); H.toast("Suggestion used. Edit it as you need."); return true; }
@@ -184,6 +212,15 @@
     return false;
   }
   function onInput(e) {
+    const ms = e.target.dataset.msfield, md = e.target.dataset.msdone;
+    if (ms || md) {
+      const [aid, mid, field] = (ms || md).split("|");
+      const a = actions().find(x => x.id === aid), m = a && (a.milestones || []).find(x => x.id === mid); if (!m) return;
+      if (md) m.done = e.target.checked; else m[field] = e.target.value;
+      H.save();
+      if (md || field === "due") render();
+      return;
+    }
     const f = e.target.dataset.afield; if (!f) return;
     const card = e.target.closest("[data-aid]"); const a = actions().find(x => x.id === card.dataset.aid); if (!a) return;
     a[f] = e.target.value; H.save();
@@ -194,9 +231,12 @@
     H = host; I = host.icon; esc = host.esc; el = id => document.getElementById(id);
     document.addEventListener("click", e => { if (onClick(e)) e.stopPropagation(); }, true);
     document.addEventListener("input", onInput);
-    document.addEventListener("change", e => { if (e.target.dataset.afield === "itemId" || e.target.dataset.afield === "due") { onInput(e); render(); } });
+    document.addEventListener("change", e => {
+      if (e.target.dataset.afield === "itemId" || e.target.dataset.afield === "due") { onInput(e); render(); }
+      if (e.target.dataset.msfield && e.target.type === "date") onInput(e);
+    });
     render();
   }
 
-  root.HWWD = Object.assign(root.HWWD || {}, { plan: { init, render, text, add, STATUS, SOURCE, overdue } });
+  root.HWWD = Object.assign(root.HWWD || {}, { plan: { init, render, text, add, STATUS, SOURCE, RAG, overdue } });
 })(window);

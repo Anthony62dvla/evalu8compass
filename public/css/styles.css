@@ -380,3 +380,38 @@ footer a { color: var(--accent); font-weight: 600 }
 .tu-err { color: var(--no); font-weight: 600; margin: 0; font-size: 14px }
 .tu-err:empty { display: none }
 .allowance .linkbtn { background: none; border: 0; padding: 0; color: var(--accent); font-weight: 700; text-decoration: underline; min-height: 24px; font-size: inherit }
+/* Team tab */
+.alert-rules { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 8px; font-size: 14px }
+.alert-rules li { display: flex; gap: 10px; align-items: flex-start; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px }
+.alert-rules .ic { color: var(--icon); margin-top: 2px }
+.team-note { display: flex; gap: 8px; align-items: flex-start; background: var(--part-soft); color: var(--ink); border-radius: 10px; padding: 10px 12px; font-size: 14px; margin: 12px 0 0 }
+.team-note .ic { color: var(--part); margin-top: 2px }
+#teamList { display: grid; gap: 10px; margin-top: 14px }
+.member { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 8px }
+.member-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px }
+.member-grid input, .member-grid select { width: 100%; font: inherit; font-size: 14px; padding: 8px 10px; min-height: 44px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink) }
+.member-grid input[aria-invalid="true"] { border-color: var(--no) }
+.member-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.member-foot .spacer { flex: 1 }
+.keytag { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; font-weight: 700; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 4px 10px }
+/* Action progress: how it's going, milestones, impact */
+.progress-box { display: grid; gap: 10px; border-top: 1px dashed var(--line); padding-top: 10px; margin-top: 4px }
+.progress-box .lbl { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: .04em; text-transform: uppercase }
+.rag-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.ragbtn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 14px; font-size: 13.5px; font-weight: 600; min-height: 36px }
+.ragbtn.rag-on[aria-pressed="true"] { background: var(--met); border-color: var(--met); color: var(--surface) }
+.ragbtn.rag-risk[aria-pressed="true"] { background: var(--part); border-color: var(--part); color: var(--surface) }
+.ragbtn.rag-off[aria-pressed="true"] { background: var(--no); border-color: var(--no); color: var(--surface) }
+.rag { font-size: 12px; font-weight: 700; border-radius: 999px; padding: 3px 10px }
+.rag-on.rag { background: var(--met-soft); color: var(--met) }
+.rag-risk.rag { background: var(--part-soft); color: var(--part) }
+.rag-off.rag { background: var(--no-soft); color: var(--no) }
+.ms { display: grid; gap: 6px }
+.ms-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px }
+.ms-list li { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.ms-list input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--brand) }
+.ms-list input[type=text] { flex: 1 1 220px; min-width: 0; font: inherit; font-size: 14px; padding: 7px 10px; min-height: 40px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink) }
+.ms-list input[type=date] { font: inherit; font-size: 14px; padding: 6px 8px; min-height: 40px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink) }
+.ms-list li.done input[type=text] { text-decoration: line-through; color: var(--muted) }
+.ms .linkbtn { justify-self: start; display: inline-flex; gap: 6px; align-items: center; background: none; border: 0; color: var(--accent); font-weight: 700; padding: 4px 0; min-height: 32px }
+.progress-box textarea { width: 100%; font: inherit; font-size: 14px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); resize: vertical; min-height: 44px }

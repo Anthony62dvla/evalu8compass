@@ -98,6 +98,7 @@
     <button role="tab" class="tab" id="tab-eval" data-view="evalView" aria-controls="evalView" aria-selected="true"><i data-icon="list-check"></i>Evaluate</button>
     <button role="tab" class="tab" id="tab-plan" data-view="planView" aria-controls="planView" aria-selected="false" tabindex="-1"><i data-icon="target"></i>Action plan<span id="planTabCount"></span></button>
     <button role="tab" class="tab" data-view="progressView" aria-controls="progressView" aria-selected="false" id="progressTab" tabindex="-1"><i data-icon="history"></i>Progress</button>
+    <button role="tab" class="tab" data-view="teamView" aria-controls="teamView" aria-selected="false" id="teamTab" tabindex="-1"><i data-icon="users"></i>Team<span id="teamTabCount"></span></button>
     </div>
     <a class="tab tablink" href="report.html" id="reportLink"><i data-icon="file-export"></i>Report</a>
   </nav>
@@ -162,11 +163,33 @@
         <button class="btn" data-pf="doing" aria-pressed="false">In progress</button>
         <button class="btn" data-pf="done" aria-pressed="false">Done</button>
         <button class="btn" data-pf="overdue" aria-pressed="false">Overdue</button>
+        <button class="btn" data-pf="risk" aria-pressed="false">At risk</button>
       </div>
       <div id="planStatus"></div>
     </div>
     <div id="planList"></div>
+    <datalist id="ownerList"></datalist>
     <p class="consult-cta" id="consultCta"><i data-icon="user-heart" data-size="20"></i><span>Want expert support with these priorities? <a href="consultants.html">Find a checked consultant or SIP</a> near you, matched to your areas for development.</span></p>
+  </section>
+
+  <section id="teamView" class="hide" role="tabpanel" aria-labelledby="teamTab">
+    <div class="prog-head">
+      <div class="prog-intro">
+        <span class="tile"><i data-icon="users" data-size="24"></i></span>
+        <div><h2>Your leadership team</h2>
+        <p>The people who own actions in your improvement plan. Evalu8 Compass emails them automatically, so nothing slips.</p></div>
+      </div>
+    </div>
+    <ul class="alert-rules">
+      <li><i data-icon="alert-triangle" data-size="18"></i><span><b>Straight away</b> to the headteacher, deputy and DSL: when a safeguarding line is rated Not yet, a safeguarding action goes overdue, or an action is marked at risk or off track. Safeguarding alerts can't be switched off.</span></li>
+      <li><i data-icon="calendar-check" data-size="18"></i><span><b>Monday at 7am</b> to each person: their actions and milestones due this week, and anything overdue. The headteacher and deputy also get a one-page summary of the plan and what changed.</span></li>
+      <li><i data-icon="arrow-up-right" data-size="18"></i><span><b>A week overdue:</b> the headteacher is told about any action more than a week past its due date.</span></li>
+    </ul>
+    <p class="team-note" id="teamMail" hidden></p>
+    <p class="team-note" id="teamWarn" hidden></p>
+    <div id="teamList"></div>
+    <div class="row" style="margin-top:12px"><button class="btn primary" type="button" id="teamAdd"><i data-icon="user"></i>Add a person</button></div>
+    <p class="scope-note" style="margin-top:12px">In the action plan, set each action's Owner to a person's name or role (for example "DSL") and the right person gets the emails. Only add work email addresses, and tell your team they'll receive these emails.</p>
   </section>
 
   <section id="progressView" class="hide" role="tabpanel" aria-labelledby="progressTab">
@@ -206,6 +229,8 @@
 <script src="js/progress.js"></script>
 <script src="js/newschool.js"></script>
 <script src="js/plan.js"></script>
+<script src="js/leaders.js"></script>
+<script src="js/team.js"></script>
 <script src="js/app.js"></script>
 <!-- /build:body -->
 </body>

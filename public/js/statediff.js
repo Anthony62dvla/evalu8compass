@@ -12,6 +12,7 @@
  */
 (function (root) {
   const MAPS = ["answers", "notes", "ai", "collapsed"];
+  const LISTS = ["actions", "team", "meetings"];   // arrays of { id, … }: changes merge item by item
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
   function diff(prev, cur) {
@@ -23,22 +24,24 @@
       for (const k of Object.keys(a)) if (!(k in b)) del.push(`${m}.${k}`);
     }
     for (const k of ["review", "ofsted"]) if (!same(p[k] || null, c[k] || null)) set[k] = c[k] || null;
-    const pa = new Map((p.actions || []).map(x => [x.id, x])), ca = new Map((c.actions || []).map(x => [x.id, x]));
-    const upsert = [...ca.values()].filter(x => !same(pa.get(x.id), x));
-    const adel = [...pa.keys()].filter(id => !ca.has(id));
     const patch = {};
     if (Object.keys(set).length) patch.set = set;
     if (del.length) patch.del = del;
-    if (upsert.length || adel.length) patch.actions = { upsert, del: adel };
+    for (const l of LISTS) {
+      const pa = new Map((p[l] || []).map(x => [x.id, x])), ca = new Map((c[l] || []).map(x => [x.id, x]));
+      const upsert = [...ca.values()].filter(x => !same(pa.get(x.id), x));
+      const adel = [...pa.keys()].filter(id => !ca.has(id));
+      if (upsert.length || adel.length) patch[l] = { upsert, del: adel };
+    }
     return patch;
   }
 
-  function isEmpty(patch) { return !patch || (!patch.set && !patch.del && !patch.actions); }
+  function isEmpty(patch) { return !patch || (!patch.set && !patch.del && !LISTS.some(l => patch[l])); }
 
   function apply(state, patch) {
     const s = JSON.parse(JSON.stringify(state || {}));
     for (const m of [...MAPS, "profile"]) if (!s[m] || typeof s[m] !== "object") s[m] = {};
-    if (!Array.isArray(s.actions)) s.actions = [];
+    for (const l of LISTS) if (!Array.isArray(s[l])) s[l] = [];
     for (const [path, v] of Object.entries((patch && patch.set) || {})) {
       if (path === "review" || path === "ofsted") { s[path] = v; continue; }
       const i = path.indexOf("."); if (i < 0) continue;
@@ -50,19 +53,21 @@
       const m = path.slice(0, i), k = path.slice(i + 1);
       if (s[m] && typeof s[m] === "object") delete s[m][k];
     }
-    const a = patch && patch.actions;
-    if (a) {
+    for (const l of LISTS) {
+      const a = patch && patch[l];
+      if (!a) continue;
       const gone = new Set(a.del || []);
-      s.actions = s.actions.filter(x => !gone.has(x.id));
+      s[l] = s[l].filter(x => !gone.has(x.id));
       for (const u of a.upsert || []) {
-        const i = s.actions.findIndex(x => x.id === u.id);
-        if (i >= 0) s.actions[i] = u; else s.actions.push(u);
+        if (!u || typeof u.id !== "string") continue;
+        const i = s[l].findIndex(x => x.id === u.id);
+        if (i >= 0) s[l][i] = u; else s[l].push(u);
       }
     }
     return s;
   }
 
-  const api = { diff, apply, isEmpty, same };
+  const api = { diff, apply, isEmpty, same, LISTS };
   root.HWWD = Object.assign(root.HWWD || {}, { statediff: api });
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : globalThis);
