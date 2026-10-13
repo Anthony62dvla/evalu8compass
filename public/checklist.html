@@ -98,11 +98,12 @@
     <button role="tab" class="tab" id="tab-eval" data-view="evalView" aria-controls="evalView" aria-selected="true"><i data-icon="list-check"></i>Evaluate</button>
     <button role="tab" class="tab" id="tab-plan" data-view="planView" aria-controls="planView" aria-selected="false" tabindex="-1"><i data-icon="target"></i>Action plan<span id="planTabCount"></span></button>
     <button role="tab" class="tab" data-view="progressView" aria-controls="progressView" aria-selected="false" id="progressTab" tabindex="-1"><i data-icon="history"></i>Progress</button>
-    <button role="tab" class="tab" data-view="leadView" aria-controls="leadView" aria-selected="false" id="leadTab" tabindex="-1"><i data-icon="file-text"></i>Leaders' reports</button>
+    <button role="tab" class="tab" data-view="monView" aria-controls="monView" aria-selected="false" id="monTab" tabindex="-1"><i data-icon="eye"></i>Monitoring<span id="monTabCount"></span></button>
+    <button role="tab" class="tab" data-view="leadView" aria-controls="leadView" aria-selected="false" id="leadTab" tabindex="-1"><i data-icon="file-text"></i>Reports</button>
     <button role="tab" class="tab" data-view="meetView" aria-controls="meetView" aria-selected="false" id="meetTab" tabindex="-1"><i data-icon="calendar-check"></i>Meetings<span id="meetTabCount"></span></button>
     <button role="tab" class="tab" data-view="teamView" aria-controls="teamView" aria-selected="false" id="teamTab" tabindex="-1"><i data-icon="users"></i>Team<span id="teamTabCount"></span></button>
     </div>
-    <a class="tab tablink" href="report.html" id="reportLink"><i data-icon="file-export"></i>Report</a>
+    <a class="tab tablink" href="report.html" id="reportLink"><i data-icon="file-export"></i>Export</a>
   </nav>
 
   <div id="evalView" role="tabpanel" aria-labelledby="tab-eval">
@@ -172,6 +173,18 @@
     <div id="planList"></div>
     <datalist id="ownerList"></datalist>
     <p class="consult-cta" id="consultCta"><i data-icon="user-heart" data-size="20"></i><span>Want expert support with these priorities? <a href="consultants.html">Find a checked consultant or SIP</a> near you, matched to your areas for development.</span></p>
+  </section>
+
+  <section id="monView" class="hide" role="tabpanel" aria-labelledby="monTab">
+    <div class="prog-head">
+      <div class="prog-intro">
+        <span class="tile"><i data-icon="eye" data-size="24"></i></span>
+        <div><h2>Monitoring</h2>
+        <p>Plan and record learning walks, work scrutiny, pupil, staff and parent voice, and the DSL's termly safeguarding checks. Findings become evidence for your self-evaluation, next steps become actions, and it all feeds leaders' reports, meeting agendas and the discussion paper for your SIP.</p></div>
+      </div>
+      <div class="row"><button class="btn primary" type="button" id="monAdd"><i data-icon="clipboard-check"></i>Record monitoring</button><button class="btn" type="button" id="monPlan"><i data-icon="calendar-check"></i>Plan monitoring</button></div>
+    </div>
+    <div id="monList"></div>
   </section>
 
   <section id="leadView" class="hide" role="tabpanel" aria-labelledby="leadTab">
@@ -256,9 +269,11 @@
 <script src="js/plan.js"></script>
 <script src="js/leaders.js"></script>
 <script src="js/team.js"></script>
+<script src="js/checks.js"></script>
 <script src="js/agenda.js"></script>
 <script src="js/briefs.js"></script>
 <script src="js/leads.js"></script>
+<script src="js/monitor.js"></script>
 <script src="js/meetings.js"></script>
 <script src="js/app.js"></script>
 <!-- /build:body -->

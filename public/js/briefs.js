@@ -8,6 +8,7 @@
  * Evidence notes are included (they're for leaders and the school's adviser); never pupils' data.
  */
 (function (root) {
+  const C = typeof module !== "undefined" && module.exports ? require("./checks.js") : root.HWWD.checks;
   const LABEL = { met: "Met", part: "Partly", no: "Not yet", na: "N/A" };
   const RAG = { on: "On track", risk: "At risk", off: "Off track" };
   const STATUS = { todo: "Not started", doing: "In progress", done: "Done" };
@@ -86,6 +87,10 @@
       if (subs.length) sections.push({ head: "Subject reviews", table: { cols: ["Subject", "Leader", ...SUBJECT_PROMPTS.map(p => p[0] === "sequence" ? "Sequenced" : p[0] === "teaching" ? "Teaching" : p[0] === "assess" ? "Assessment" : p[0] === "work" ? "Pupils' work" : p[0] === "send" ? "SEND" : "Staff"), "Next step"],
         rows: subs.map(s => [s.subject, s.leader || "–", ...SUBJECT_PROMPTS.map(([k]) => LABEL[(s.ratings || {})[k]] || "–"), s.next || "–"]) } });
     }
+    const tm = C.term(new Date().toISOString());
+    const mon = C.since(st, tm.start, areaId);
+    if (mon.length) sections.push({ head: `Monitoring this term (${tm.name})`, lines: mon.slice(0, 15).map(r => C.line(r, true)) });
+    if (areaId === "sg") { const sgc = C.sgStatus(st); sections.push({ head: "The DSL's termly safeguarding checks", lines: sgc.list.map(x => `${x.label}: ${x.rec ? `done ${x.rec.date}${x.rec.judge ? ", " + C.JUDGE[x.rec.judge] : ""}` : "not done yet"}`) }); }
     const ch = changes(st, areas, areaId);
     if (ch && ch.lines.length) sections.push({ head: `Changes since the last leadership meeting (${nice(ch.since)})`, lines: ch.lines });
     return { title: `${area.name}: leader's report`, area: area.name, sections };
@@ -114,10 +119,18 @@
     if (ranked.length) sections.push({ head: "Our priorities and how they're going", lines: ranked.slice(0, 12).map(actionLine) });
     const done = (st.actions || []).filter(a => a.status === "done" && a.impact);
     if (done.length) sections.push({ head: "Completed, with impact", lines: done.slice(-8).map(a => `${a.title}: ${a.impact}`) });
+    const tm = C.term(new Date().toISOString()), mon = C.since(st, tm.start);
+    if (mon.length) {
+      const other = mon.filter(r => r.type !== "sg");
+      sections.push({ head: `What our monitoring shows (${tm.name})`, lines: [C.counts(mon).join(", "),
+        ...other.slice(0, 10).map(r => `${C.line(r)}${r.next ? " · Next: " + String(r.next).replace(/\s+/g, " ").slice(0, 200) : ""}`)] });
+    }
     const sgArea = areas.find(a => a.id === "sg");
     if (sgArea) {
       const sgGaps = sgArea.items.filter(i => answers[i.id] === "no" || answers[i.id] === "part");
-      sections.push({ head: "Safeguarding", lines: sgGaps.length ? sgGaps.map(i => `${LABEL[answers[i.id]]}: ${i.text}`) : ["All safeguarding lines rated so far are Met."] });
+      const sgc = C.sgStatus(st);
+      sections.push({ head: "Safeguarding", lines: [...(sgGaps.length ? sgGaps.map(i => `${LABEL[answers[i.id]]}: ${i.text}`) : ["All safeguarding lines rated so far are Met."]),
+        `The DSL's termly checks: ${sgc.done} of ${sgc.total} done this term${sgc.done ? " (" + sgc.list.filter(x => x.rec).map(x => x.label).join(", ") + ")" : ""}`] });
     }
     const ch = changes(st, areas);
     if (ch && ch.lines.length) sections.push({ head: `What has changed since our last leadership meeting (${nice(ch.since)})`, lines: ch.lines.slice(0, 15) });

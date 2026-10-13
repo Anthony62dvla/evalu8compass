@@ -11,6 +11,7 @@
   const LABEL = { met: "Met", part: "Partly", no: "Not yet", na: "N/A" };
   const nice = ymd => ymd ? new Date(ymd + "T12:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" }) : "";
   const uid = () => Math.random().toString(36).slice(2, 10);
+  const C = typeof module !== "undefined" && module.exports ? require("./checks.js") : root.HWWD.checks;
 
   function buildAgenda(state, areas, today) {
     const st = state || {}, t = today || new Date().toISOString().slice(0, 10);
@@ -28,9 +29,11 @@
     // 1. Safeguarding: always on the agenda
     const sgLines = Object.keys(lines).filter(k => k.startsWith("sg-") && (answers[k] === "no" || answers[k] === "part"));
     const sgActions = open.filter(a => String(a.itemId || "").startsWith("sg-"));
-    const sgList = [...sgLines.map(k => `${text(k)}: ${LABEL[answers[k]]}`), ...sgActions.map(a => `Action: ${desc(a)}${a.due && a.due < t ? " (overdue)" : ""}`)];
+    const sgc = C.sgStatus(st, t);
+    const sgList = [...sgLines.map(k => `${text(k)}: ${LABEL[answers[k]]}`), ...sgActions.map(a => `Action: ${desc(a)}${a.due && a.due < t ? " (overdue)" : ""}`),
+      `DSL's termly checks (${sgc.term.name}): ${sgc.done} of ${sgc.total} done${sgc.done < sgc.total ? "; still to do: " + sgc.list.filter(x => !x.rec).map(x => x.label).join(", ") : ""}${sgc.concerns ? `; ${sgc.concerns} raised a concern` : ""}`];
     items.push({ id: uid(), kind: "safeguarding", title: "Safeguarding", prompt: "DSL update: is the culture of safeguarding working in practice? Concerns acted on promptly, records audited, filtering and monitoring checked, children missing education followed up.",
-      lines: sgList.length ? sgList : ["No safeguarding lines rated Partly or Not yet, and no open safeguarding actions."], lineIds: sgLines, actionIds: sgActions.map(a => a.id) });
+      lines: sgList, lineIds: sgLines, actionIds: sgActions.map(a => a.id) });
 
     // 2. At risk or off track
     const risk = open.filter(a => a.rag === "risk" || a.rag === "off");
@@ -50,6 +53,11 @@
       add("changes", "What has changed since the last meeting", "Do we agree with these changes? What's the evidence?",
         [...down.map(k => `Slipped: ${text(k)} (${LABEL[before[k]]} → ${LABEL[answers[k]]})`), ...up.map(k => `Better: ${text(k)} (${LABEL[before[k]]} → ${LABEL[answers[k]]})`)], [...down, ...up]);
     }
+
+    // 4b. What monitoring has shown (safeguarding checks are covered above)
+    const mon = C.since(st, since || C.term(t).start).filter(r => r.type !== "sg");
+    add("monitoring", "What our monitoring shows", "Do the findings match our self-evaluation? What should we follow up?",
+      mon.slice(0, 12).map(r => C.line(r, true)), [...new Set(mon.map(r => r.lineId).filter(Boolean))].slice(0, 8));
 
     // 5. Areas needing attention, and gaps nobody owns
     const scored = (areas || []).map(a => {

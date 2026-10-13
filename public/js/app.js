@@ -27,7 +27,7 @@
   const busy = new Set();
   const save = () => Y.changed(state);
   const aiOn = () => state.profile.ai !== false;
-  const P = window.HWWD.plan, TM = window.HWWD.team, MT = window.HWWD.meetings, LD = window.HWWD.leads;
+  const P = window.HWWD.plan, TM = window.HWWD.team, MT = window.HWWD.meetings, LD = window.HWWD.leads, MO = window.HWWD.monitor;
   function applyAI() { document.body.classList.toggle("no-ai", !aiOn()); $("pAI").checked = aiOn(); }
   const ctx = () => ({ name: state.profile.name, type: state.profile.type, phases: state.profile.phases, special: state.profile.special });
 
@@ -407,14 +407,15 @@
     undo.t = setTimeout(() => bar.classList.add("hide"), 6000);
   }
   function showView(id) {
-    ["evalView", "planView", "progressView", "teamView", "meetView", "leadView"].forEach(v => $(v).classList.toggle("hide", v !== id));
+    ["evalView", "planView", "progressView", "teamView", "meetView", "leadView", "monView"].forEach(v => $(v).classList.toggle("hide", v !== id));
     document.querySelectorAll("[data-view]").forEach(b => { b.setAttribute("aria-selected", b.dataset.view === id); b.tabIndex = b.dataset.view === id ? 0 : -1; });
     if (id === "planView") P.render();
     if (id === "progressView") renderProgress();
     if (id === "teamView") TM.render();
     if (id === "meetView") { MT.reset(); MT.render(); }
     if (id === "leadView") LD.render();
-    history.replaceState(null, "", id === "planView" ? "#plan" : id === "progressView" ? "#progress" : id === "teamView" ? "#team" : id === "meetView" ? "#meetings" : id === "leadView" ? "#reports" : location.pathname);
+    if (id === "monView") MO.render();
+    history.replaceState(null, "", id === "planView" ? "#plan" : id === "progressView" ? "#progress" : id === "teamView" ? "#team" : id === "meetView" ? "#meetings" : id === "leadView" ? "#reports" : id === "monView" ? "#monitoring" : location.pathname);
   }
 
   /* ---------- Progress: termly snapshots ---------- */
@@ -539,6 +540,7 @@
     state = next;
     renderSetup(); if (!ofBusy && !ofKeep) renderOfsted(); renderAreas(); renderReview(); P.render(); TM.render(); if (!$("meetView").classList.contains("hide") && !(document.activeElement && document.activeElement.closest && document.activeElement.closest(".meeting"))) MT.render();
     if (!$("leadView").classList.contains("hide") && !LD.isEditing()) LD.render();
+    if (!$("monView").classList.contains("hide") && !MO.isEditing()) MO.render();
     if (!$("progressView").classList.contains("hide") && cmpTo === "now") renderCompare();
     if (id && $(id)) { const el = $(id); el.focus({ preventScroll: true }); if (sel && el.setSelectionRange) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) {} }
     window.scrollTo(0, y);
@@ -684,6 +686,7 @@
     ai: (task, data) => AI.ask(task, data), errorText: e => AI.errorText(e),
   });
   TM.init({ state: () => state, save, toast, undo, icon: I, esc, flush: () => Y.flush() });
+  MO.init({ state: () => state, save, toast, undo, icon: I, esc, view: () => view, plan: P, rerender: () => { renderAreas(); renderReview(); } });
   LD.init({ state: () => state, save, toast, undo, icon: I, esc, flush: () => Y.flush(), view: () => view });
   MT.init({ renderDoc: LD.renderDoc, state: () => state, save, toast, undo, icon: I, esc, flush: () => Y.flush(), view: () => view, plan: P,
     rerender: () => { renderAreas(); P.render(); }, snapshot: name => Y.snapshots.create(name) });
@@ -697,6 +700,7 @@
     if (location.hash === "#team") showView("teamView");
     if (location.hash === "#meetings") showView("meetView");
     if (location.hash === "#reports") showView("leadView");
+    if (location.hash === "#monitoring") showView("monView");
     if (r.mode !== "server") { $("saveNote").textContent = "This copy isn't connected to your school's account, so your answers are saved in this browser only. Use Save / load to keep a copy."; $("progressTab").hidden = true; }
     if (r.legacy) {
       const n = Object.keys(r.legacy.answers || {}).length, m = Object.keys(state.answers || {}).length;

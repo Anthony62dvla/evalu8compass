@@ -513,3 +513,44 @@ details.past .meeting { margin-top: 10px }
 .paper-doc summary { cursor: pointer; font-weight: 700; display: inline-flex; gap: 6px; align-items: center; min-height: 40px }
 .paper-doc .btn { margin-top: 8px }
 .paper textarea { width: 100%; font: inherit; font-size: 14px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); resize: vertical }
+/* Monitoring */
+.ic.flip-v { transform: rotate(180deg) }
+.sg-cycle { margin-top: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px }
+.sg-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between }
+.sg-head h3 { margin: 0; font-size: 17px; display: inline-flex; gap: 8px; align-items: center }
+.sg-count { font-weight: 700; font-size: 13.5px; padding: 3px 10px; border-radius: 999px; background: var(--part-soft); color: var(--part) }
+.sg-count.all { background: var(--met-soft); color: var(--met) }
+.sg-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px }
+.sg-list li { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 10px; align-items: center; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; background: var(--bg) }
+.sg-list li.is-done .sg-ico { color: var(--met) }
+.sg-ico { color: var(--muted) }
+.sg-txt { display: grid; gap: 2px; min-width: 0 }
+.sg-txt .small { margin: 0 }
+.mon-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 16px 0 4px; font-size: 14px }
+.mon-filters select { font: inherit; font-size: 14px; padding: 6px 8px; min-height: 40px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); max-width: 100% }
+.mon-h { font-size: 16px; margin: 18px 0 8px }
+.mon { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 8px; overflow: hidden }
+.mon.concern { border-left: 4px solid var(--no) }
+.mon.planned { border-style: dashed }
+.mon-sum { all: unset; box-sizing: border-box; width: 100%; cursor: pointer; display: grid; grid-template-columns: 130px minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 10px 12px; min-height: 48px }
+.mon-sum:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px }
+.mon-date { font-size: 13px; color: var(--muted) }
+.mon-date .warn { color: var(--part); font-weight: 700 }
+.mon-title { display: grid; gap: 1px; min-width: 0 }
+.mon-title .small { margin: 0 }
+@media (max-width: 560px) { .mon-sum { grid-template-columns: minmax(0, 1fr) auto auto } .mon-date { grid-column: 1 / -1 } }
+.judge { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap }
+.j-strong { background: var(--met-soft); color: var(--met) } .j-dev { background: var(--part-soft); color: var(--part) } .j-concern { background: var(--no-soft); color: var(--no) }
+.mon-body { border-top: 1px solid var(--line); padding: 12px; display: grid; gap: 10px }
+.mon-body > * { min-width: 0 }
+.mon-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px 12px }
+.mon-grid .wide { grid-column: 1 / -1 }
+.mon-body select, .mon-body input:not([type=radio]), .mon-body textarea { width: 100%; font: inherit; font-size: 14px; padding: 7px 9px; min-height: 40px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink) }
+.mon-body textarea { resize: vertical }
+.mon-body .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px }
+.mon-prompt { margin: 0; background: var(--bg); border-radius: 8px; padding: 8px 10px }
+.judge-pick { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 4px 16px }
+.judge-pick legend { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; padding: 0 }
+.mon-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.mon-foot .spacer { flex: 1 }
+@media (min-width: 900px) { .pagetabs { gap: 0 } .pagetabs .tab { padding: 10px 8px; gap: 6px; font-size: 14.5px } }
