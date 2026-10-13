@@ -113,6 +113,101 @@ module.exports = async function shots(outDir) {
     await p.fill("#snapName", "");
     await snap(p, "progress", "#progressView", { maxH: 1050 });
 
+    /* ---------- leading improvement through the year ---------- */
+    p.on("dialog", d => d.accept());
+    await p.waitForTimeout(1500);
+    await p.evaluate(async () => {
+      const cur = await (await fetch("api/school")).json();
+      const d = n => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
+      const team = [
+        { id: "t1", name: "Daniel Price", role: "head", email: "head@oakfield.example", alerts: "weekly", areas: ["lg"] },
+        { id: "t2", name: "Sarah Khan", role: "deputy", email: "deputy@oakfield.example", alerts: "weekly", areas: ["ct", "ach"] },
+        { id: "t3", name: "Amira Hussain", role: "dsl", email: "dsl@oakfield.example", alerts: "weekly", areas: ["sg"] },
+        { id: "t4", name: "Tom Reid", role: "senco", email: "senco@oakfield.example", alerts: "weekly", areas: ["inc"] },
+        { id: "t5", name: "Jo Evans", role: "attendance", email: "attendance@oakfield.example", alerts: "weekly", areas: ["ab"] },
+        { id: "t6", name: "Margaret Lowe", role: "gov", email: "chair@oakfield.example", alerts: "urgent", areas: [] },
+        { id: "t7", name: "Alan Brooks", role: "sip", email: "alan@adviser.example", alerts: "urgent", areas: [] },
+      ];
+      const acts = (cur.state.actions || []).slice(0, 2).map((a, i) => ({ ...a, rag: i ? "on" : "risk", milestones: i ? [] : [{ id: "ms1", text: "Audit 20 concern records", due: d(10), done: false }, { id: "ms2", text: "Brief subject staff on same-day logging", due: d(-3), done: true }] }));
+      const monitoring = [
+        { id: "mo1", type: "sg", check: "staffknow", date: d(-12), by: "Amira Hussain", areaId: "sg", focus: "Staff safeguarding knowledge", found: "Teachers confident about reporting concerns. Two lunchtime supervisors unsure how to raise a low-level concern about an adult.", next: "Brief lunchtime staff on low-level concerns; recheck in spring.", judge: "dev", status: "done", actionIds: [] },
+        { id: "mo2", type: "sg", check: "pupilsafe", date: d(-8), by: "Amira Hussain", areaId: "sg", focus: "Pupil voice: feeling safe", found: "Pupils in Years 7 and 9 say they feel safe and know who to talk to.", next: "", judge: "strong", status: "done", actionIds: [] },
+        { id: "mo3", type: "walk", date: d(-6), by: "Sarah Khan", areaId: "ct", lineId: "ct-coherent", focus: "Reading in Year 8 English", found: "Consistent use of the new reading routine; most pupils could explain new vocabulary.", next: "Share the routine with humanities in the next CPD session.", judge: "strong", status: "done", actionIds: [] },
+        { id: "mo4", type: "work", date: d(-3), by: "Tom Reid", areaId: "inc", focus: "Books of pupils with SEND, Year 9 science", found: "Adaptations visible in half the books; pupil profiles not always used in planning.", next: "Profiles to be used in planning; revisit after half-term.", judge: "dev", status: "done", actionIds: [] },
+        { id: "mo5", type: "pupil", date: d(9), by: "Jo Evans", areaId: "ab", focus: "Pupil voice on attendance rewards", status: "planned", actionIds: [] },
+      ];
+      const subjects = [
+        { id: "s1", subject: "English: reading", leader: "Hannah Cole", ratings: { sequence: "met", teaching: "met", assess: "part", work: "met", send: "part", staff: "met" }, strengths: "Clear reading curriculum; routines consistent.", next: "Sharpen checks for understanding in Year 9.", updatedAt: new Date().toISOString() },
+        { id: "s2", subject: "Mathematics", leader: "Ravi Patel", ratings: { sequence: "met", teaching: "part", assess: "part", work: "part", send: "no", staff: "met" }, strengths: "Well-sequenced schemes of work.", next: "Adapt teaching for pupils with SEND; retrieval practice in every lesson.", updatedAt: new Date().toISOString() },
+      ];
+      const patch = {
+        team: { upsert: team, del: [] }, actions: { upsert: acts, del: [] }, monitoring: { upsert: monitoring, del: [] }, subjects: { upsert: subjects, del: [] },
+        set: {
+          "leads.sg": { commentary: "Our culture of vigilance is strong and pupils say they feel safe. Recording by some subject staff is still too slow; the audit this half-term will check the new same-day expectation.", indicators: { concerns: { now: "46", last: "39" }, referrals: { now: "3", last: "5" }, earlyhelp: { now: "7", last: "6" }, trained: { now: "96", last: "100" } } },
+          "leads.ab": { commentary: "", indicators: { attendance: { now: "93.6", last: "92.4" }, pa: { now: "17.2", last: "19.8" }, suspensions: { now: "11", last: "14" } } },
+        },
+      };
+      await fetch("api/school", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ baseRev: cur.rev, patch }) });
+    });
+    await p.reload(); await p.waitForSelector(".item", { state: "attached" }); await p.waitForTimeout(800);
+    await p.addStyleTag({ content: ".summary, .brandbar { position: static !important } .toast { display: none !important }" });
+
+    // Team
+    await p.click('[data-view="teamView"]'); await p.waitForSelector(".member");
+    await snap(p, "team", "#teamView", { maxH: 1000 });
+    // Monitoring
+    await p.click("#monTab"); await p.waitForSelector(".sg-list");
+    await p.click('[data-mtoggle="mo3"]'); await p.waitForSelector(".mon-body");
+    await snap(p, "monitoring", "#monList", { maxH: 1150 });
+    await snap(p, "monitoring-record", '[data-mid="mo3"]');
+    // Leadership meeting
+    await p.click("#meetTab"); await p.click("#meetAdd"); await p.waitForSelector(".meeting");
+    await p.locator(".meeting [data-agbuild]").first().click(); await p.waitForSelector(".ag-item");
+    await p.waitForTimeout(800);
+    await snap(p, "meeting", ".meeting", { maxH: 1150 });
+    await p.locator(".meeting [data-mstart]").first().click(); await p.waitForSelector(".meeting.live");
+    await p.locator(".meeting.live textarea").first().fill("Audit of concern records to go ahead this half-term. DSL to report findings at the next meeting.");
+    await snap(p, "meeting-live", ".meeting.live .ag-item", { maxH: 900 });
+    // Leaders' reports
+    await p.click("#leadTab"); await p.waitForSelector(".lead-card");
+    await snap(p, "reports", ".lead-grid");
+    await p.click("[data-lopen=sg]"); await p.waitForSelector(".lead-report");
+    await snap(p, "lead-report", ".lead-report", { maxH: 1150 });
+    await p.click("[data-lback]"); await p.click("[data-lopen=ct]"); await p.waitForSelector(".subj");
+    await snap(p, "subjects", ".subjects", { maxH: 1000 });
+    await p.click("[data-lback]");
+    // SIP or consultant visit
+    await p.click("#meetTab"); await p.click("#meetSip"); await p.waitForTimeout(400);
+    const sip = p.locator(".meeting", { has: p.locator(".meet-kind") }).first();
+    await sip.locator("textarea[data-mfld$='|focus']").fill("Test our view of the curriculum for pupils with SEND, and how well subject leaders check the impact of their work.");
+    await sip.locator("details.paper-doc summary").click();
+    await p.waitForTimeout(400);
+    await p.locator(".meeting:has(.meet-kind)").first().scrollIntoViewIfNeeded(); await p.waitForTimeout(800);
+    await snap(p, "sip", ".meeting:has(.meet-kind)", { maxH: 1300 });
+    // Governors
+    await p.click("#leadTab"); await p.waitForSelector("#gCom");
+    await p.fill("#gCom", "A positive start to the year. Attendance and persistent absence have both improved, and pupils tell us they feel safe. Our priority is the curriculum for pupils with SEND, where our monitoring shows adaptations aren't yet consistent. We'd welcome a link governor visit to see this work this half-term.");
+    await p.locator("[data-gdet] summary").click(); await p.waitForTimeout(400);
+    await snap(p, "gov-draft", "#govBox", { maxH: 1300 });
+    await p.click("[data-gissue]"); await p.waitForSelector("[data-gsend]");
+    const gcode = await p.evaluate(async () => (await (await fetch("api/school/governors/code", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "new" }) })).json()).code);
+    await p.waitForTimeout(1500);
+    const gctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, deviceScaleFactor: 2 });
+    const g = await gctx.newPage();
+    await g.goto(BASE + "/enter.html?next=/governors.html"); await g.fill("#code", gcode); await g.click("#go");
+    await g.waitForURL(/governors/); await g.waitForSelector(".gov-rep");
+    await g.addStyleTag({ content: ".toast { display: none !important }" });
+    await snap(g, "gov-view", "main", { maxH: 1300 });
+    await g.click("#gtab-ask"); await g.fill("#askBy", "Margaret Lowe (Chair)"); await g.selectOption("#askArea", "inc");
+    await g.fill("#askQ", "The report says adaptations for pupils with SEND aren't yet consistent. What will be different by Christmas, and how will governors know?");
+    await g.click("#askGo"); await g.waitForSelector(".chal");
+    await snap(g, "gov-ask", "#gAsk", { maxH: 1100 });
+    await gctx.close();
+    await p.reload(); await p.waitForSelector(".item", { state: "attached" }); await p.waitForTimeout(800); await p.addStyleTag({ content: ".summary, .brandbar { position: static !important } .toast { display: none !important }" });
+    await p.click("#leadTab"); await p.waitForSelector(".chal");
+    await p.fill("textarea[data-cres]", "SEND profiles are now part of every department's planning check. The SENCo will sample books again in December and report to the next full governing board.");
+    await snap(p, "challenge", ".gov-chal", { maxH: 1000 });
+
     /* ---------- report ---------- */
     await p.goto(BASE + "/report.html"); await p.waitForSelector(".paper h1");
     await p.setViewportSize({ width: 1180, height: 1200 });
