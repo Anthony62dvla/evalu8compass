@@ -24,6 +24,7 @@
     const box = el("leadList"); if (!box) return;
     const areas = H.view(), answers = st().answers || {}, team = st().team || [];
     if (open && !areas.some(a => a.id === open)) open = null;
+    const gb = el("govBox"); if (gb) gb.hidden = !!open;
     if (!open) {
       box.innerHTML = `<div class="lead-grid">${areas.map(a => {
         const sc = BR.score(a, answers), who = team.filter(m => (m.areas || []).includes(a.id));

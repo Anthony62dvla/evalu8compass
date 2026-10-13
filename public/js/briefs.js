@@ -145,6 +145,87 @@
     return { title: `Discussion paper${o.visit ? ": " + o.visit : ""}`, sections };
   }
 
+  /* ---------- governors and trustees ---------- */
+  const scoresOf = (st, areas) => Object.fromEntries(areas.map(a => [a.id, score(a, st.answers || {})]).filter(([, s]) => s.rated).map(([k, s]) => [k, s.pct]));
+  function glanceTable(st, areas, prev) {
+    const rows = areas.map(a => ({ a, sc: score(a, st.answers || {}) })).filter(x => x.sc.rated);
+    if (!rows.length) return null;
+    const cols = ["Evaluation area", "In place", ...(prev ? ["Last report"] : []), "Met", "Partly", "Not yet"];
+    return { cols, rows: rows.map(({ a, sc }) => [a.name, `${sc.pct}%`, ...(prev ? [prev[a.id] != null ? `${prev[a.id]}%` : "–"] : []), String(sc.met), String(sc.part), String(sc.no)]) };
+  }
+  function planCounts(st) {
+    const acts = (st.actions || []).filter(a => a && a.id), open = acts.filter(a => a.status !== "done");
+    return { total: acts.length, done: acts.length - open.length, on: open.filter(a => a.rag === "on").length, risk: open.filter(a => a.rag === "risk").length, off: open.filter(a => a.rag === "off").length, late: open.filter(a => a.due && a.due < new Date().toISOString().slice(0, 10)).length, open };
+  }
+  /** The headteacher's termly report to governors or trustees. No evidence notes, no pupils' information,
+   *  and monitoring is summarised (focus and judgement), not what was found. */
+  function govReport(state, areas, opts) {
+    const st = state || {}, o = opts || {}, tm = C.term(o.today || new Date().toISOString()), answers = st.answers || {};
+    const sections = [];
+    const p = st.profile || {};
+    sections.push({ head: "About this report", lines: [`${p.name || "Our school"}: ${tm.name}`, "Written from the school's live self-evaluation, improvement plan and monitoring in Evalu8 Compass. It contains no information about individual pupils."] });
+    if (o.commentary) sections.push({ head: "From the headteacher", para: o.commentary });
+    const g = glanceTable(st, areas, o.prev);
+    if (g) sections.push({ head: "Our self-evaluation at a glance", table: g });
+    // Safeguarding
+    const sgArea = areas.find(a => a.id === "sg"), sgc = C.sgStatus(st, o.today);
+    if (sgArea) {
+      const gaps = sgArea.items.filter(i => answers[i.id] === "no" || answers[i.id] === "part");
+      sections.push({ head: "Safeguarding", lines: [
+        ...(gaps.length ? gaps.map(i => `${LABEL[answers[i.id]]}: ${i.text}`) : ["Every safeguarding line rated so far is Met."]),
+        `The DSL's termly checks: ${sgc.done} of ${sgc.total} done${sgc.done < sgc.total ? " (still to do: " + sgc.list.filter(x => !x.rec).map(x => x.label).join(", ") + ")" : ""}${sgc.concerns ? `; ${sgc.concerns} raised a concern` : ""}`,
+      ] });
+    }
+    // Key figures from every area's leader
+    const kf = [];
+    areas.forEach(a => (INDICATORS[a.id] || []).forEach(([k, label, unit]) => {
+      const v = (((st.leads || {})[a.id] || {}).indicators || {})[k]; if (!v || String(v.now || "").trim() === "") return;
+      const u = unit && unit !== "text" ? unit : "";
+      kf.push([label, `${v.now}${u}`, v.last != null && String(v.last) !== "" ? `${v.last}${u}` : "–"]);
+    }));
+    if (kf.length) sections.push({ head: "Key figures", table: { cols: ["", "This term", "Last term"], rows: kf } });
+    // The plan
+    const pc = planCounts(st);
+    if (pc.total) {
+      const ranked = pc.open.slice().sort((a, b) => ({ off: 0, risk: 1, on: 2 }[a.rag] ?? 3) - ({ off: 0, risk: 1, on: 2 }[b.rag] ?? 3));
+      sections.push({ head: "Our improvement priorities", lines: [`${pc.total} action${pc.total === 1 ? "" : "s"}: ${pc.done} done, ${pc.on} on track, ${pc.risk} at risk, ${pc.off} off track, ${pc.late} overdue`,
+        ...ranked.slice(0, 10).map(a => `${a.title || "Untitled action"} · ${STATUS[a.status] || "Not started"}${a.rag ? ", " + RAG[a.rag] : ""}${a.due ? " · due " + nice(a.due) : ""}`)] });
+      const impact = (st.actions || []).filter(a => a.status === "done" && a.impact && (!a.doneAt || a.doneAt.slice(0, 10) >= tm.start));
+      if (impact.length) sections.push({ head: "Impact this term", lines: impact.slice(0, 10).map(a => `${a.title}: ${a.impact}`) });
+    }
+    // Monitoring
+    const mon = C.since(st, tm.start);
+    if (mon.length) sections.push({ head: "Monitoring this term", lines: [C.counts(mon).join(", "), ...mon.filter(r => r.type !== "sg").slice(0, 12).map(r => C.line(r))] });
+    // Ofsted
+    const rd = st.ofsted && st.ofsted.reading;
+    if (rd && (rd.nextSteps || []).length) sections.push({ head: "Our last inspection's next steps", lines: rd.nextSteps.map(n => n) });
+    // Governors' questions answered since the last report
+    const since = o.since || tm.start;
+    const answered = (st.challenges || []).filter(c => c.response && (c.respondedAt || "").slice(0, 10) >= since);
+    if (answered.length) sections.push({ head: "Responses to governors' questions", lines: answered.slice(0, 12).map(c => `${c.question} · Response: ${String(c.response).replace(/\s+/g, " ").slice(0, 400)}`) });
+    const open = (st.challenges || []).filter(c => c.status === "open");
+    if (open.length) sections.push({ head: "Questions still open", lines: open.slice(0, 12).map(c => `${c.question}${c.asked ? " (asked " + nice(c.asked) + ")" : ""}`) });
+    // Suggested challenge
+    const q = [];
+    pc.open && pc.open.filter(a => a.rag === "off" || a.rag === "risk").slice(0, 3).forEach(a => q.push(`What is getting in the way of "${a.title}", and when will it be back on track?`));
+    if (sgArea && sgc.done < sgc.total) q.push("How do leaders know safeguarding is working in practice, and when will the remaining termly checks be done?");
+    const low = areas.map(a => ({ a, sc: score(a, answers) })).filter(x => x.sc.rated >= 3).sort((x, y) => x.sc.pct - y.sc.pct)[0];
+    if (low) q.push(`${low.a.name} is our lowest-rated area. What will be different by the next report, and how will we know?`);
+    if (o.prev && g) { const down = areas.filter(a => o.prev[a.id] != null && score(a, answers).rated && score(a, answers).pct < o.prev[a.id]); if (down.length) q.push(`${down.map(a => a.name).join(", ")} ${down.length === 1 ? "has" : "have"} gone down since the last report. Why?`); }
+    q.push("What difference has our work made for disadvantaged pupils and pupils with SEND this term?");
+    sections.push({ head: "Questions governors may want to ask", lines: q });
+    return { title: `Headteacher's report to governors: ${tm.name}`, term: tm.key, scores: scoresOf(st, areas), sections };
+  }
+  /** What governors see live between reports. */
+  function govGlance(state, areas) {
+    const st = state || {}, sections = [], g = glanceTable(st, areas);
+    if (g) sections.push({ head: "Our self-evaluation today", table: g });
+    const pc = planCounts(st), sgc = C.sgStatus(st);
+    if (pc.total) sections.push({ head: "The improvement plan today", lines: [`${pc.total} action${pc.total === 1 ? "" : "s"}: ${pc.done} done, ${pc.on} on track, ${pc.risk} at risk, ${pc.off} off track, ${pc.late} overdue`] });
+    sections.push({ head: "Safeguarding checks this term", lines: [`${sgc.done} of ${sgc.total} of the DSL's termly checks done`] });
+    return { title: "The school today", sections };
+  }
+
   /** Agenda items for a SIP or consultant visit, taken from the discussion paper. */
   function sipAgenda(paper) {
     const pick = h => paper.sections.find(s => s.head.startsWith(h));
@@ -166,7 +247,7 @@
       ...(s.table ? [s.table.cols.join(" | "), ...s.table.rows.map(r => r.join(" | "))] : []), ""])].join("\n");
   }
 
-  const api = { areaReport, sipPaper, sipAgenda, toText, score, INDICATORS, SUBJECTS, SUBJECT_PROMPTS, LABEL };
+  const api = { areaReport, sipPaper, sipAgenda, govReport, govGlance, toText, score, INDICATORS, SUBJECTS, SUBJECT_PROMPTS, LABEL };
   root.HWWD = Object.assign(root.HWWD || {}, { briefs: api });
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : globalThis);

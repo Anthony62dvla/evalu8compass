@@ -27,7 +27,7 @@
   const busy = new Set();
   const save = () => Y.changed(state);
   const aiOn = () => state.profile.ai !== false;
-  const P = window.HWWD.plan, TM = window.HWWD.team, MT = window.HWWD.meetings, LD = window.HWWD.leads, MO = window.HWWD.monitor;
+  const P = window.HWWD.plan, TM = window.HWWD.team, MT = window.HWWD.meetings, LD = window.HWWD.leads, MO = window.HWWD.monitor, GL = window.HWWD.govlead;
   function applyAI() { document.body.classList.toggle("no-ai", !aiOn()); $("pAI").checked = aiOn(); }
   const ctx = () => ({ name: state.profile.name, type: state.profile.type, phases: state.profile.phases, special: state.profile.special });
 
@@ -413,7 +413,7 @@
     if (id === "progressView") renderProgress();
     if (id === "teamView") TM.render();
     if (id === "meetView") { MT.reset(); MT.render(); }
-    if (id === "leadView") LD.render();
+    if (id === "leadView") { LD.render(); GL.render(); }
     if (id === "monView") MO.render();
     history.replaceState(null, "", id === "planView" ? "#plan" : id === "progressView" ? "#progress" : id === "teamView" ? "#team" : id === "meetView" ? "#meetings" : id === "leadView" ? "#reports" : id === "monView" ? "#monitoring" : location.pathname);
   }
@@ -540,6 +540,7 @@
     state = next;
     renderSetup(); if (!ofBusy && !ofKeep) renderOfsted(); renderAreas(); renderReview(); P.render(); TM.render(); if (!$("meetView").classList.contains("hide") && !(document.activeElement && document.activeElement.closest && document.activeElement.closest(".meeting"))) MT.render();
     if (!$("leadView").classList.contains("hide") && !LD.isEditing()) LD.render();
+    if (!$("leadView").classList.contains("hide") && !GL.isEditing()) GL.render();
     if (!$("monView").classList.contains("hide") && !MO.isEditing()) MO.render();
     if (!$("progressView").classList.contains("hide") && cmpTo === "now") renderCompare();
     if (id && $(id)) { const el = $(id); el.focus({ preventScroll: true }); if (sel && el.setSelectionRange) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) {} }
@@ -687,6 +688,7 @@
   });
   TM.init({ state: () => state, save, toast, undo, icon: I, esc, flush: () => Y.flush() });
   MO.init({ state: () => state, save, toast, undo, icon: I, esc, view: () => view, plan: P, rerender: () => { renderAreas(); renderReview(); } });
+  GL.init({ state: () => state, save, toast, undo, icon: I, esc, flush: () => Y.flush(), view: () => view, plan: P, renderDoc: d => LD.renderDoc(d) });
   LD.init({ state: () => state, save, toast, undo, icon: I, esc, flush: () => Y.flush(), view: () => view });
   MT.init({ renderDoc: LD.renderDoc, state: () => state, save, toast, undo, icon: I, esc, flush: () => Y.flush(), view: () => view, plan: P,
     rerender: () => { renderAreas(); P.render(); }, snapshot: name => Y.snapshots.create(name) });

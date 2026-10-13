@@ -4,7 +4,7 @@
   var next = params.get("next") || "/checklist.html";
   if (!/^\/[^/\\]/.test(next)) next = "/checklist.html"; // only same-site paths
   var form = document.getElementById("form"), code = document.getElementById("code"), err = document.getElementById("err"), go = document.getElementById("go");
-  fetch("/api/access").then(function (r) { return r.json(); }).then(function (s) { if (!s.required || s.ok) location.replace(next); }).catch(function () {});
+  fetch("/api/access").then(function (r) { return r.json(); }).then(function (s) { if (!s.required || s.ok) location.replace(next); else if (s.governor) location.replace("/governors.html"); }).catch(function () {});
   code.addEventListener("input", function () { err.textContent = ""; document.getElementById("subLink").hidden = true; });
   form.addEventListener("submit", function (e) {
     e.preventDefault();
@@ -13,7 +13,7 @@
     fetch("/api/access", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ code: code.value }) })
       .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
       .then(function (x) {
-        if (x.ok) return location.replace(next);
+        if (x.ok) return location.replace(x.d.governor ? "/governors.html" : next);
         err.textContent = x.d.error || "That didn't work. Try again."; go.disabled = false;
         document.getElementById("subLink").hidden = !x.d.subscribe;
         code.focus();

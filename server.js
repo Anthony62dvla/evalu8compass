@@ -29,6 +29,7 @@ const evals = require("./lib/evals");
 const billing = require("./lib/billing");
 const consultants = require("./lib/consultants");
 const alerts = require("./lib/alerts");
+const governors = require("./lib/governors");
 access.setAdminCheck(req => admin.who(req));
 
 const PORT = Number(process.env.PORT || 3000);
@@ -86,6 +87,7 @@ const server = http.createServer(async (req, res) => {
       }
       if (p.startsWith("/api/admin")) return adminRoute(req, res, p);
       if (p === "/api/school" || p.startsWith("/api/school/")) return schoolRoute(req, res, p, url);
+      if (p.startsWith("/api/gov/")) return govRoute(req, res, p);
       if (p === "/api/w" && req.method === "POST") {
         req.hwwdWho = access.who(req);
         if (!req.hwwdWho) return json(res, 401, { code: "access_required", error: "Enter your school access code to start a workshop." });
@@ -101,6 +103,7 @@ const server = http.createServer(async (req, res) => {
     if (/^\/join\/[A-Za-z0-9]{6}$/.test(p)) { res.writeHead(302, { location: "/workshop.html?code=" + p.slice(6).toUpperCase() }); return res.end(); }
     // The consultant register is only ever for signed-in schools, even when access codes are switched off
     if (p === "/consultants.html") { const w = access.who(req); if (!w || !(w.id || w.admin)) { res.writeHead(302, { location: w ? "/index.html" : "/enter.html?next=%2Fconsultants.html" }); return res.end(); } }
+    if (p === "/governors.html") { const w = access.who(req); if (!(w && w.id && !w.admin) && !access.govWho(req)) { res.writeHead(302, { location: "/enter.html?next=%2Fgovernors.html" }); return res.end(); } }
     if (PROTECTED_PAGES.has(p) && !access.who(req)) {
       res.writeHead(302, { location: "/enter.html?next=" + encodeURIComponent(p + url.search) }); return res.end();
     }
@@ -173,7 +176,9 @@ async function accessRoute(req, res) {
     const entry = w && w.id && !w.admin ? access.list().find(c => c.id === w.id) : null;
     const st = w && ai.hasKey() ? usage.status(w.open ? "open" : w.id) : null;
     if (st && entry) st.topup = billing.topupInfo(entry, st);
-    return json(res, 200, { required: access.required(), ok: !!w, school: w && w.name && !w.admin ? w.name : "", ai: st, plan: billing.forSchool(entry), mail: w ? require("./lib/mail").configured() : undefined });
+    const g = !w ? access.govWho(req) : null;
+    if (g) return json(res, 200, { required: access.required(), ok: false, governor: true, school: g.name });
+    return json(res, 200, { required: access.required(), ok: !!w, school: w && w.name && !w.admin ? w.name : "", ai: st, plan: billing.forSchool(entry), mail: w ? require("./lib/mail").configured() : undefined, gov: entry ? { on: !!entry.govCodeAt, at: entry.govCodeAt || null } : undefined });
   }
   if (req.method !== "POST") return json(res, 405, { error: "Method not allowed" });
   if (limited(req, "login")) return json(res, 429, { code: "rate_limited", error: "Too many attempts. Wait a minute and try again." });
@@ -190,7 +195,26 @@ async function accessRoute(req, res) {
     if (known && !known.revoked) return json(res, 403, { code: "expired", error: "This access code has expired. Email support@evalu8compass.app to renew it." });
     return json(res, 401, { code: "bad_code", error: "That access code isn't recognised. Check it and try again." });
   }
+  if (c.gov) { admin.audit("governor.signin", `${c.name} (${c.id})`, req); return json(res, 200, { ok: true, school: c.name, governor: true }); }
   return json(res, 200, { ok: true, school: c.name });
+}
+
+/* Governors and trustees: read-only view and questions. Leaders signed in as the school can see it too. */
+async function govRoute(req, res, p) {
+  const w = access.who(req), g = w && w.id && !w.admin ? w : access.govWho(req);
+  if (!g) return json(res, 401, { code: "access_required", error: "Sign in with your governors' code." });
+  if (req.method !== "GET" && !sameSite(req)) return json(res, 403, { error: "Cross-site request refused." });
+  try {
+    if (p === "/api/gov/view" && req.method === "GET") return json(res, 200, { ...governors.view(g.id, g.name), leader: !g.gov });
+    if (p === "/api/gov/challenge" && req.method === "POST") {
+      if (limited(req, "signup")) return json(res, 429, { error: "Too many questions at once. Wait a minute." });
+      let b; try { b = JSON.parse(await readBody(req, 16384) || "{}"); } catch { return json(res, 400, { error: "Invalid request" }); }
+      const ch = await governors.ask(g.id, g.name, b);
+      admin.audit("governor.question", `${g.name} (${g.id})`, req);
+      return json(res, 200, { challenge: ch });
+    }
+    return json(res, 404, { error: "Not found" });
+  } catch (e) { return json(res, e.status || 500, { error: e.message }); }
 }
 
 /* Each school's saved self-evaluation (see lib/schools.js) */
@@ -248,6 +272,30 @@ async function schoolRoute(req, res, p, url) {
       if (!m) return json(res, 404, { error: "Save the meeting first, then try again." });
       const kind = ["minutes", "paper"].includes(b.kind) ? b.kind : "agenda";
       try { const sent = await require("./lib/meetings").sendMeeting(w.name, st, m, kind); admin.audit("meeting.email", `${w.name} (${id}): ${kind} to ${sent}`, req); return json(res, 200, { sent }); }
+      catch (e) { return json(res, e.status || 502, { error: e.message }); }
+    }
+    // Governors' read-only code: create (replacing any old one, optionally emailing it) or switch off
+    if (p === "/api/school/governors/code" && req.method === "POST") {
+      if (!w.id || w.admin) return json(res, 403, { error: "Sign in as a school to manage governors' access." });
+      if (limited(req, "signup")) return json(res, 429, { error: "Too many requests. Wait a minute." });
+      const b = (await body()) || {};
+      if (b.action === "off") { access.govOff(id); admin.audit("governor.code_off", `${w.name} (${id})`, req); return json(res, 200, { on: false }); }
+      const code = access.govCode(id);
+      if (!code) return json(res, 404, { error: "Couldn't find your school's account." });
+      admin.audit("governor.code_new", `${w.name} (${id})`, req);
+      let sent = 0, mailError = "";
+      if (b.email) { try { sent = await governors.sendCode(w.name, schools.get(id).state || {}, code); } catch (e) { mailError = e.message; } }
+      return json(res, 200, { on: true, code, sent, mailError });
+    }
+    const gr = p.match(/^\/api\/school\/govreports\/([a-z0-9]{1,20})\/send$/);
+    if (gr && req.method === "POST") {
+      if (!w.id || w.admin) return json(res, 403, { error: "Sign in as a school to send reports." });
+      if (limited(req, "signup")) return json(res, 429, { error: "Too many emails. Wait a minute." });
+      await body();
+      const st = schools.get(id).state || {};
+      const rep = (st.govReports || []).find(r => r.id === gr[1]);
+      if (!rep) return json(res, 404, { error: "Save the report first, then try again." });
+      try { const sent = await governors.sendReport(w.name, st, rep); admin.audit("governor.report_email", `${w.name} (${id}) to ${sent}`, req); return json(res, 200, { sent }); }
       catch (e) { return json(res, e.status || 502, { error: e.message }); }
     }
     // Email a key leader's area report to the area's leaders and the head

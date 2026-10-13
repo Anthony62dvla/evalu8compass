@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Governors and trustees · Evalu8 Compass</title>
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<header class="brandbar">
+  <div class="brandbar-in">
+    <div class="brand-logo"><i data-icon="compass" data-size="26"></i></div>
+    <div class="brand-text"><b id="schoolName">Evalu8 Compass</b><span>Governors and trustees</span></div>
+    <nav class="brand-nav" aria-label="Main">
+      <a href="checklist.html" id="leaderLink" hidden><i data-icon="list-check"></i>Back to the checklist</a>
+      <a href="#" id="signOut"><i data-icon="logout"></i>Sign out</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Governors and trustees</div>
+      <h1>How is our school doing?</h1>
+      <p>The headteacher's termly reports, where the school stands today, and your questions with leaders' answers. This view is read-only and contains no information about individual pupils.</p>
+    </div>
+  </header>
+  <p class="safe-note" role="note" id="leaderNote" hidden><i data-icon="eye" data-size="20"></i><span>You're seeing what your governors and trustees see. Only reports you've issued are shown here.</span></p>
+  <p class="err" id="loadErr" role="alert"></p>
+
+  <nav class="tabs pagetabs" aria-label="Governors' sections">
+    <div role="tablist" class="tablist-in" aria-label="Governors' sections">
+      <button role="tab" class="tab" id="gtab-reports" data-gview="gReports" aria-controls="gReports" aria-selected="true"><i data-icon="file-text"></i>Termly reports</button>
+      <button role="tab" class="tab" id="gtab-today" data-gview="gToday" aria-controls="gToday" aria-selected="false" tabindex="-1"><i data-icon="trending-up"></i>The school today</button>
+      <button role="tab" class="tab" id="gtab-ask" data-gview="gAsk" aria-controls="gAsk" aria-selected="false" tabindex="-1"><i data-icon="message-circle"></i>Questions and answers<span id="gOpenCount"></span></button>
+    </div>
+  </nav>
+
+  <section id="gReports" role="tabpanel" aria-labelledby="gtab-reports"><div id="gReportList"></div></section>
+  <section id="gToday" role="tabpanel" aria-labelledby="gtab-today" class="hide"><div class="lead-preview" id="gTodayDoc"></div></section>
+  <section id="gAsk" role="tabpanel" aria-labelledby="gtab-ask" class="hide">
+    <form class="gov-ask" id="askForm" novalidate>
+      <h2>Ask a question</h2>
+      <p class="small">Holding leaders to account is part of your role. Ask about anything in a report or the school today; leaders are told straight away and their answer appears here and in the next termly report. Don't include pupils' or staff names.</p>
+      <div class="gov-ask-grid">
+        <div class="field"><label for="askBy">Your name</label><input id="askBy" autocomplete="name" maxlength="100"></div>
+        <div class="field"><label for="askArea">About <span class="muted-inline">(optional)</span></label><select id="askArea"><option value="">Any area</option></select></div>
+      </div>
+      <div class="field"><label for="askQ">Your question</label><textarea id="askQ" rows="4" maxlength="1500"></textarea></div>
+      <div class="row"><button class="btn primary" type="submit" id="askGo"><i data-icon="message-circle"></i>Send the question</button><span class="err" id="askErr" role="alert"></span></div>
+    </form>
+    <div id="gChallenges"></div>
+  </section>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="js/icons.js"></script>
+<script src="js/governors.js"></script>
+</body>
+</html>

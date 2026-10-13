@@ -10,6 +10,13 @@ const FILE = path.join(DATA, "access.json");
 const backup = fs.existsSync(FILE) ? fs.readFileSync(FILE) : null;
 const PORT = 3996, base = `http://127.0.0.1:${PORT}`;
 const ok = (c, m) => { console.log((c ? "PASS " : "FAIL ") + m); if (!c) process.exitCode = 1; };
+{ // A saved list item edited again in place must still count as a change (the saved copy mustn't share objects with the screen)
+  let base = { actions: [], meetings: [] }; const state = { actions: [{ id: "a1", title: "x" }], meetings: [{ id: "m1", status: "planned" }] };
+  base = D.apply(base, D.diff(base, state));
+  state.actions[0].title = "changed"; state.meetings[0].status = "live";
+  const p2 = D.diff(base, state);
+  ok(p2.actions && p2.actions.upsert[0].title === "changed" && p2.meetings && p2.meetings.upsert[0].status === "live", "a second edit to the same action or meeting is saved");
+}
 const ids = [];
 
 const srv = spawn(process.execPath, [path.join(__dirname, "..", "server.js")], { env: { ...process.env, PORT, ANTHROPIC_API_KEY: "", ACCESS_REQUIRED: "" }, stdio: "ignore" });

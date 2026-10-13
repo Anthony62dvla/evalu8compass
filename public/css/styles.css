@@ -554,3 +554,31 @@ details.past .meeting { margin-top: 10px }
 .mon-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
 .mon-foot .spacer { flex: 1 }
 @media (min-width: 900px) { .pagetabs { gap: 0 } .pagetabs .tab { padding: 10px 8px; gap: 6px; font-size: 14.5px } }
+/* Governors */
+.gov-rep { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; margin-top: 12px; overflow: hidden }
+#gToday .lead-preview, #gReports, #gAsk { margin-top: 14px }
+.gov-ask { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 10px }
+.gov-ask h2 { margin: 0; font-size: 18px }
+.gov-ask-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px }
+.gov-ask input, .gov-ask select, .gov-ask textarea, .chal textarea { width: 100%; font: inherit; font-size: 15px; padding: 8px 10px; min-height: 44px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink) }
+.chal { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; display: grid; gap: 6px }
+.chal.open { border-left: 4px solid var(--part) }
+.chal-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.chal-top .small { margin: 0 }
+.chal-q { margin: 0; font-weight: 600; white-space: pre-wrap }
+.chal-a { background: var(--bg); border-radius: 8px; padding: 8px 10px; white-space: pre-wrap; font-size: 14.5px }
+.chip-st { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px }
+.st-open { background: var(--part-soft); color: var(--part) } .st-answered { background: var(--met-soft); color: var(--met) } .st-closed { background: var(--na-soft, #eee); color: var(--muted) }
+.safe-note { display: flex; gap: 10px; align-items: flex-start; background: var(--accent-soft); border-radius: 12px; padding: 12px 14px; font-size: 14.5px; margin: 18px 0 0 }
+.safe-note .ic { color: var(--icon); margin-top: 2px }
+.gov-h { display: flex; gap: 8px; align-items: center; font-size: 20px; margin: 28px 0 10px }
+.gov-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; align-items: start }
+.gov-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: grid; gap: 10px; min-width: 0 }
+.gov-card > * { min-width: 0 }
+.gov-card h3 { margin: 0; font-size: 17px; display: inline-flex; gap: 8px; align-items: center }
+.gov-card .small { margin: 0 }
+.gov-card textarea, .gov-card input:not([type=checkbox]), .gov-card select { width: 100%; font: inherit; font-size: 14px; padding: 8px 10px; min-height: 40px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink) }
+.gov-chal { margin-top: 12px }
+.gov-past { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px }
+.code-once { display: grid; gap: 4px; background: var(--accent-soft); border-radius: 10px; padding: 10px 12px; font-size: 14px }
+.code-once b { font-size: 22px; letter-spacing: 2px; color: var(--ink) }

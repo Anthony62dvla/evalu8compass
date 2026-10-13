@@ -12,7 +12,7 @@
  */
 (function (root) {
   const MAPS = ["answers", "notes", "ai", "collapsed", "leads"];   // leads: each evaluation area's leader report (commentary, key figures)
-  const LISTS = ["actions", "team", "meetings", "subjects", "monitoring"];   // arrays of { id, … }: changes merge item by item
+  const LISTS = ["actions", "team", "meetings", "subjects", "monitoring", "govReports", "challenges"];   // arrays of { id, … }: changes merge item by item
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
   function diff(prev, cur) {
@@ -61,7 +61,8 @@
       for (const u of a.upsert || []) {
         if (!u || typeof u.id !== "string") continue;
         const i = s[l].findIndex(x => x.id === u.id);
-        if (i >= 0) s[l][i] = u; else s[l].push(u);
+        const v = JSON.parse(JSON.stringify(u));   // a copy: the result must never share objects with the patch (or the screen's state)
+        if (i >= 0) s[l][i] = v; else s[l].push(v);
       }
     }
     return s;
