@@ -462,3 +462,54 @@ footer a { color: var(--accent); font-weight: 600 }
 details.past { margin-top: 6px }
 details.past > summary { cursor: pointer; font-weight: 700; min-height: 40px; display: flex; align-items: center }
 details.past .meeting { margin-top: 10px }
+/* Leaders' reports */
+.lead-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 14px }
+.lead-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 6px; align-content: start }
+.lead-card h3 { margin: 0; font-size: 16px }
+.lead-meta, .lead-who { margin: 0; font-size: 13.5px; color: var(--muted) }
+.lead-meta .warn { color: var(--part); font-weight: 700 }
+.lead-card .btn { justify-self: start }
+.lead-report > *, .paper > *, .subjects > *, .subj > * { min-width: 0 }
+.lead-report { grid-template-columns: minmax(0, 1fr); margin-top: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 14px }
+.lead-report > h3 { margin: 0; font-size: 20px }
+.lead-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.lead-bar .spacer { flex: 1 }
+.lead-who-edit, .lead-ind { border: 0; margin: 0; padding: 0; min-width: 0; display: flex; flex-wrap: wrap; gap: 4px 16px }
+.lead-who-edit legend, .lead-ind legend { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; padding: 0; margin-bottom: 6px }
+.lead-ind legend .muted-inline { text-transform: none; letter-spacing: 0; font-weight: 400 }
+.ind-grid { display: grid; grid-template-columns: minmax(0, 1fr) 130px 130px; gap: 6px 10px; align-items: center; width: 100%; font-size: 14px }
+.ind-grid .lbl { font-size: 12px; font-weight: 700; color: var(--muted) }
+.ind-grid input { width: 100%; font: inherit; font-size: 14px; padding: 7px 9px; min-height: 40px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink) }
+@media (max-width: 560px) { .ind-grid { grid-template-columns: minmax(0, 1fr) 90px 90px } }
+.lead-report textarea, .subj textarea { width: 100%; font: inherit; font-size: 14px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); resize: vertical }
+.lead-report .small { margin: 0 0 4px }
+.subjects { display: grid; gap: 10px }
+.subjects h4, .lead-preview-h { margin: 6px 0 0; font-size: 16px }
+.subj { border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; gap: 8px; background: var(--bg) }
+.subj-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.subj-top h5 { margin: 0; font-size: 15px; flex: 1 1 160px }
+.subj-top input { font: inherit; font-size: 14px; padding: 7px 9px; min-height: 40px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink) }
+.subj-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 6px 14px }
+.subj-q { display: flex; gap: 8px; align-items: center; justify-content: space-between; font-size: 13.5px }
+.subj-q select, .subj-add select { font: inherit; font-size: 14px; padding: 6px 8px; min-height: 40px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink) }
+.subj .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px }
+.subj-add { display: flex; flex-wrap: wrap; gap: 8px }
+.lead-preview { border: 1px dashed var(--line); border-radius: 12px; padding: 14px; background: var(--bg) }
+.doc-title { margin: 0 0 8px; font-size: 18px }
+.doc-sec h4 { margin: 12px 0 4px; font-size: 15px; color: var(--accent) }
+.doc-sec ul { margin: 0; padding-left: 20px; font-size: 14px; display: grid; gap: 3px }
+.doc-para { margin: 0 0 6px; font-size: 14px; white-space: pre-wrap }
+.doc-tbl { overflow-x: auto }
+.doc table { border-collapse: collapse; font-size: 13.5px; min-width: 360px; width: 100% }
+.doc th, .doc td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top }
+.doc thead th { font-size: 12px; color: var(--muted) }
+@media print {
+  body.print-doc * { visibility: hidden }
+  body.print-doc .printing, body.print-doc .printing * { visibility: visible }
+  body.print-doc .printing { position: absolute; left: 0; top: 0; width: 100%; border: 0; background: #fff; color: #000 }
+}
+.meet-kind { margin: 0; display: inline-flex; gap: 6px; align-items: center; font-size: 13px; font-weight: 700; color: var(--accent) }
+.paper { display: grid; gap: 8px; margin: 10px 0 }
+.paper-doc summary { cursor: pointer; font-weight: 700; display: inline-flex; gap: 6px; align-items: center; min-height: 40px }
+.paper-doc .btn { margin-top: 8px }
+.paper textarea { width: 100%; font: inherit; font-size: 14px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); resize: vertical }

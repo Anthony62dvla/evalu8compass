@@ -98,6 +98,7 @@
     <button role="tab" class="tab" id="tab-eval" data-view="evalView" aria-controls="evalView" aria-selected="true"><i data-icon="list-check"></i>Evaluate</button>
     <button role="tab" class="tab" id="tab-plan" data-view="planView" aria-controls="planView" aria-selected="false" tabindex="-1"><i data-icon="target"></i>Action plan<span id="planTabCount"></span></button>
     <button role="tab" class="tab" data-view="progressView" aria-controls="progressView" aria-selected="false" id="progressTab" tabindex="-1"><i data-icon="history"></i>Progress</button>
+    <button role="tab" class="tab" data-view="leadView" aria-controls="leadView" aria-selected="false" id="leadTab" tabindex="-1"><i data-icon="file-text"></i>Leaders' reports</button>
     <button role="tab" class="tab" data-view="meetView" aria-controls="meetView" aria-selected="false" id="meetTab" tabindex="-1"><i data-icon="calendar-check"></i>Meetings<span id="meetTabCount"></span></button>
     <button role="tab" class="tab" data-view="teamView" aria-controls="teamView" aria-selected="false" id="teamTab" tabindex="-1"><i data-icon="users"></i>Team<span id="teamTabCount"></span></button>
     </div>
@@ -173,6 +174,17 @@
     <p class="consult-cta" id="consultCta"><i data-icon="user-heart" data-size="20"></i><span>Want expert support with these priorities? <a href="consultants.html">Find a checked consultant or SIP</a> near you, matched to your areas for development.</span></p>
   </section>
 
+  <section id="leadView" class="hide" role="tabpanel" aria-labelledby="leadTab">
+    <div class="prog-head">
+      <div class="prog-intro">
+        <span class="tile"><i data-icon="file-text" data-size="24"></i></span>
+        <div><h2>Leaders' reports</h2>
+        <p>One report for each of Ofsted's evaluation areas, owned by its leader: where the area stands, key figures, the leader's commentary, actions and their impact. Curriculum and teaching includes subject leaders' reviews. Reports feed your leadership meetings and can be printed or emailed.</p></div>
+      </div>
+    </div>
+    <div id="leadList"></div>
+  </section>
+
   <section id="meetView" class="hide" role="tabpanel" aria-labelledby="meetTab">
     <div class="prog-head">
       <div class="prog-intro">
@@ -180,7 +192,7 @@
         <div><h2>Half-termly leadership meetings</h2>
         <p>Evalu8 Compass writes each agenda from what your plan and self-evaluation show, and emails it to attendees a week before. In the meeting, record what you decide; new actions go straight into your improvement plan, and the minutes are emailed when you finish.</p></div>
       </div>
-      <div class="row"><button class="btn primary" type="button" id="meetAdd"><i data-icon="calendar-check"></i>Schedule a meeting</button><button class="btn" type="button" id="meetPlanYear"><i data-icon="history"></i>Plan this year's meetings</button></div>
+      <div class="row"><button class="btn primary" type="button" id="meetAdd"><i data-icon="calendar-check"></i>Schedule a meeting</button><button class="btn" type="button" id="meetPlanYear"><i data-icon="history"></i>Plan this year's meetings</button><button class="btn" type="button" id="meetSip"><i data-icon="users"></i>Plan a SIP or consultant visit</button></div>
     </div>
     <div id="meetList"></div>
   </section>
@@ -245,6 +257,8 @@
 <script src="js/leaders.js"></script>
 <script src="js/team.js"></script>
 <script src="js/agenda.js"></script>
+<script src="js/briefs.js"></script>
+<script src="js/leads.js"></script>
 <script src="js/meetings.js"></script>
 <script src="js/app.js"></script>
 <!-- /build:body -->

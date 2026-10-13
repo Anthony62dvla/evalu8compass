@@ -246,7 +246,18 @@ async function schoolRoute(req, res, p, url) {
       const st = schools.get(id).state || {};
       const m = (st.meetings || []).find(x => x.id === mm[1]);
       if (!m) return json(res, 404, { error: "Save the meeting first, then try again." });
-      try { const sent = await require("./lib/meetings").sendMeeting(w.name, st, m, b.kind === "minutes" ? "minutes" : "agenda"); admin.audit("meeting.email", `${w.name} (${id}): ${b.kind === "minutes" ? "minutes" : "agenda"} to ${sent}`, req); return json(res, 200, { sent }); }
+      const kind = ["minutes", "paper"].includes(b.kind) ? b.kind : "agenda";
+      try { const sent = await require("./lib/meetings").sendMeeting(w.name, st, m, kind); admin.audit("meeting.email", `${w.name} (${id}): ${kind} to ${sent}`, req); return json(res, 200, { sent }); }
+      catch (e) { return json(res, e.status || 502, { error: e.message }); }
+    }
+    // Email a key leader's area report to the area's leaders and the head
+    const rm = p.match(/^\/api\/school\/reports\/([a-z0-9]{1,12})\/send$/);
+    if (rm && req.method === "POST") {
+      if (!w.id || w.admin) return json(res, 403, { error: "Sign in as a school to send reports." });
+      if (limited(req, "signup")) return json(res, 429, { error: "Too many emails. Wait a minute." });
+      await body();
+      const st = schools.get(id).state || {};
+      try { const sent = await require("./lib/meetings").sendReport(w.name, st, rm[1]); admin.audit("report.email", `${w.name} (${id}): ${rm[1]} to ${sent}`, req); return json(res, 200, { sent }); }
       catch (e) { return json(res, e.status || 502, { error: e.message }); }
     }
     // Send a test email to one member of the leadership team

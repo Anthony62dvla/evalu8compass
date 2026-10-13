@@ -11,8 +11,8 @@
  *     actions: { upsert: [ {id, ...} ], del: [ "a1b2" ] } }
  */
 (function (root) {
-  const MAPS = ["answers", "notes", "ai", "collapsed"];
-  const LISTS = ["actions", "team", "meetings"];   // arrays of { id, … }: changes merge item by item
+  const MAPS = ["answers", "notes", "ai", "collapsed", "leads"];   // leads: each evaluation area's leader report (commentary, key figures)
+  const LISTS = ["actions", "team", "meetings", "subjects"];   // arrays of { id, … }: changes merge item by item
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
   function diff(prev, cur) {
