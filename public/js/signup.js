@@ -4,6 +4,8 @@
   var form = $("form"), err = $("err"), go = $("go"), pricing = null;
   var PRICES = { independent: 99, primary: 149, secondary: 199 };
   var LABEL = { independent: "Independent school", primary: "Primary school", secondary: "Secondary school" };
+  // A signed "page loaded at" token: forms sent back within seconds are from bots
+  var ft = ""; var getFt = function () { return fetch("/api/form-token").then(function (r) { return r.json(); }).then(function (d) { ft = d.t; }).catch(function () {}); }; getFt();
   var val = function (name) { var x = form.querySelector('input[name="' + name + '"]:checked'); return x ? x.value : ""; };
 
   fetch("/api/pricing").then(function (r) { return r.json(); }).then(function (d) { pricing = d; update(); }).catch(function () {});
@@ -45,7 +47,7 @@
     if (!$("agree").checked) return fail("Tick the box to agree to the terms and privacy notice.", "agree");
     go.disabled = true;
     var body = { type: type, phase: val("phase"), school: $("school").value, urn: $("urn").value, name: $("name").value, role: $("role").value, email: $("email").value.trim(),
-      schools: $("schools").value, message: $("message").value, agree: true, website: $("website").value };
+      schools: $("schools").value, message: $("message").value, agree: true, website: $("website").value, ft: ft };
     fetch("/api/signup", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })
       .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
       .then(function (x) {

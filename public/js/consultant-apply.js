@@ -3,6 +3,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var form = $("form"), err = $("err"), go = $("go"), prof = $("profile");
   fetch("/api/consultants/options").then(function (r) { return r.json(); }).then(function (o) { CProfile.render(prof, o, {}); }).catch(function () { err.textContent = "Couldn't load the form. Refresh the page."; });
+  var ft = ""; fetch("/api/form-token").then(function (r) { return r.json(); }).then(function (d) { ft = d.t; }).catch(function () {});
   function fail(msg, focusId) { err.textContent = msg; go.disabled = false; if (focusId && $(focusId)) $(focusId).focus(); }
   form.addEventListener("input", function () { err.textContent = ""; });
   form.addEventListener("submit", function (e) {
@@ -13,7 +14,7 @@
       email: $("email").value.trim(), phone: $("phone").value, address: $("address").value, updateService: $("updateService").checked, trn: $("trn").value,
       insProvider: $("insProvider").value, insExpires: $("insExpires").value,
       referees: [{ name: $("r1n").value, role: $("r1r").value, email: $("r1e").value.trim() }, { name: $("r2n").value, role: $("r2r").value, email: $("r2e").value.trim() }],
-      accurate: $("accurate").checked, consent: $("consent").checked, agree: $("agree").checked, website: $("website").value,
+      accurate: $("accurate").checked, consent: $("consent").checked, agree: $("agree").checked, website: $("website").value, ft: ft,
     });
     go.disabled = true;
     fetch("/api/consultants/apply", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })

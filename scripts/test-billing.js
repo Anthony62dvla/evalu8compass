@@ -52,7 +52,11 @@ const last = () => inbox[inbox.length - 1];
 const mailTo = (addr, re) => inbox.filter(m => m.to.includes(addr) && (!re || re.test(m.subject)));
 const codeIn = m => (m.text.match(/[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}/) || [])[0];
 
-const post = (p, body, cookie) => fetch(base + p, { method: "POST", redirect: "manual", headers: { "content-type": "application/json", ...(cookie ? { cookie } : {}) }, body: JSON.stringify(body || {}) });
+const post = async (p, body, cookie) => {
+  if ((p === "/api/signup" || p === "/api/consultants/apply") && body && body.ft === undefined) body = { ...body, ft: (await (await fetch(base + "/api/form-token")).json()).t };
+  return fetch(base + p, { method: "POST", redirect: "manual", headers: { "content-type": "application/json", ...(cookie ? { cookie } : {}) }, body: JSON.stringify(body || {}) });
+};
+process.env.FORM_MIN_SECONDS = "0";
 const get = (p, cookie) => fetch(base + p, { redirect: "manual", headers: cookie ? { cookie } : {} });
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const readCodes = () => JSON.parse(fs.readFileSync(FILES[1], "utf8"));

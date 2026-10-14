@@ -14,7 +14,11 @@ const PORT = 3986, SMTP = 3985, base = `http://127.0.0.1:${PORT}`;
 Object.assign(process.env, { SMTP_HOST: "127.0.0.1", SMTP_PORT: String(SMTP), SMTP_SECURE: "0", SMTP_ALLOW_PLAIN: "1", MAIL_FROM: "Evalu8 Compass <support@evalu8compass.test>",
   ADMIN_EMAIL: "owner@example.org", OPERATOR_NAME: "Test Operator", OPERATOR_ADDRESS: "1 High Street, Town", BANK_SORT_CODE: "12-34-56", BANK_ACCOUNT_NUMBER: "12345678",
   SITE_URL: "https://evalu8compass.test", AI_MONTHLY_REQUESTS: "200", AI_TOPUP_PACKS: "50:10,150:25", MAIL_OUTBOX: "", VAT_NUMBER: "" });
-const post = (p, body, cookie) => fetch(base + p, { method: "POST", headers: { "content-type": "application/json", ...(cookie ? { cookie } : {}) }, body: JSON.stringify(body || {}) });
+const post = async (p, body, cookie) => {
+  if ((p === "/api/signup" || p === "/api/consultants/apply") && body && body.ft === undefined) body = { ...body, ft: (await (await fetch(base + "/api/form-token")).json()).t };
+  return fetch(base + p, { method: "POST", headers: { "content-type": "application/json", ...(cookie ? { cookie } : {}) }, body: JSON.stringify(body || {}) });
+};
+process.env.FORM_MIN_SECONDS = "0";
 const get = (p, cookie) => fetch(base + p, { headers: cookie ? { cookie } : {} });
 const wait = ms => new Promise(r => setTimeout(r, ms));
 

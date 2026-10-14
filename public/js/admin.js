@@ -11,7 +11,7 @@
     "admin.setup": "Superadmin set up", "admin.login": "Signed in", "admin.logout": "Signed out", "admin.login_failed": "Failed sign-in attempt",
     "code.create": "Code created", "code.revoke": "Code revoked", "code.reactivate": "Code reactivated", "code.extend": "Expiry changed",
     "data.erase": "School data deleted", "school.delete": "School deleted", "ai.allowance": "AI allowance changed", "data.retention_delete": "Deleted under retention policy",
-    "signup.code": "School signed up", "signup.resend": "New code emailed", "signup.trust_enquiry": "Trust enquiry",
+    "signup.code": "School signed up", "signup.checked": "Sign-up checked", "bot.blocked": "Bot blocked", "signup.resend": "New code emailed", "signup.trust_enquiry": "Trust enquiry",
     "billing.subscribe": "School subscribed", "billing.send-invoice": "Invoice sent", "billing.mark-paid": "Marked paid", "billing.mark-unpaid": "Marked unpaid",
     "ai.topup_request": "AI top-up requested", "ai.topup_approve": "AI top-up approved", "ai.topup_decline": "AI top-up declined", "ai.topup_paid": "AI top-up paid", "ai.credits": "Extra AI requests changed",
     "billing.cancel": "Subscription cancelled", "billing.set-trial": "Free term set", "billing.reminder": "Reminder emailed",
@@ -147,13 +147,13 @@
     const codes = d.codes.slice().sort((a, b) => (a.state === "active" ? 0 : 1) - (b.state === "active" ? 0 : 1) || a.name.localeCompare(b.name));
     $("codes").innerHTML = `<thead><tr><th>School</th><th>Status</th><th>Created</th><th>Expires</th><th>Last signed in</th><th>Saved work</th><th>AI this month</th><th>Workshops</th><th>Actions</th></tr></thead><tbody>${
       codes.length ? codes.map(c => `<tr>
-        <td><b>${esc(c.name)}</b>${c.email ? `<span class="sub">${esc(c.email)}</span>` : ""}${c.notes ? `<span class="sub">${esc(c.notes)}</span>` : ""}<span class="sub">id ${esc(c.id)}</span></td>
+        <td><b>${esc(c.name)}</b>${c.check ? `<span class="checkflag">${I("alert-triangle", 14)}Check this: ${esc(c.check.reasons.join("; "))}</span>` : ""}${c.email ? `<span class="sub">${esc(c.email)}</span>` : ""}${c.notes ? `<span class="sub">${esc(c.notes)}</span>` : ""}<span class="sub">id ${esc(c.id)}</span></td>
         <td><span class="state state-${c.state}">${c.state[0].toUpperCase() + c.state.slice(1)}</span></td>
         <td>${day(c.createdAt)}</td><td>${c.expiresAt ? day(c.expiresAt) : "Never"}</td><td>${c.lastUsedAt ? day(c.lastUsedAt) : "Never"}</td>
         <td>${c.saved ? `${day(c.saved.updatedAt)}<span class="sub">${c.saved.assessed} lines · ${c.saved.actions} actions · ${c.saved.snapshots} snapshots</span>` : `<span class="sub">None yet</span>`}</td>
         <td>${aiCell(c.ai)}</td>
         <td class="num">${c.workshops}${c.participants ? `<span class="sub">${c.participants} staff</span>` : ""}</td>
-        <td><div class="acts">${c.state === "revoked"
+        <td><div class="acts">${c.check ? `<button class="btn" data-act="checked" data-id="${c.id}">${I("circle-check", 16)}Looks fine</button>` : ""}${c.state === "revoked"
           ? `<button class="btn" data-act="reactivate" data-id="${c.id}">${I("refresh", 16)}Reactivate</button>`
           : `<button class="btn" data-act="revoke" data-id="${c.id}" data-name="${esc(c.name)}">${I("x", 16)}Revoke</button>`}
           <button class="btn" data-act="allowance" data-id="${c.id}" data-name="${esc(c.name)}" data-cur="${c.ai.limit == null ? "unlimited" : c.ai.limit}">${I("sparkles", 16)}AI allowance</button>
@@ -234,7 +234,7 @@
     b.disabled = true;
     try {
       await api("POST", `/codes/${id}/${act}`, act === "extend" ? { days: Number(b.dataset.days) } : {});
-      toast({ revoke: "Code revoked. It stops working straight away.", reactivate: "Code reactivated", extend: "Expiry updated" }[act]);
+      toast({ revoke: "Code revoked. It stops working straight away.", reactivate: "Code reactivated", extend: "Expiry updated", checked: "Marked as looking fine" }[act]);
       await load();
     } catch (err) { toast(err.message); b.disabled = false; }
   });

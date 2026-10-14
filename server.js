@@ -30,6 +30,7 @@ const billing = require("./lib/billing");
 const consultants = require("./lib/consultants");
 const alerts = require("./lib/alerts");
 const governors = require("./lib/governors");
+const botcheck = require("./lib/botcheck");
 access.setAdminCheck(req => admin.who(req));
 
 const PORT = Number(process.env.PORT || 3000);
@@ -77,6 +78,7 @@ const server = http.createServer(async (req, res) => {
       const isAI = p === "/api/inspector" || /\/(report|themes|plan)$/.test(p);
       if (limited(req, isAI ? "ai" : "api")) return json(res, 429, { code: "rate_limited", error: "Too many requests. Wait a minute and try again." });
       if (p === "/api/access") return accessRoute(req, res);
+      if (p === "/api/form-token" && req.method === "GET") return json(res, 200, { t: botcheck.token() });
       if (p === "/api/pricing" || p.startsWith("/api/signup") || p.startsWith("/api/subscribe")) return billingRoute(req, res, p);
       if (p.startsWith("/api/consultants")) return consultantRoute(req, res, p);
       if (p === "/api/access/logout" && req.method === "POST") { access.logout(req, res); return json(res, 200, { ok: true }); }
@@ -342,6 +344,14 @@ async function schoolRoute(req, res, p, url) {
     throw e;
   }
 }
+/** The timing check on public forms: null if fine, otherwise the answer to send. A form sent too
+ *  quickly gets the same answer as a real one (so a bot learns nothing), but nothing is created. */
+function formCheck(req, b, kind) {
+  const r = botcheck.check(b && b.ft);
+  if (r === "ok") return null;
+  if (r === "fast") { admin.audit("bot.blocked", `${kind} form sent ${b && b.ft ? "too quickly" : ""} (${String((b && (b.school || b.name)) || "").slice(0, 60)})`, req); return { status: 200, body: kind === "signup" ? { ok: true, kind: "code" } : { ok: true } }; }
+  return { status: 400, body: { code: "refresh", error: r === "stale" ? "This page has been open for a long time. Refresh it, then send the form again (what you typed may need re-entering)." : "This form didn't load fully. Refresh the page and try again." } };
+}
 function sameSite(req) {
   if (!req.headers.origin) return true;
   try { return new URL(req.headers.origin).host === req.headers.host; } catch { return false; }
@@ -363,7 +373,10 @@ async function billingRoute(req, res, p) {
   try { b = JSON.parse((await readBody(req, 16384)) || "{}"); } catch (e) { return json(res, 400, { error: "Invalid request" }); }
   if (!b || typeof b !== "object" || Array.isArray(b)) return json(res, 400, { error: "Invalid request" });
   try {
-    if (p === "/api/signup") return json(res, 200, await billing.signup(b, clientIp(req), billingHooks(req)));
+    if (p === "/api/signup") {
+      const f = formCheck(req, b, "signup"); if (f) return json(res, f.status, f.body);
+      return json(res, 200, await billing.signup(b, clientIp(req), billingHooks(req)));
+    }
     if (p === "/api/signup/resend") return json(res, 200, await billing.resend(b.email, clientIp(req), billingHooks(req)));
     // Signed in (within the free term, a paid year or its grace): no need to type the code again
     const w = b.code ? null : access.who(req), mine = w && w.id && !w.admin ? w.id : null;
@@ -414,7 +427,10 @@ async function consultantRoute(req, res, p) {
     try { b = JSON.parse((await readBody(req, 32768)) || "{}"); } catch (e) { return json(res, 400, { error: "Invalid request" }); }
     if (!b || typeof b !== "object" || Array.isArray(b)) return json(res, 400, { error: "Invalid request" });
     const hooks = { audit: (a, d) => admin.audit(a, d, req) };
-    if (p === "/api/consultants/apply") return json(res, 200, await consultants.apply(b, clientIp(req), hooks));
+    if (p === "/api/consultants/apply") {
+      const f = formCheck(req, b, "consultant"); if (f) return json(res, f.status, f.body);
+      return json(res, 200, await consultants.apply(b, clientIp(req), hooks));
+    }
     if (p === "/api/consultants/link") return json(res, 200, await consultants.resendLink(b.email, clientIp(req)));
     if (p.startsWith("/api/consultants/me")) {
       const c = consultants.byToken(b.id, b.t);
@@ -565,6 +581,13 @@ async function adminRoute(req, res, p) {
       admin.audit("ai.allowance", `${c.name} (${c.id}): ${st.limit === null ? "unlimited" : st.limit === 0 ? "AI off" : st.limit + " requests a month"}${st.custom ? "" : " (default)"}`, req);
       return json(res, 200, st);
     } catch (e) { return json(res, 400, { error: e.message }); }
+  }
+  const ck = p.match(/^\/api\/admin\/codes\/([a-f0-9]{8})\/checked$/);
+  if (ck && req.method === "POST") {
+    const c = access.update(ck[1], x => { delete x.check; });
+    if (!c) return json(res, 404, { error: "No code with that id." });
+    admin.audit("signup.checked", `${c.name} (${c.id}) marked as looking fine`, req);
+    return json(res, 200, { ok: true });
   }
   const m = p.match(/^\/api\/admin\/codes\/([a-f0-9]{8})\/(revoke|reactivate|extend)$/);
   if (m && req.method === "POST") {
