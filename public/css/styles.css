@@ -624,3 +624,13 @@ details.past .meeting { margin-top: 10px }
 .church-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px 14px }
 .church select { width: 100%; font: inherit; font-size: 15px; padding: 8px 10px; min-height: 44px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink) }
 .church .small { margin: 0 }
+.si-read { border: 1px dashed var(--line); border-radius: 12px; padding: 10px 12px; display: grid; gap: 8px; background: var(--bg) }
+.si-read .small, .si-sum { margin: 0 }
+.si-read.busy { display: flex; gap: 8px; align-items: center; font-weight: 600 }
+.si-read textarea { width: 100%; font: inherit; font-size: 14px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink) }
+.si-read-form { display: grid; gap: 6px }
+.si-sum { font-size: 14.5px }
+.si-list, .si-rep { font-size: 14px; display: grid; gap: 4px }
+.si-list .lbl, .si-rep .lbl { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em }
+.si-list ul, .si-rep ul { margin: 0; padding-left: 20px; display: grid; gap: 3px }
+.si-rep { background: var(--accent-soft); border-radius: 8px; padding: 8px 10px }

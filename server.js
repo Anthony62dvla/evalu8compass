@@ -263,6 +263,30 @@ async function schoolRoute(req, res, p, url) {
       const r = schools.patch(id, cur.rev, { set: { ofsted: rec } });
       return json(res, 200, { ofsted: rec, rev: r.rev });
     }
+    // Read the school's latest SIAMS report with the AI and save the reading as its last inspection
+    if (p === "/api/school/siams/read" && req.method === "POST") {
+      if (!ai.hasKey()) return json(res, 503, { error: "Reading a report needs the AI, which isn't connected on this server." });
+      let b;
+      try { b = JSON.parse((await readBody(req, 36 * 1024 * 1024)) || "{}"); } catch (e) { return json(res, 400, { error: "Couldn't read that file. PDFs up to 25 MB." }); }
+      const hasPdf = typeof b.pdf === "string" && b.pdf.length > 100;
+      if (!hasPdf && !(typeof b.text === "string" && b.text.trim().length > 200)) return json(res, 400, { error: "Choose the report PDF or paste its full text." });
+      const cur = schools.get(id), SI = require("./public/js/siams.js");
+      const profile = (cur.state && cur.state.profile) || {};
+      if (!SI.isChurch(profile)) return json(res, 400, { error: "Choose Church school in Step 1 first." });
+      if (profile.ai === false) return json(res, 403, { error: "AI suggestions are switched off for your school (Step 1)." });
+      const text = prompts.siamsPrompt({ ctx: profile, iqs: SI.iqsFor(profile), hasPdf, text: b.text });
+      const content = hasPdf ? [{ type: "document", source: { type: "base64", media_type: "application/pdf", data: b.pdf.replace(/^data:[^,]+,/, "") } }, { type: "text", text }] : text;
+      const reading = await ai.askJson({ system: prompts.SYSTEM, content, maxTokens: 6000, account: id });
+      const prev = ((cur.state || {}).siams || {}).last || {};
+      const last = { date: /^\d{4}-\d{2}-\d{2}$/.test(reading.inspectionDate || "") ? reading.inspectionDate : prev.date || "",
+        outcome: ["J1", "J2"].includes(reading.outcome) ? reading.outcome : reading.outcome === "earlier" ? "other" : prev.outcome || "",
+        areas: Array.isArray(reading.areas) && reading.areas.length ? reading.areas.map(String).join("\n") : prev.areas || "",
+        reading, filename: String(b.filename || "").slice(0, 200), at: new Date().toISOString() };
+      const r = schools.patch(id, cur.rev, { set: { "siams.last": last } });
+      const saved = (schools.get(id).state.siams || {}).last;
+      admin.audit("siams.read", `${w.name || id}: SIAMS report read`, req);
+      return json(res, 200, { last: saved, rev: r.rev });
+    }
     // Email a leadership meeting's agenda or minutes to its attendees
     const mm = p.match(/^\/api\/school\/meetings\/([a-z0-9]{1,20})\/send$/);
     if (mm && req.method === "POST") {

@@ -65,6 +65,30 @@ let mail;
     const m = mail.inbox.find(x => /SIAMS self-evaluation/.test(x.subject));
     ok(n === 2 && m && m.to.includes("head@stmarys.sch.uk") && m.to.includes("adviser@diocese.test") && !m.to.includes("deputy@stmarys.sch.uk") && /Let your light shine/.test(m.text), "self-evaluation emailed to the head and the diocesan adviser");
     let err = null; try { await M.sendSiams("X", { ...state, profile: { ...profile, church: "" } }); } catch (e) { err = e; } ok(err && err.status === 400, "only for Church schools");
+
+    // Reading the last SIAMS report with the AI (a stand-in AI answers)
+    const http = require("http"), { spawn } = require("child_process");
+    let asked = "";
+    const fake = http.createServer((q, r) => { let b = ""; q.on("data", c => (b += c)); q.on("end", () => { asked = b; r.writeHead(200, { "content-type": "application/json" });
+      r.end(JSON.stringify({ content: [{ type: "text", text: JSON.stringify({ inspectionDate: "2023-11-02", outcome: "J2", earlierGrades: [], vision: "Let your light shine", summary: "A caring school whose vision is well known.", strengths: ["Pupils live out the vision in their care for others"], areas: ["Develop collective worship so it enables spiritual flourishing", "Strengthen RE assessment"], findings: [{ iq: "iq3", type: "development", finding: "Worship is not yet consistently inspiring." }, { iq: "iq9", type: "strength", finding: "bad id" }] }) }], usage: { input_tokens: 10, output_tokens: 10 } })); }); }).listen(3989);
+    const access = require("../lib/access"); const code = access.add("St Mary's CE Primary", 365);
+    schools.replace(code.id, { ...state, siams: {} });
+    const srv = spawn(process.execPath, [path.join(__dirname, "..", "server.js")], { env: { ...process.env, PORT: "3993", ANTHROPIC_API_KEY: "test-key", ANTHROPIC_BASE_URL: "http://127.0.0.1:3989", ALERT_DELAY_MS: "600000" }, stdio: ["ignore", "ignore", "inherit"] });
+    await new Promise(r => setTimeout(r, 900));
+    try {
+      const base = "http://127.0.0.1:3993";
+      const lr = await fetch(base + "/api/access", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ code: code.code }) });
+      const ck = (lr.headers.get("set-cookie") || "").split(";")[0];
+      const rr = await fetch(base + "/api/school/siams/read", { method: "POST", headers: { "content-type": "application/json", cookie: ck }, body: JSON.stringify({ text: "SIAMS report. ".repeat(40) }) });
+      const rj = await rr.json();
+      ok(rr.status === 200 && rj.last.date === "2023-11-02" && rj.last.outcome === "J2" && /Strengthen RE assessment/.test(rj.last.areas), "SIAMS report read: date, outcome and areas for development filled in");
+      ok(rj.last.reading.findings.length === 2 && rj.last.reading.findings[1].iq === null && rj.last.reading.findings[0].iq === "iq3", "findings mapped to Inspection Questions (unknown ids dropped)");
+      ok(/iq7: What is the quality of religious education/.test(asked) && /J1/.test(asked), "the AI is given this school's Inspection Questions");
+      const after = JSON.parse(fs.readFileSync(path.join(DATA, "schools", code.id, "state.json"), "utf8")).state.siams.last;
+      ok(after.reading.summary === "A caring school whose vision is well known.", "the reading is saved with the school's work");
+      const nr = await fetch(base + "/api/school/siams/read", { method: "POST", headers: { "content-type": "application/json", cookie: ck }, body: JSON.stringify({ text: "short" }) });
+      ok(nr.status === 400, "needs the PDF or the full text");
+    } finally { srv.kill(); fake.close(); }
   } catch (e) { console.error(e); ok(false, "threw: " + e.message); }
   finally {
     if (mail) mail.close();

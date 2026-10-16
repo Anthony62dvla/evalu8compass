@@ -157,6 +157,35 @@ Reply with only JSON in this shape:
 Include every concern and the main strengths, at most 15 findings in all, each one short sentence. Use null for itemId when no line fits.`;
   }
 
+  /** A Church school's SIAMS inspection report (PDF or text) → outcome, strengths and areas for development by Inspection Question. */
+  function siamsPrompt({ ctx, iqs, hasPdf, text }) {
+    return `SCHOOL
+${describe(ctx)}
+
+SIAMS INSPECTION QUESTIONS (id: question)
+${iqs.map(q => `  ${q.id}: ${q.q}`).join("\n")}
+
+${hasPdf ? "The school's most recent SIAMS inspection report is attached." : `The school's most recent SIAMS inspection report text:\n"""\n${String(text || "").slice(0, 120000)}\n"""`}
+
+HOW TO READ IT
+- SIAMS (the Statutory Inspection of Anglican and Methodist Schools) reports since September 2023 give no grades. The outcome is either J1 ("the school is living up to its foundation as a Church school and is enabling pupils and adults to flourish") or J2 ("the school has strengths, but there are also issues that leaders need to address as a matter of priority"). Reports list strengths and areas for development, and are organised by Inspection Question.
+- Earlier reports (before September 2023) used grades such as Excellent, Good, Requires improvement or Ineffective, and sometimes a separate grade for collective worship or, in voluntary aided schools, for religious education. Report those exactly as written in earlierGrades, and set outcome to "earlier".
+- Areas for development are the report's own "Areas for development" (or "What should the school do to improve?") points. List each once, in the report's order, paraphrased; don't add your own.
+- Take everything only from what the report says about THIS school. If something isn't in the report, use null or an empty list. Never guess.
+
+TASK
+Read the report and extract what matters for the school's next steps. Map each finding to the Inspection Question it relates to most closely, using the ids above. Paraphrase in your own words; never copy long passages.
+Reply with only JSON in this shape:
+{"inspectionDate":"YYYY-MM-DD if a full date is stated, otherwise null","outcome":"J1|J2|earlier|null",
+ "earlierGrades":[{"area":"as written","grade":"as written"}],
+ "vision":"the school's Christian vision or its biblical text as the report states it, or null",
+ "summary":"3-4 sentence overview",
+ "strengths":["each strength the report lists, paraphrased"],
+ "areas":["each area for development, paraphrased, in order"],
+ "findings":[{"iq":"id from the list or null","type":"strength|development","finding":"one sentence, paraphrased"}]}
+At most 14 findings, each one short sentence.`;
+  }
+
   /** Staff comments from a workshop → themes per area. */
   function themesPrompt({ ctx, results }) {
     const blocks = results.areas.map(a => {
@@ -261,7 +290,7 @@ Give exactly 4 priorities, ordered by risk of a standard not being met. Anything
   /** For providers with no separate system prompt (artifact mode): persona + task in one message. */
   function withSystem(body) { return SYSTEM + "\n\n" + body; }
 
-  const api = { SYSTEM, firstPrompt, itemPrompt, reviewPrompt, actionPrompt, draftPrompt, reportPrompt, themesPrompt, planPrompt, describe, withSystem };
+  const api = { SYSTEM, firstPrompt, itemPrompt, reviewPrompt, actionPrompt, draftPrompt, reportPrompt, siamsPrompt, themesPrompt, planPrompt, describe, withSystem };
   root.HWWD = Object.assign(root.HWWD || {}, { prompts: api });
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : globalThis);

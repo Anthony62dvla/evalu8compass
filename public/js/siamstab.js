@@ -11,7 +11,43 @@
   const today = () => new Date().toISOString().slice(0, 10);
   const nice = d => d ? new Date(String(d).slice(0, 10) + "T12:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }) : "";
   const openSec = { ctx1: null, ctx2: null };
-  let showDoc = false;
+  let showDoc = false, srFile = null, srBusy = false, srOpen = false;
+  const aiOn = () => (st().profile || {}).ai !== false;
+
+  /** Reading the last SIAMS report with the AI, and what it found. */
+  function readerHTML(last) {
+    const rd = last.reading;
+    if (srBusy) return `<div class="si-read busy" role="status">${I("sparkles", 18)}Reading your SIAMS report… this can take a minute.</div>`;
+    const form = `<div class="si-read-form">
+        <div class="of-row"><label class="btn filebtn">${I("file-upload", 18)}Choose PDF<input type="file" id="srFile" accept="application/pdf"></label><span class="muted" id="srName">${srFile ? esc(srFile.name) : "No file chosen"}</span></div>
+        <details><summary>Or paste the report text</summary><label class="sr-only" for="srText">SIAMS report text</label><textarea id="srText" rows="4" placeholder="Paste the full report text here"></textarea></details>
+        <div class="of-row"><button class="btn ai" type="button" data-srread="1"${aiOn() ? "" : " disabled"}>${I("sparkles", 18)}Read the report</button><span class="muted">${aiOn() ? "Uses one AI request." : "Needs AI suggestions switched on in Step 1."}</span></div>
+        <p class="error" id="srErr" role="alert"></p></div>`;
+    if (!rd) return `<div class="si-read"><p class="small"><b>Upload your last SIAMS report</b> and the AI will read it: the outcome, strengths and areas for development, and which Inspection Question each relates to. Or fill in the details below yourself.</p>${form}</div>`;
+    const vis = ((sm().ctx2 || {}).vision || "").trim();
+    return `<div class="si-read done">
+      <p class="small"><b>Your last SIAMS report${last.filename ? " (" + esc(last.filename) + ")" : ""}</b>, read ${esc(nice(last.at))}. ${rd.outcome === "earlier" ? "Inspected under the previous framework" + ((rd.earlierGrades || []).length ? ": " + esc(rd.earlierGrades.map(g => `${g.area} ${g.grade}`).join("; ")) : "") + "." : ""}</p>
+      ${rd.summary ? `<p class="si-sum">${esc(rd.summary)}</p>` : ""}
+      ${(rd.strengths || []).length ? `<div class="si-list"><span class="lbl">Strengths</span><ul>${rd.strengths.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
+      ${rd.vision && !vis ? `<p class="small">The report records your vision as: <b>${esc(rd.vision)}</b> <button class="btn" type="button" data-srvision="1">${I("copy", 16)}Use it in "What are we doing here?"</button></p>` : ""}
+      <p class="small">The AI reads the report for you: check the outcome and areas for development against your copy.</p>
+      <button class="linkbtn" type="button" data-sragain="1" aria-expanded="${srOpen}">${srOpen ? "Cancel" : "Read a newer report"}</button>
+      ${srOpen ? form : ""}
+    </div>`;
+  }
+  async function readReport() {
+    const text = (el("srText") && el("srText").value.trim()) || "";
+    if (!srFile && text.length < 200) { el("srErr").textContent = "Choose the report PDF, or paste its full text."; return; }
+    srBusy = true; render();
+    try {
+      await H.flush();
+      const r = await fetch("api/school/siams/read", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(srFile ? { pdf: srFile.data, filename: srFile.name } : { text }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "The report couldn't be read. Try again.");
+      sm().last = d.last; srFile = null; srOpen = false; srBusy = false; H.save(); render();
+      H.toast("SIAMS report read and saved");
+    } catch (e) { srBusy = false; render(); const er = el("srErr"); if (er) er.textContent = e.message; else H.toast(e.message); }
+  }
 
   function filled(obj, defs) { return defs.filter(d => ((obj || {})[d[0]] || "").trim()).length; }
 
@@ -28,6 +64,7 @@
       <div class="sg-head"><h3 id="siStandH">${I("compass", 20)}Where we stand</h3><span class="sg-count${stt.ready ? " all" : ""}">${stt.yes} of ${stt.total} answered "yes"</span></div>
       <p class="small">SIAMS has no criteria to meet. For each Inspection Question, the inspector asks whether leaders can show, with evidence, that the answer is yes. If every answer is yes, the school is living up to its foundation as a Church school. This is your own honest view, not a prediction.</p>
       <ul class="si-chips">${stt.list.map(x => `<li><a href="#si-${x.q.id}" class="si-chip j-${x.judge || "none"}"><b>IQ${x.q.n}</b> ${esc(x.q.short)}<span>${x.judge ? SI.JUDGE[x.judge] : "Not yet considered"}</span></a></li>`).join("")}</ul>
+      ${readerHTML(last)}
       <div class="si-last">
         <div class="field"><label for="siLastDate">Last SIAMS inspection</label><input type="date" id="siLastDate" data-si="last.date" value="${esc(last.date || "")}"></div>
         <div class="field"><label for="siLastOut">Outcome</label><select id="siLastOut" data-si="last.outcome"><option value="">Choose…</option><option value="J1"${last.outcome === "J1" ? " selected" : ""}>J1: living up to its foundation</option><option value="J2"${last.outcome === "J2" ? " selected" : ""}>J2: strengths, with issues to address</option><option value="other"${last.outcome === "other" ? " selected" : ""}>Under the previous framework</option></select></div>
@@ -64,10 +101,12 @@
 
   function iqCard(x, p) {
     const q = x.q, v = sm()[q.id] || {}, mon = SI.evidenceFor(st(), q.id);
+    const fromReport = ((((sm().last || {}).reading) || {}).findings || []).filter(f => f.iq === q.id);
     const acts = (st().actions || []).filter(a => a.siams === q.id);
     return `<article class="si-iq j-${x.judge || "none"}" id="si-${q.id}" aria-labelledby="siq-${q.id}">
       <div class="si-iq-top"><span class="si-n">IQ${q.n}</span><h4 id="siq-${q.id}">${esc(q.q)}</h4></div>
       <ul class="si-prompts">${q.prompts.map(t => `<li>${esc(t)}</li>`).join("")}${q.trust && SI.isAcademy(p) ? `<li>${esc(q.trust)}</li>` : ""}</ul>
+      ${fromReport.length ? `<div class="si-rep"><span class="lbl">From your last SIAMS report</span><ul>${fromReport.map(f => `<li class="${f.type}"><b>${f.type === "strength" ? "Strength" : "To develop"}:</b> ${esc(f.finding)}</li>`).join("")}</ul></div>` : ""}
       <div class="two">
         <div class="field"><label for="sie-${q.id}">Evidence of impact</label><textarea id="sie-${q.id}" data-si="${q.id}.evidence" rows="5" placeholder="What difference does this make, for whom, and how do you know? What would pupils, staff, parents and the church say?">${esc(v.evidence || "")}</textarea></div>
         <div class="field"><label for="sin-${q.id}">What isn't yet true, and what we're doing about it</label><textarea id="sin-${q.id}" data-si="${q.id}.next" rows="5">${esc(v.next || "")}</textarea></div>
@@ -95,6 +134,9 @@
   function onClick(e) {
     const b = e.target.closest("button"); if (!b || !el("siamsView") || !el("siamsView").contains(b)) return false;
     const d = b.dataset;
+    if (d.srread) { readReport(); return true; }
+    if (d.sragain) { srOpen = !srOpen; render(); return true; }
+    if (d.srvision) { const rd = (sm().last || {}).reading; if (rd && rd.vision) { const c2 = { ...(sm().ctx2 || {}) }; c2.vision = rd.vision; sm().ctx2 = c2; H.save(); openSec.ctx2 = true; render(); H.toast("Vision added. Check it and write how it is theologically rooted."); } return true; }
     if (d.sidoc) { showDoc = !showDoc; render(); const t = document.querySelector("[data-sidoc]"); if (t) t.focus(); return true; }
     if (d.siprint) { print(); return true; }
     if (d.sisend) {
@@ -120,6 +162,13 @@
   }
   function onChange(e) {
     const t = e.target;
+    if (t.id === "srFile") {
+      const f = t.files[0]; srFile = null; el("srErr").textContent = "";
+      if (!f) { el("srName").textContent = "No file chosen"; return; }
+      if (f.size > 25 * 1024 * 1024) { el("srErr").textContent = "That PDF is over 25 MB. Paste the text instead."; return; }
+      const fr = new FileReader(); fr.onload = () => { srFile = { name: f.name, data: fr.result }; el("srName").textContent = f.name; }; fr.readAsDataURL(f);
+      return;
+    }
     if (t.dataset && t.dataset.si && (t.tagName === "SELECT" || t.type === "date")) { set(t.dataset.si, t.value); render(); const again = el(t.id); if (again) again.focus(); return; }
     if (t.dataset && t.dataset.sij) { set(t.dataset.sij + ".judge", t.value); render(); const again = document.querySelector(`[data-sij="${t.dataset.sij}"][value="${t.value}"]`); if (again) again.focus(); }
   }
