@@ -62,11 +62,12 @@
     <label class="switch"><input type="checkbox" id="pSpecial"> Specialist provision (special school, resourced provision or AP)</label>
     <div class="church hide" id="pChurchRow">
       <div class="church-grid">
-        <div class="field"><label for="pChurch">Church school</label><select id="pChurch"><option value="">Not a Church school</option><option value="cofe">Church of England</option><option value="methodist">Methodist</option><option value="joint">Joint Anglican and Methodist</option></select></div>
+        <div class="field"><label for="pChurch">Church school</label><select id="pChurch"><option value="">Not a Church school</option><option value="cofe">Church of England</option><option value="methodist">Methodist</option><option value="joint">Joint Anglican and Methodist</option><option value="catholic">Catholic</option></select></div>
         <div class="field hide" id="pDesigRow"><label for="pDesig">Designation</label><select id="pDesig"><option value="">Choose…</option><option value="vc">Voluntary controlled</option><option value="va">Voluntary aided</option><option value="foundation">Foundation</option><option value="fvc">Academy, formerly voluntary controlled</option><option value="fva">Academy, formerly voluntary aided</option><option value="other">Other</option></select></div>
       </div>
       <label class="switch hide" id="pDenomRow"><input type="checkbox" id="pDenom"> As an academy, we teach denominational RE</label>
       <p class="small hide" id="pChurchNote">Church schools get a <b>SIAMS</b> tab, for the Statutory Inspection of Anglican and Methodist Schools.</p>
+      <p class="small hide" id="pCatholicNote">Catholic schools get a <b>CSI</b> tab, for Catholic schools inspection: Catholic life and mission, religious education and collective worship.</p>
     </div>
     <div class="newschool hide" id="pNewRow">
       <label class="switch"><input type="checkbox" id="pNew"> New school: we've had our pre-registration inspection but not yet our first standard inspection</label>
@@ -105,6 +106,7 @@
     <div role="tablist" class="tablist-in" aria-label="Checklist sections">
     <button role="tab" class="tab" id="tab-eval" data-view="evalView" aria-controls="evalView" aria-selected="true"><i data-icon="list-check"></i>Evaluate</button>
     <button role="tab" class="tab" data-view="siamsView" aria-controls="siamsView" aria-selected="false" id="siamsTab" tabindex="-1" hidden><i data-icon="building-community"></i>SIAMS</button>
+    <button role="tab" class="tab" data-view="csiView" aria-controls="csiView" aria-selected="false" id="csiTab" tabindex="-1" hidden><i data-icon="building-community"></i>CSI</button>
     <button role="tab" class="tab" id="tab-plan" data-view="planView" aria-controls="planView" aria-selected="false" tabindex="-1"><i data-icon="target"></i>Action plan<span id="planTabCount"></span></button>
     <button role="tab" class="tab" data-view="progressView" aria-controls="progressView" aria-selected="false" id="progressTab" tabindex="-1"><i data-icon="history"></i>Progress</button>
     <button role="tab" class="tab" data-view="monView" aria-controls="monView" aria-selected="false" id="monTab" tabindex="-1"><i data-icon="eye"></i>Monitoring<span id="monTabCount"></span></button>
@@ -193,6 +195,17 @@
       </div>
     </div>
     <div id="siamsList"></div>
+  </section>
+
+  <section id="csiView" class="hide" role="tabpanel" aria-labelledby="csiTab">
+    <div class="prog-head">
+      <div class="prog-intro">
+        <span class="tile"><i data-icon="building-community" data-size="24"></i></span>
+        <div><h2>Catholic schools inspection</h2>
+        <p>Evaluate Catholic life and mission, religious education and collective worship, each through pupil outcomes, provision and leadership, and keep your Catholic self-evaluation document (CSED) up to date. Based on the Catholic Schools Inspectorate's National Framework (Inspection Handbook, September 2025). Your diocese may add its own requirements.</p></div>
+      </div>
+    </div>
+    <div id="csiList"></div>
   </section>
 
   <section id="monView" class="hide" role="tabpanel" aria-labelledby="monTab">
@@ -299,6 +312,8 @@
 <script src="js/govlead.js"></script>
 <script src="js/siams.js"></script>
 <script src="js/siamstab.js"></script>
+<script src="js/csi.js"></script>
+<script src="js/csitab.js"></script>
 <script src="js/meetings.js"></script>
 <script src="js/app.js"></script>
 <!-- /build:body -->

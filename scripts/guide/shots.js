@@ -31,7 +31,7 @@ module.exports = async function shots(outDir) {
   await new Promise(r => setTimeout(r, 800));
   const browser = await chromium.launch();
   const made = [];
-  let schoolId, wcode, churchId;
+  let schoolId, wcode, churchId, catholicId;
   const snap = async (page, name, sel, opts = {}) => {
     const file = path.join(outDir, name + ".jpg");
     const el = sel ? page.locator(sel).first() : null;
@@ -247,6 +247,37 @@ module.exports = async function shots(outDir) {
       await cctx.close();
     }
 
+    /* ---------- a Catholic school ---------- */
+    {
+      const out3 = execFileSync(process.execPath, [path.join(APP, "scripts", "access.js"), "add", "St Joseph's Catholic Primary"]).toString();
+      const code3 = out3.match(/[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}/)[0];
+      catholicId = JSON.parse(fs.readFileSync(path.join(DATA, "access.json"), "utf8")).codes.find(c => c.name === "St Joseph's Catholic Primary").id;
+      const kctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, deviceScaleFactor: 2 });
+      const k = await kctx.newPage(); k.on("dialog", d => d.accept());
+      await k.goto(BASE + "/enter.html?next=/checklist.html"); await k.fill("#code", code3); await k.click("#go");
+      await k.waitForURL(/checklist/); await k.waitForSelector(".item", { state: "attached" });
+      await k.addStyleTag({ content: ".summary, .brandbar { position: static !important } .toast { display: none !important }" });
+      await k.fill("#pName", "St Joseph's Catholic Primary");
+      await k.click('[data-type="academy"]');
+      for (const ph of ["ks1", "ks2"]) if ((await k.getAttribute(`[data-phase="${ph}"]`, "aria-pressed")) !== "true") await k.click(`[data-phase="${ph}"]`);
+      for (const ph of ["ks3", "ks4"]) if ((await k.getAttribute(`[data-phase="${ph}"]`, "aria-pressed")) === "true") await k.click(`[data-phase="${ph}"]`);
+      await k.selectOption("#pChurch", "catholic"); await k.waitForTimeout(300);
+      await k.click("#csiTab"); await k.waitForSelector(".si-read");
+      await k.click(".si-read details summary"); await k.fill("#crText", "St Joseph's Catholic Primary inspection report. ".repeat(10));
+      await k.click("[data-crread]"); await k.waitForSelector(".si-read.done", { timeout: 15000 });
+      await k.click("[data-crmission]"); await k.waitForTimeout(300);
+      for (const [id, g] of [["clm_po", 1], ["clm_pr", 1], ["clm_le", 2], ["re_po", 2], ["re_pr", 3], ["re_le", 2], ["cw_po", 2], ["cw_pr", 2], ["cw_le", 2]]) await k.check(`[data-csg="${id}"][value="${g}"]`);
+      await k.selectOption("#csAfi-0", "partially"); await k.selectOption("#csAfi-1", "fully");
+      await k.selectOption("#csComp-time", "yes"); await k.selectOption("#csComp-red", "yes"); await k.selectOption("#csComp-diocese", "yes");
+      await k.fill("#cse-re_pr", "Teaching follows the Religious Education Directory, with well-planned units in every year group. Book looks show pupils' knowledge building over time.");
+      await k.fill("#csn-re_pr", "Make RE assessment consistent across key stage 2, moderating with the diocese each term.");
+      await k.waitForTimeout(500);
+      await k.locator(".si-stand").first().scrollIntoViewIfNeeded(); await k.waitForTimeout(600);
+      await snap(k, "csi-stand", ".si-stand", { maxH: 1300 });
+      await snap(k, "csi-sub", "#cs-re_pr", { maxH: 1100 });
+      await kctx.close();
+    }
+
     /* ---------- report ---------- */
     await p.goto(BASE + "/report.html"); await p.waitForSelector(".paper h1");
     await p.setViewportSize({ width: 1180, height: 1200 });
@@ -317,6 +348,7 @@ module.exports = async function shots(outDir) {
     await new Promise(r => setTimeout(r, 400));
     if (schoolId) fs.rmSync(path.join(DATA, "schools", schoolId), { recursive: true, force: true });
     if (churchId) fs.rmSync(path.join(DATA, "schools", churchId), { recursive: true, force: true });
+    if (catholicId) fs.rmSync(path.join(DATA, "schools", catholicId), { recursive: true, force: true });
     if (wcode) fs.rmSync(path.join(DATA, "sessions", wcode + ".json"), { force: true });
     KEEP.forEach((f, i) => (backup[i] ? fs.writeFileSync(f, backup[i]) : fs.rmSync(f, { force: true })));
   }

@@ -499,7 +499,7 @@ details.past .meeting { margin-top: 10px }
 .doc-sec h4 { margin: 12px 0 4px; font-size: 15px; color: var(--accent) }
 .doc-sec ul { margin: 0; padding-left: 20px; font-size: 14px; display: grid; gap: 3px }
 .doc-para { margin: 0 0 6px; font-size: 14px; white-space: pre-wrap }
-.doc-tbl { overflow-x: auto }
+.doc-tbl { overflow-x: auto; position: relative }
 .doc table { border-collapse: collapse; font-size: 13.5px; min-width: 360px; width: 100% }
 .doc th, .doc td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top }
 .doc thead th { font-size: 12px; color: var(--muted) }
@@ -553,7 +553,7 @@ details.past .meeting { margin-top: 10px }
 .judge-pick legend { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; padding: 0 }
 .mon-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
 .mon-foot .spacer { flex: 1 }
-@media (min-width: 900px) { .pagetabs { gap: 0 } .pagetabs .tab { padding: 10px 8px; gap: 6px; font-size: 14.5px } .pagetabs:has(#siamsTab:not([hidden])) .tab { padding: 10px 6px; gap: 5px; font-size: 14px } }
+@media (min-width: 900px) { .pagetabs { gap: 0 } .pagetabs .tab { padding: 10px 8px; gap: 6px; font-size: 14.5px } .pagetabs:has(#siamsTab:not([hidden])) .tab, .pagetabs:has(#csiTab:not([hidden])) .tab { padding: 10px 6px; gap: 5px; font-size: 14px } }
 /* Governors */
 .gov-rep { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; margin-top: 12px; overflow: hidden }
 #gToday .lead-preview, #gReports, #gAsk { margin-top: 14px }
@@ -585,7 +585,7 @@ details.past .meeting { margin-top: 10px }
 .checkflag { display: flex; gap: 4px; align-items: flex-start; font-size: 12.5px; font-weight: 700; color: var(--part); background: var(--part-soft); border-radius: 6px; padding: 3px 6px; margin: 4px 0 }
 .checkflag .ic { flex: none; margin-top: 2px }
 /* SIAMS */
-.si-stand, .si-doc { margin-top: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: grid; gap: 10px }
+.si-stand, .si-doc { grid-template-columns: minmax(0, 1fr); margin-top: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: grid; gap: 10px }
 .si-stand > *, .si-doc > *, .si-iq > *, .si-body > * { min-width: 0 }
 .si-stand .small, .si-doc .small { margin: 0 }
 .si-doc h3 { margin: 0; font-size: 17px; display: inline-flex; gap: 8px; align-items: center }
@@ -634,3 +634,13 @@ details.past .meeting { margin-top: 10px }
 .si-list .lbl, .si-rep .lbl { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em }
 .si-list ul, .si-rep ul { margin: 0; padding-left: 20px; display: grid; gap: 3px }
 .si-rep { background: var(--accent-soft); border-radius: 8px; padding: 8px 10px }
+.cs-grid td.g1 { color: var(--met); font-weight: 700 } .cs-grid td.g3 { color: var(--part); font-weight: 700 } .cs-grid td.g4 { color: var(--no); font-weight: 700 }
+.cs-grid select { font: inherit; font-size: 13.5px; padding: 5px 6px; min-height: 36px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); max-width: 210px }
+.cs-grid a { color: var(--ink) }
+.si-iq.cs-g1 { border-left-color: var(--met) } .si-iq.cs-g2 { border-left-color: var(--accent) } .si-iq.cs-g3 { border-left-color: var(--part) } .si-iq.cs-g4 { border-left-color: var(--no) }
+.cs-nums { display: flex; flex-wrap: wrap; gap: 12px }
+.cs-h3 { margin: 0; font-size: 17px; display: inline-flex; gap: 8px; align-items: center }
+.cs-h4 { margin: 6px 0 0; font-size: 15px }
+.cs-comp { display: grid; gap: 8px }
+.si-stand .field label { font-weight: 600 }
+@media (max-width: 560px) { .cs-grid { font-size: 12.5px } .cs-grid th, .cs-grid td { padding: 4px 5px } }

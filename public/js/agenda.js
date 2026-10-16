@@ -66,6 +66,11 @@
       items.push({ id: uid(), kind: "siams", title: "Living our Christian vision (SIAMS)", prompt: "Is our theologically rooted Christian vision enabling pupils and adults to flourish? Which Inspection Questions can't we yet answer \"yes\", and what will change that?", lines, lineIds: [], actionIds: (st.actions || []).filter(a => a.siams && a.status !== "done").map(a => a.id) });
     }
 
+    const CS = typeof module !== "undefined" && module.exports ? require("./csi.js") : root.HWWD.csi;
+    if (CS && CS.isCatholic(st.profile)) {
+      items.push({ id: uid(), kind: "csi", title: "Catholic life and mission, RE and worship", prompt: "Is our evaluation of Catholic life and mission, religious education and collective worship accurate? What will move each area on, and how will we know?", lines: CS.summaryLines(st), lineIds: [], actionIds: (st.actions || []).filter(a => a.csi && a.status !== "done").map(a => a.id) });
+    }
+
     // 5. Areas needing attention, and gaps nobody owns
     const scored = (areas || []).map(a => {
       const rated = a.items.filter(i => answers[i.id] && answers[i.id] !== "na");

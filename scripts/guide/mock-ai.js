@@ -90,8 +90,20 @@ const siamsReading = {
     { iq: "iq6", type: "development", finding: "Assessment in RE is not yet used consistently to plan next steps." },
   ],
 };
+const csiReading = {
+  inspectionDate: "2021-11-10", overall: 2, clm: 1, re: 2, cw: 2, mission: "Learning and growing together in the love of Christ",
+  summary: "St Joseph's is a welcoming community where pupils are known and loved. The Catholic life of the school is a real strength, led by a committed chaplaincy team. Religious education is good, though assessment is not yet used consistently.",
+  strengths: ["Pupils show great care for one another and for the wider community", "Chaplaincy is at the heart of school life"],
+  areas: ["Ensure assessment in religious education is accurate and used consistently to plan next steps", "Give pupils more opportunities to plan and lead collective worship"],
+  findings: [
+    { sub: "clm_po", type: "strength", finding: "Pupils respond to Catholic Social Teaching through well-chosen charity work." },
+    { sub: "re_pr", type: "development", finding: "Assessment in RE is not yet used consistently across key stage 2." },
+    { sub: "cw_po", type: "development", finding: "Pupils rarely plan and lead worship themselves." },
+  ],
+};
 function answer(prompt) {
   if (/SIAMS INSPECTION QUESTIONS/.test(prompt)) return siamsReading;
+  if (/CATHOLIC SCHOOLS INSPECTION AREAS/.test(prompt)) return csiReading;
   if (/STAFF WORKSHOP RESULTS/.test(prompt)) return plan;
   if (/ANONYMOUS STAFF COMMENTS/.test(prompt)) return themes;
   if (/CHECKLIST LINES/.test(prompt)) return reading;

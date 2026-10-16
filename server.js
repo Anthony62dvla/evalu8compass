@@ -287,6 +287,37 @@ async function schoolRoute(req, res, p, url) {
       admin.audit("siams.read", `${w.name || id}: SIAMS report read`, req);
       return json(res, 200, { last: saved, rev: r.rev });
     }
+    // Read the school's last Catholic schools inspection report with the AI
+    if (p === "/api/school/csi/read" && req.method === "POST") {
+      if (!ai.hasKey()) return json(res, 503, { error: "Reading a report needs the AI, which isn't connected on this server." });
+      let b;
+      try { b = JSON.parse((await readBody(req, 36 * 1024 * 1024)) || "{}"); } catch (e) { return json(res, 400, { error: "Couldn't read that file. PDFs up to 25 MB." }); }
+      const hasPdf = typeof b.pdf === "string" && b.pdf.length > 100;
+      if (!hasPdf && !(typeof b.text === "string" && b.text.trim().length > 200)) return json(res, 400, { error: "Choose the report PDF or paste its full text." });
+      const cur = schools.get(id), CSI = require("./public/js/csi.js");
+      const profile = (cur.state && cur.state.profile) || {};
+      if (!CSI.isCatholic(profile)) return json(res, 400, { error: "Choose Catholic under Church school in Step 1 first." });
+      if (profile.ai === false) return json(res, 403, { error: "AI suggestions are switched off for your school (Step 1)." });
+      const text = prompts.csiPrompt({ ctx: profile, hasPdf, text: b.text });
+      const content = hasPdf ? [{ type: "document", source: { type: "base64", media_type: "application/pdf", data: b.pdf.replace(/^data:[^,]+,/, "") } }, { type: "text", text }] : text;
+      const reading = await ai.askJson({ system: prompts.SYSTEM, content, maxTokens: 6000, account: id });
+      const prev = ((cur.state || {}).csi || {}).last || {}, g = v => [1, 2, 3, 4].includes(Number(v)) ? Number(v) : 0;
+      const last = { date: /^\d{4}-\d{2}-\d{2}$/.test(reading.inspectionDate || "") ? reading.inspectionDate : prev.date || "",
+        overall: g(reading.overall) || prev.overall || 0, clm: g(reading.clm), re: g(reading.re), cw: g(reading.cw),
+        areas: Array.isArray(reading.areas) && reading.areas.length ? reading.areas.map(String).join("\n") : prev.areas || "",
+        reading, filename: String(b.filename || "").slice(0, 200), at: new Date().toISOString() };
+      const r = schools.patch(id, cur.rev, { set: { "csi.last": last } });
+      admin.audit("csi.read", `${w.name || id}: Catholic schools inspection report read`, req);
+      return json(res, 200, { last: (schools.get(id).state.csi || {}).last, rev: r.rev });
+    }
+    // A Catholic school's CSED, to the head and the school's adviser
+    if (p === "/api/school/csi/send" && req.method === "POST") {
+      if (!w.id || w.admin) return json(res, 403, { error: "Sign in as a school to send it." });
+      if (limited(req, "signup")) return json(res, 429, { error: "Too many emails. Wait a minute." });
+      await body();
+      try { const sent = await require("./lib/meetings").sendCsi(w.name, schools.get(id).state || {}); admin.audit("csi.email", `${w.name} (${id}) to ${sent}`, req); return json(res, 200, { sent }); }
+      catch (e) { return json(res, e.status || 502, { error: e.message }); }
+    }
     // Email a leadership meeting's agenda or minutes to its attendees
     const mm = p.match(/^\/api\/school\/meetings\/([a-z0-9]{1,20})\/send$/);
     if (mm && req.method === "POST") {

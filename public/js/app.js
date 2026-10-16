@@ -27,7 +27,7 @@
   const busy = new Set();
   const save = () => Y.changed(state);
   const aiOn = () => state.profile.ai !== false;
-  const P = window.HWWD.plan, TM = window.HWWD.team, MT = window.HWWD.meetings, LD = window.HWWD.leads, MO = window.HWWD.monitor, GL = window.HWWD.govlead, SM = window.HWWD.siamstab, SI = window.HWWD.siams;
+  const P = window.HWWD.plan, TM = window.HWWD.team, MT = window.HWWD.meetings, LD = window.HWWD.leads, MO = window.HWWD.monitor, GL = window.HWWD.govlead, SM = window.HWWD.siamstab, SI = window.HWWD.siams, CT = window.HWWD.csitab, CSI = window.HWWD.csi;
   function applyAI() { document.body.classList.toggle("no-ai", !aiOn()); $("pAI").checked = aiOn(); }
   const ctx = () => ({ name: state.profile.name, type: state.profile.type, phases: state.profile.phases, special: state.profile.special });
 
@@ -40,7 +40,10 @@
     $("pSpecial").checked = !!p.special;
     $("pChurchRow").classList.toggle("hide", p.type === "independent");
     $("pChurch").value = p.church || ""; $("pDesig").value = p.designation || ""; $("pDenom").checked = !!p.denomRE;
-    $("pDesigRow").classList.toggle("hide", !p.church); $("pChurchNote").classList.toggle("hide", !p.church);
+    $("pDesigRow").classList.toggle("hide", !p.church || p.church === "catholic"); $("pChurchNote").classList.toggle("hide", !p.church || p.church === "catholic");
+    $("pCatholicNote").classList.toggle("hide", p.church !== "catholic");
+    $("csiTab").hidden = !CSI.isCatholic(p);
+    if (!CSI.isCatholic(p) && !$("csiView").classList.contains("hide")) showView("evalView");
     $("pDenomRow").classList.toggle("hide", !(p.church && p.designation === "fvc"));
     $("siamsTab").hidden = !SI.isChurch(p);
     if (!SI.isChurch(p) && !$("siamsView").classList.contains("hide")) showView("evalView");
@@ -413,7 +416,7 @@
     undo.t = setTimeout(() => bar.classList.add("hide"), 6000);
   }
   function showView(id) {
-    ["evalView", "planView", "progressView", "teamView", "meetView", "leadView", "monView", "siamsView"].forEach(v => $(v).classList.toggle("hide", v !== id));
+    ["evalView", "planView", "progressView", "teamView", "meetView", "leadView", "monView", "siamsView", "csiView"].forEach(v => $(v).classList.toggle("hide", v !== id));
     document.querySelectorAll("[data-view]").forEach(b => { b.setAttribute("aria-selected", b.dataset.view === id); b.tabIndex = b.dataset.view === id ? 0 : -1; });
     if (id === "planView") P.render();
     if (id === "progressView") renderProgress();
@@ -422,7 +425,8 @@
     if (id === "leadView") { LD.render(); GL.render(); }
     if (id === "monView") MO.render();
     if (id === "siamsView") SM.render();
-    history.replaceState(null, "", id === "planView" ? "#plan" : id === "progressView" ? "#progress" : id === "teamView" ? "#team" : id === "meetView" ? "#meetings" : id === "leadView" ? "#reports" : id === "monView" ? "#monitoring" : id === "siamsView" ? "#siams" : location.pathname);
+    if (id === "csiView") CT.render();
+    history.replaceState(null, "", id === "planView" ? "#plan" : id === "progressView" ? "#progress" : id === "teamView" ? "#team" : id === "meetView" ? "#meetings" : id === "leadView" ? "#reports" : id === "monView" ? "#monitoring" : id === "siamsView" ? "#siams" : id === "csiView" ? "#csi" : location.pathname);
   }
 
   /* ---------- Progress: termly snapshots ---------- */
@@ -550,6 +554,7 @@
     if (!$("leadView").classList.contains("hide") && !GL.isEditing()) GL.render();
     if (!$("monView").classList.contains("hide") && !MO.isEditing()) MO.render();
     if (!$("siamsView").classList.contains("hide") && !SM.isEditing()) SM.render();
+    if (!$("csiView").classList.contains("hide") && !CT.isEditing()) CT.render();
     if (!$("progressView").classList.contains("hide") && cmpTo === "now") renderCompare();
     if (id && $(id)) { const el = $(id); el.focus({ preventScroll: true }); if (sel && el.setSelectionRange) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) {} }
     window.scrollTo(0, y);
@@ -595,7 +600,7 @@
   $("pNew").addEventListener("change", e => { state.profile.newSchool = e.target.checked; save(); renderSetup(); renderOfsted(); renderFirst(); });
   $("pOpened").addEventListener("change", e => { state.profile.opened = e.target.value; save(); renderSetup(); renderFirst(); });
   $("pSpecial").addEventListener("change", e => { state.profile.special = e.target.checked; save(); renderAreas(); });
-  $("pChurch").addEventListener("change", e => { state.profile.church = e.target.value; save(); renderSetup(); SM.render(); });
+  $("pChurch").addEventListener("change", e => { state.profile.church = e.target.value; save(); renderSetup(); SM.render(); CT.render(); });
   $("pDesig").addEventListener("change", e => { state.profile.designation = e.target.value; save(); renderSetup(); SM.render(); });
   $("pDenom").addEventListener("change", e => { state.profile.denomRE = e.target.checked; save(); SM.render(); });
   $("pAI").addEventListener("change", e => { state.profile.ai = e.target.checked; save(); applyAI(); if (!ofReading()) renderOfsted(); P.render(); toast(e.target.checked ? "AI suggestions switched on" : "AI suggestions switched off. Nothing will be sent to the AI."); });
@@ -698,6 +703,7 @@
     ai: (task, data) => AI.ask(task, data), errorText: e => AI.errorText(e),
   });
   TM.init({ state: () => state, save, toast, undo, icon: I, esc, flush: () => Y.flush() });
+  CT.init({ state: () => state, save, toast, undo, icon: I, esc, flush: () => Y.flush(), view: () => view, plan: P, renderDoc: d => LD.renderDoc(d) });
   SM.init({ state: () => state, save, toast, undo, icon: I, esc, flush: () => Y.flush(), view: () => view, plan: P, renderDoc: d => LD.renderDoc(d) });
   MO.init({ state: () => state, save, toast, undo, icon: I, esc, view: () => view, plan: P, rerender: () => { renderAreas(); renderReview(); } });
   GL.init({ state: () => state, save, toast, undo, icon: I, esc, flush: () => Y.flush(), view: () => view, plan: P, renderDoc: d => LD.renderDoc(d) });
@@ -716,6 +722,7 @@
     if (location.hash === "#reports") showView("leadView");
     if (location.hash === "#monitoring") showView("monView");
     if (location.hash === "#siams" && SI.isChurch(state.profile)) showView("siamsView");
+    if (location.hash === "#csi" && CSI.isCatholic(state.profile)) showView("csiView");
     if (r.mode !== "server") { $("saveNote").textContent = "This copy isn't connected to your school's account, so your answers are saved in this browser only. Use Save / load to keep a copy."; $("progressTab").hidden = true; }
     if (r.legacy) {
       const n = Object.keys(r.legacy.answers || {}).length, m = Object.keys(state.answers || {}).length;

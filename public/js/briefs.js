@@ -137,6 +137,11 @@
       const v = ((st.siams || {}).ctx2 || {}).vision;
       sections.push({ head: "Our Church school foundation (SIAMS)", para: v ? "Our vision: " + v.trim() : "", lines: SIp.summaryLines(st) });
     }
+    const CSp = typeof module !== "undefined" && module.exports ? require("./csi.js") : root.HWWD.csi;
+    if (CSp && CSp.isCatholic(st.profile)) {
+      const m = ((st.csi || {}).ctx || {}).mission;
+      sections.push({ head: "Our Catholic life and mission", para: m ? "Our mission: " + m.trim() : "", lines: CSp.summaryLines(st) });
+    }
     const ch = changes(st, areas);
     if (ch && ch.lines.length) sections.push({ head: `What has changed since our last leadership meeting (${nice(ch.since)})`, lines: ch.lines.slice(0, 15) });
     // Questions for discussion
@@ -184,6 +189,8 @@
     // Church schools
     const SI = typeof module !== "undefined" && module.exports ? require("./siams.js") : root.HWWD.siams;
     if (SI && SI.isChurch(st.profile)) sections.push({ head: "Living up to our foundation as a Church school (SIAMS)", lines: SI.summaryLines(st) });
+    const CSg = typeof module !== "undefined" && module.exports ? require("./csi.js") : root.HWWD.csi;
+    if (CSg && CSg.isCatholic(st.profile)) sections.push({ head: "Catholic life and mission, RE and collective worship", lines: CSg.summaryLines(st) });
     // Key figures from every area's leader
     const kf = [];
     areas.forEach(a => (INDICATORS[a.id] || []).forEach(([k, label, unit]) => {

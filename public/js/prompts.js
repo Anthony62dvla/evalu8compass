@@ -186,6 +186,40 @@ Reply with only JSON in this shape:
 At most 14 findings, each one short sentence.`;
   }
 
+  /** A Catholic school's inspection report (CSI or diocesan section 48) → grades, strengths and areas for improvement. */
+  function csiPrompt({ ctx, hasPdf, text }) {
+    return `SCHOOL
+${describe(ctx)}
+
+CATHOLIC SCHOOLS INSPECTION AREAS (id: area)
+  clm_po: Catholic life and mission: pupil outcomes
+  clm_pr: Catholic life and mission: provision
+  clm_le: Catholic life and mission: leadership
+  re_po: Religious education: pupil outcomes
+  re_pr: Religious education: provision (teaching, learning and assessment)
+  re_le: Religious education: leadership
+  cw_po: Collective worship: pupil outcomes
+  cw_pr: Collective worship: provision
+  cw_le: Collective worship: leadership
+
+${hasPdf ? "The school's most recent Catholic schools inspection report is attached." : `The school's most recent Catholic schools inspection report text:\n"""\n${String(text || "").slice(0, 120000)}\n"""`}
+
+HOW TO READ IT
+- Catholic Schools Inspectorate (CSI) reports grade overall effectiveness and three key areas (Catholic life and mission, religious education, collective worship) on a four-point scale: 1 Outstanding, 2 Good, 3 Requires improvement, 4 Inadequate. Older diocesan section 48 reports may use similar grades or different headings: map them as closely as you can, and use null where there is no grade.
+- Areas for improvement are the report's own "What the school needs to improve" or "Areas for improvement" points. List each once, in order, paraphrased; don't add your own.
+- Take everything only from what the report says about THIS school. Never guess a grade.
+
+TASK
+Reply with only JSON in this shape:
+{"inspectionDate":"YYYY-MM-DD if a full date is stated, otherwise null","overall":1|2|3|4|null,"clm":1|2|3|4|null,"re":1|2|3|4|null,"cw":1|2|3|4|null,
+ "mission":"the school's mission statement as the report quotes it, or null",
+ "summary":"3-4 sentence overview",
+ "strengths":["each main strength, paraphrased"],
+ "areas":["each area for improvement, paraphrased, in order"],
+ "findings":[{"sub":"id from the list or null","type":"strength|development","finding":"one sentence, paraphrased"}]}
+At most 14 findings, each one short sentence.`;
+  }
+
   /** Staff comments from a workshop → themes per area. */
   function themesPrompt({ ctx, results }) {
     const blocks = results.areas.map(a => {
@@ -290,7 +324,7 @@ Give exactly 4 priorities, ordered by risk of a standard not being met. Anything
   /** For providers with no separate system prompt (artifact mode): persona + task in one message. */
   function withSystem(body) { return SYSTEM + "\n\n" + body; }
 
-  const api = { SYSTEM, firstPrompt, itemPrompt, reviewPrompt, actionPrompt, draftPrompt, reportPrompt, siamsPrompt, themesPrompt, planPrompt, describe, withSystem };
+  const api = { SYSTEM, firstPrompt, itemPrompt, reviewPrompt, actionPrompt, draftPrompt, reportPrompt, siamsPrompt, csiPrompt, themesPrompt, planPrompt, describe, withSystem };
   root.HWWD = Object.assign(root.HWWD || {}, { prompts: api });
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : globalThis);
