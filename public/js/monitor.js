@@ -70,6 +70,7 @@
         <div class="field"><label for="mo-dt-${id}">Date</label><input type="date" id="mo-dt-${id}" ${f("date")} value="${esc(r.date || "")}"></div>
         <div class="field"><label for="mo-by-${id}">Carried out by</label><input id="mo-by-${id}" ${f("by")} value="${esc(r.by || "")}" list="ownerList" autocomplete="off"></div>
         <div class="field"><label for="mo-ar-${id}">Evaluation area</label><select id="mo-ar-${id}" ${f("areaId")}><option value="">Choose…</option>${areas.map(a => `<option value="${a.id}"${r.areaId === a.id ? " selected" : ""}>${esc(a.name)}</option>`).join("")}</select></div>
+        ${(() => { const SI = root.HWWD.siams, pr = H.state().profile || {}; if (!SI || !SI.isChurch(pr)) return ""; return `<div class="field"><label for="mo-iq-${id}">SIAMS Inspection Question <span class="muted-inline">(optional)</span></label><select id="mo-iq-${id}" ${f("iq")}><option value="">None</option>${SI.iqsFor(pr).map(q => `<option value="${q.id}"${r.iq === q.id ? " selected" : ""}>IQ${q.n}: ${esc(q.short)}</option>`).join("")}</select></div>`; })()}
         ${area ? `<div class="field wide"><label for="mo-ln-${id}">Evidence for which checklist line? <span class="muted-inline">(optional)</span></label><select id="mo-ln-${id}" ${f("lineId")}><option value="">None in particular</option>${area.items.map(i => `<option value="${i.id}"${r.lineId === i.id ? " selected" : ""}>${esc(i.text.length > 110 ? i.text.slice(0, 108) + "…" : i.text)}</option>`).join("")}</select></div>` : ""}
       </div>
       ${r.type === "sg" && r.check ? `<p class="small mon-prompt">${esc((C.SG_CHECKS.find(c => c[0] === r.check) || [])[2] || "")}</p>` : ""}
@@ -145,7 +146,12 @@
       const [id, k] = t.dataset.mf.split("|"); const r = list().find(x => x.id === id); if (!r) return;
       r[k] = t.value; r.updatedAt = new Date().toISOString();
       if (k === "areaId") r.lineId = "";
-      if (k === "type") { if (t.value === "sg") { r.areaId = "sg"; } else r.check = ""; }
+      if (k === "type") {
+        if (t.value === "sg") { r.areaId = "sg"; } else r.check = "";
+        const SI = root.HWWD.siams;
+        if (SI && SI.isChurch(H.state().profile || {}) && !r.iq) { if (t.value === "cw") r.iq = "iq3"; if (t.value === "re") r.iq = SI.hasIQ7(H.state().profile) ? "iq7" : "iq6"; }
+        if (t.value === "re" && !r.areaId) r.areaId = "ct";
+      }
       if (k === "check" && t.value) r.focus = C.SG[t.value];
       H.save(); render(); const again = el(t.id); if (again) again.focus();
     }

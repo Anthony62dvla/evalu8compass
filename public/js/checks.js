@@ -12,7 +12,7 @@
  */
 (function (root) {
   const TYPES = [["walk", "Learning walk"], ["drop", "Lesson visit or drop-in"], ["work", "Work scrutiny"], ["pupil", "Pupil voice"], ["staff", "Staff voice or survey"],
-    ["parent", "Parent voice or survey"], ["records", "Records or data review"], ["sg", "Safeguarding check"], ["gov", "Governor or trustee visit"], ["other", "Other"]];
+    ["parent", "Parent voice or survey"], ["records", "Records or data review"], ["sg", "Safeguarding check"], ["cw", "Collective worship"], ["re", "RE lesson visit or learning walk"], ["gov", "Governor or trustee visit"], ["other", "Other"]];
   const TYPE = Object.fromEntries(TYPES);
   const JUDGE = { strong: "Working well", dev: "Developing", concern: "Concern" };
 

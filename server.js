@@ -276,6 +276,14 @@ async function schoolRoute(req, res, p, url) {
       try { const sent = await require("./lib/meetings").sendMeeting(w.name, st, m, kind); admin.audit("meeting.email", `${w.name} (${id}): ${kind} to ${sent}`, req); return json(res, 200, { sent }); }
       catch (e) { return json(res, e.status || 502, { error: e.message }); }
     }
+    // A Church school's SIAMS self-evaluation, to the head and the school's adviser
+    if (p === "/api/school/siams/send" && req.method === "POST") {
+      if (!w.id || w.admin) return json(res, 403, { error: "Sign in as a school to send it." });
+      if (limited(req, "signup")) return json(res, 429, { error: "Too many emails. Wait a minute." });
+      await body();
+      try { const sent = await require("./lib/meetings").sendSiams(w.name, schools.get(id).state || {}); admin.audit("siams.email", `${w.name} (${id}) to ${sent}`, req); return json(res, 200, { sent }); }
+      catch (e) { return json(res, e.status || 502, { error: e.message }); }
+    }
     // Governors' read-only code: create (replacing any old one, optionally emailing it) or switch off
     if (p === "/api/school/governors/code" && req.method === "POST") {
       if (!w.id || w.admin) return json(res, 403, { error: "Sign in as a school to manage governors' access." });

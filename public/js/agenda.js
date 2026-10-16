@@ -59,6 +59,13 @@
     add("monitoring", "What our monitoring shows", "Do the findings match our self-evaluation? What should we follow up?",
       mon.slice(0, 12).map(r => C.line(r, true)), [...new Set(mon.map(r => r.lineId).filter(Boolean))].slice(0, 8));
 
+    // 4c. Church schools: living up to our foundation (SIAMS)
+    const SI = typeof module !== "undefined" && module.exports ? require("./siams.js") : root.HWWD.siams;
+    if (SI && SI.isChurch(st.profile)) {
+      const lines = SI.summaryLines(st);
+      items.push({ id: uid(), kind: "siams", title: "Living our Christian vision (SIAMS)", prompt: "Is our theologically rooted Christian vision enabling pupils and adults to flourish? Which Inspection Questions can't we yet answer \"yes\", and what will change that?", lines, lineIds: [], actionIds: (st.actions || []).filter(a => a.siams && a.status !== "done").map(a => a.id) });
+    }
+
     // 5. Areas needing attention, and gaps nobody owns
     const scored = (areas || []).map(a => {
       const rated = a.items.filter(i => answers[i.id] && answers[i.id] !== "na");

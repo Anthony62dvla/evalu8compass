@@ -132,6 +132,11 @@
       sections.push({ head: "Safeguarding", lines: [...(sgGaps.length ? sgGaps.map(i => `${LABEL[answers[i.id]]}: ${i.text}`) : ["All safeguarding lines rated so far are Met."]),
         `The DSL's termly checks: ${sgc.done} of ${sgc.total} done this term${sgc.done ? " (" + sgc.list.filter(x => x.rec).map(x => x.label).join(", ") + ")" : ""}`] });
     }
+    const SIp = typeof module !== "undefined" && module.exports ? require("./siams.js") : root.HWWD.siams;
+    if (SIp && SIp.isChurch(st.profile)) {
+      const v = ((st.siams || {}).ctx2 || {}).vision;
+      sections.push({ head: "Our Church school foundation (SIAMS)", para: v ? "Our vision: " + v.trim() : "", lines: SIp.summaryLines(st) });
+    }
     const ch = changes(st, areas);
     if (ch && ch.lines.length) sections.push({ head: `What has changed since our last leadership meeting (${nice(ch.since)})`, lines: ch.lines.slice(0, 15) });
     // Questions for discussion
@@ -176,6 +181,9 @@
         `The DSL's termly checks: ${sgc.done} of ${sgc.total} done${sgc.done < sgc.total ? " (still to do: " + sgc.list.filter(x => !x.rec).map(x => x.label).join(", ") + ")" : ""}${sgc.concerns ? `; ${sgc.concerns} raised a concern` : ""}`,
       ] });
     }
+    // Church schools
+    const SI = typeof module !== "undefined" && module.exports ? require("./siams.js") : root.HWWD.siams;
+    if (SI && SI.isChurch(st.profile)) sections.push({ head: "Living up to our foundation as a Church school (SIAMS)", lines: SI.summaryLines(st) });
     // Key figures from every area's leader
     const kf = [];
     areas.forEach(a => (INDICATORS[a.id] || []).forEach(([k, label, unit]) => {

@@ -60,6 +60,14 @@
     <div class="field"><span class="lbl" id="typeLbl">School type</span><div class="seg" id="types" role="group" aria-labelledby="typeLbl"></div></div>
     <div class="field"><span class="lbl" id="phaseLbl">Phases you teach</span><div class="chips" id="phases" role="group" aria-labelledby="phaseLbl"></div></div>
     <label class="switch"><input type="checkbox" id="pSpecial"> Specialist provision (special school, resourced provision or AP)</label>
+    <div class="church hide" id="pChurchRow">
+      <div class="church-grid">
+        <div class="field"><label for="pChurch">Church school</label><select id="pChurch"><option value="">Not a Church school</option><option value="cofe">Church of England</option><option value="methodist">Methodist</option><option value="joint">Joint Anglican and Methodist</option></select></div>
+        <div class="field hide" id="pDesigRow"><label for="pDesig">Designation</label><select id="pDesig"><option value="">Choose…</option><option value="vc">Voluntary controlled</option><option value="va">Voluntary aided</option><option value="foundation">Foundation</option><option value="fvc">Academy, formerly voluntary controlled</option><option value="fva">Academy, formerly voluntary aided</option><option value="other">Other</option></select></div>
+      </div>
+      <label class="switch hide" id="pDenomRow"><input type="checkbox" id="pDenom"> As an academy, we teach denominational RE</label>
+      <p class="small hide" id="pChurchNote">Church schools get a <b>SIAMS</b> tab, for the Statutory Inspection of Anglican and Methodist Schools.</p>
+    </div>
     <div class="newschool hide" id="pNewRow">
       <label class="switch"><input type="checkbox" id="pNew"> New school: we've had our pre-registration inspection but not yet our first standard inspection</label>
       <div class="field newschool-date hide" id="pOpenedRow"><label for="pOpened">Opened (or opening)</label><input type="month" id="pOpened"><span class="muted-inline" id="pDue"></span></div>
@@ -96,6 +104,7 @@
   <nav class="tabs pagetabs" aria-label="Checklist sections">
     <div role="tablist" class="tablist-in" aria-label="Checklist sections">
     <button role="tab" class="tab" id="tab-eval" data-view="evalView" aria-controls="evalView" aria-selected="true"><i data-icon="list-check"></i>Evaluate</button>
+    <button role="tab" class="tab" data-view="siamsView" aria-controls="siamsView" aria-selected="false" id="siamsTab" tabindex="-1" hidden><i data-icon="building-community"></i>SIAMS</button>
     <button role="tab" class="tab" id="tab-plan" data-view="planView" aria-controls="planView" aria-selected="false" tabindex="-1"><i data-icon="target"></i>Action plan<span id="planTabCount"></span></button>
     <button role="tab" class="tab" data-view="progressView" aria-controls="progressView" aria-selected="false" id="progressTab" tabindex="-1"><i data-icon="history"></i>Progress</button>
     <button role="tab" class="tab" data-view="monView" aria-controls="monView" aria-selected="false" id="monTab" tabindex="-1"><i data-icon="eye"></i>Monitoring<span id="monTabCount"></span></button>
@@ -173,6 +182,17 @@
     <div id="planList"></div>
     <datalist id="ownerList"></datalist>
     <p class="consult-cta" id="consultCta"><i data-icon="user-heart" data-size="20"></i><span>Want expert support with these priorities? <a href="consultants.html">Find a checked consultant or SIP</a> near you, matched to your areas for development.</span></p>
+  </section>
+
+  <section id="siamsView" class="hide" role="tabpanel" aria-labelledby="siamsTab">
+    <div class="prog-head">
+      <div class="prog-intro">
+        <span class="tile"><i data-icon="building-community" data-size="24"></i></span>
+        <div><h2>SIAMS: living up to our foundation</h2>
+        <p>The Statutory Inspection of Anglican and Methodist Schools asks one thing: through its theologically rooted Christian vision, is the school living up to its foundation as a Church school, enabling pupils and adults to flourish? Tell your story here, gather the evidence for each Inspection Question, and keep your SIAMS self-evaluation ready. Based on the SIAMS Framework (September 2024, updated September 2026).</p></div>
+      </div>
+    </div>
+    <div id="siamsList"></div>
   </section>
 
   <section id="monView" class="hide" role="tabpanel" aria-labelledby="monTab">
@@ -277,6 +297,8 @@
 <script src="js/leads.js"></script>
 <script src="js/monitor.js"></script>
 <script src="js/govlead.js"></script>
+<script src="js/siams.js"></script>
+<script src="js/siamstab.js"></script>
 <script src="js/meetings.js"></script>
 <script src="js/app.js"></script>
 <!-- /build:body -->

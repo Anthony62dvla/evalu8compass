@@ -11,7 +11,7 @@
  *     actions: { upsert: [ {id, ...} ], del: [ "a1b2" ] } }
  */
 (function (root) {
-  const MAPS = ["answers", "notes", "ai", "collapsed", "leads"];   // leads: each evaluation area's leader report (commentary, key figures)
+  const MAPS = ["answers", "notes", "ai", "collapsed", "leads", "siams"];   // siams: last inspection, context, and each Inspection Question   // leads: each evaluation area's leader report (commentary, key figures)
   const LISTS = ["actions", "team", "meetings", "subjects", "monitoring", "govReports", "challenges"];   // arrays of { id, … }: changes merge item by item
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 

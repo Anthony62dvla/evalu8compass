@@ -11,7 +11,7 @@
     ["ddsl", "Deputy DSL", "Deputy DSL"], ["senco", "SENCo", "SENCo"], ["ahead", "Assistant headteacher", "Assistant head"],
     ["phase", "Phase or key stage leader", "Phase leader"], ["subject", "Subject leader", "Subject leader"], ["attendance", "Attendance lead", "Attendance lead"],
     ["ey", "Early years lead", "EYFS lead"], ["p16", "Sixth form lead", "Sixth form lead"], ["gov", "Governor", "Governor"], ["trustee", "Trustee", "Trustee"],
-    ["sip", "School improvement partner or consultant (external)", "SIP"], ["other", "Other", "Other"],
+    ["sip", "School improvement partner, diocesan adviser or consultant (external)", "SIP or adviser"], ["other", "Other", "Other"],
   ];
   const LABEL = Object.fromEntries(ROLES.map(r => [r[0], r[1]]));
   const SHORT = Object.fromEntries(ROLES.map(r => [r[0], r[2]]));
