@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Trust view · Evalu8 Compass</title>
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<header class="brandbar">
+  <div class="brandbar-in">
+    <div class="brand-logo"><i data-icon="compass" data-size="26"></i></div>
+    <div class="brand-text"><b id="trustName">Evalu8 Compass</b><span>Trust view</span></div>
+    <nav class="brand-nav" aria-label="Main">
+      <span class="whoami" id="whoAmI"></span>
+      <a href="#" id="signOut"><i data-icon="logout"></i>Sign out</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap trust-wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Trust view</div>
+      <h1>Our schools</h1>
+      <p>A live comparison of the schools that have agreed to share their summary with the trust: self-evaluation, safeguarding, the improvement plan, monitoring and governance. Never evidence notes, monitoring findings or anything about individual pupils.</p>
+    </div>
+  </header>
+  <p class="err" id="loadErr" role="alert"></p>
+  <div class="trust-tiles" id="tiles"></div>
+  <section class="trust-table" aria-labelledby="tblH">
+    <div class="sg-head"><h2 id="tblH">Schools</h2><button class="btn" type="button" id="csv"><i data-icon="file-export"></i>Download as a spreadsheet (CSV)</button></div>
+    <div class="doc-tbl" id="tbl"></div>
+    <p class="small" id="pending"></p>
+  </section>
+  <section class="trust-detail" id="detail" hidden aria-live="polite"></section>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="js/icons.js"></script>
+<script src="js/trust.js"></script>
+</body>
+</html>

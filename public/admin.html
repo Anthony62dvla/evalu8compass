@@ -91,6 +91,13 @@
       <div class="tablewrap"><table class="atable" id="codes"></table></div>
     </section>
 
+    <section class="panel2" aria-labelledby="trustsTitle">
+      <h2 id="trustsTitle"><i data-icon="building-community" data-size="22"></i>Trusts and groups</h2>
+      <p class="muted small">Create a trust, add its leaders (they sign in with their email), and ask to link its schools. Each school's headteacher or deputy must agree before the trust sees anything; they can stop sharing at any time.</p>
+      <form class="trust-new" id="trustNew"><label for="trustName" class="sr-only">Trust name</label><input id="trustName" placeholder="Trust or group name" maxlength="120"><button class="btn primary" type="submit"><i data-icon="building-community"></i>Create trust</button></form>
+      <div id="trustsBox"></div>
+    </section>
+
     <section class="panel2 collapsible" aria-labelledby="actTitle">
       <details id="actBox">
         <summary><h2 id="actTitle"><i data-icon="clipboard-list" data-size="22"></i>Recent admin activity <span class="muted small" id="actCount"></span></h2><i data-icon="chevron-down" data-size="22" class="chev"></i></summary>
@@ -102,5 +109,6 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="js/icons.js"></script>
 <script src="js/admin.js"></script>
+<script src="js/admin-trusts.js"></script>
 </body>
 </html>

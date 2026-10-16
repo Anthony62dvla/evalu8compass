@@ -44,7 +44,7 @@
         <button class="btn" type="button" data-lprint="1">${I("file-export", 16)}Print or save as PDF</button>
         <button class="btn primary" type="button" data-lsend="${open}"${who.some(m => L.validEmail(m.email)) || team.some(m => m.role === "head" && L.validEmail(m.email)) ? "" : " disabled"}>${I("mail", 16)}Email to the leader and head</button></div>
       <h3>${esc(a.name)}</h3>
-      <fieldset class="lead-who-edit"><legend>Led by</legend>${team.length ? team.filter(m => m.role !== "sip").map(m => `<label class="switch"><input type="checkbox" data-lwho="${m.id}"${(m.areas || []).includes(open) ? " checked" : ""}> ${esc(m.name || L.LABEL[m.role])} <span class="muted-inline">${esc(L.SHORT[m.role])}</span></label>`).join("") : `<span class="small">Add your team in the Team tab first.</span>`}</fieldset>
+      <fieldset class="lead-who-edit"><legend>Led by</legend>${team.length ? team.filter(m => m.role !== "sip").map(m => `<label class="switch"><input type="checkbox" data-lwho="${m.id}"${(m.areas || []).includes(open) ? " checked" : ""}${root.HWWD.canAdmin === false ? " disabled" : ""}> ${esc(m.name || L.LABEL[m.role])} <span class="muted-inline">${esc(L.SHORT[m.role])}</span></label>`).join("") : `<span class="small">Add your team in the Team tab first.</span>`}</fieldset>
       ${ind.length ? `<fieldset class="lead-ind"><legend>Key figures <span class="muted-inline">(whole-school numbers only, never pupils' names)</span></legend>
         <div class="ind-grid"><span></span><span class="lbl">This term</span><span class="lbl">Last term</span>
         ${ind.map(([k, label, unit]) => { const v = (lead.indicators || {})[k] || {}; return `<label for="ind-${k}-now">${esc(label)}${unit && unit !== "text" ? ` (${unit})` : ""}</label>

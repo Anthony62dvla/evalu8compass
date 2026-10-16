@@ -19,18 +19,19 @@
     el("teamMail").innerHTML = mailOn === false
       ? `${I("alert-triangle", 18)}<span>Emails aren't switched on for this service yet, so alerts can't be sent. Your team list is saved and will be used once they are.</span>` : "";
     el("teamMail").hidden = mailOn !== false;
+    const ro = root.HWWD.canAdmin === false, dis = ro ? " disabled" : "";
     box.innerHTML = t.length ? t.map(m => `
       <article class="member" data-mid="${m.id}" aria-label="${esc(m.name || "New team member")}">
         <div class="member-grid">
-          <div class="field"><label for="tm-name-${m.id}">Name</label><input type="text" id="tm-name-${m.id}" data-mfield="name" value="${esc(m.name)}" maxlength="100" autocomplete="off"></div>
-          <div class="field"><label for="tm-role-${m.id}">Role</label><select id="tm-role-${m.id}" data-mfield="role">${L.ROLES.map(([k, label]) => `<option value="${k}"${m.role === k ? " selected" : ""}>${esc(label)}</option>`).join("")}</select></div>
-          <div class="field"><label for="tm-email-${m.id}">Email</label><input type="email" id="tm-email-${m.id}" data-mfield="email" value="${esc(m.email)}" maxlength="200" autocomplete="off"${m.email && !L.validEmail(m.email) ? ' aria-invalid="true"' : ""}></div>
-          <div class="field"><label for="tm-alerts-${m.id}">Emails</label><select id="tm-alerts-${m.id}" data-mfield="alerts"><option value="weekly"${m.alerts !== "urgent" ? " selected" : ""}>Monday summary and urgent alerts</option><option value="urgent"${m.alerts === "urgent" ? " selected" : ""}>Urgent alerts only</option></select></div>
+          <div class="field"><label for="tm-name-${m.id}">Name</label><input type="text" id="tm-name-${m.id}" data-mfield="name" value="${esc(m.name)}" maxlength="100" autocomplete="off"${dis}></div>
+          <div class="field"><label for="tm-role-${m.id}">Role</label><select id="tm-role-${m.id}" data-mfield="role"${dis}>${L.ROLES.map(([k, label]) => `<option value="${k}"${m.role === k ? " selected" : ""}>${esc(label)}</option>`).join("")}</select></div>
+          <div class="field"><label for="tm-email-${m.id}">Email</label><input type="email" id="tm-email-${m.id}" data-mfield="email" value="${esc(m.email)}" maxlength="200" autocomplete="off"${m.email && !L.validEmail(m.email) ? ' aria-invalid="true"' : ""}${dis}></div>
+          <div class="field"><label for="tm-alerts-${m.id}">Emails</label><select id="tm-alerts-${m.id}" data-mfield="alerts"${dis}><option value="weekly"${m.alerts !== "urgent" ? " selected" : ""}>Monday summary and urgent alerts</option><option value="urgent"${m.alerts === "urgent" ? " selected" : ""}>Urgent alerts only</option></select></div>
         </div>
         <div class="member-foot">
           ${L.KEY.includes(m.role) ? `<span class="keytag">${I("shield-check", 16)}Gets immediate alerts</span>` : `<span class="muted-inline">Gets alerts about actions they own</span>`}
           <span class="spacer"></span>
-          <button class="btn" type="button" data-mtest="${m.id}"${!L.validEmail(m.email) || mailOn === false ? " disabled" : ""}>${I("mail", 16)}Send a test email</button>
+          <button class="btn" type="button" data-mtest="${m.id}"${!L.validEmail(m.email) || mailOn === false || ro ? " disabled" : ""}>${I("mail", 16)}Send a test email</button>
           <button class="btn" type="button" data-mdel="${m.id}" aria-label="Remove ${esc(m.name || "this person")}">${I("x", 16)}Remove</button>
         </div>
       </article>`).join("")

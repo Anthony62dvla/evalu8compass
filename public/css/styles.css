@@ -644,3 +644,48 @@ details.past .meeting { margin-top: 10px }
 .cs-comp { display: grid; gap: 8px }
 .si-stand .field label { font-weight: 600 }
 @media (max-width: 560px) { .cs-grid { font-size: 12.5px } .cs-grid th, .cs-grid td { padding: 4px 5px } }
+/* People: sign-ins, roles, trust */
+.whoami { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; color: var(--on-brand, #fff); opacity: .9; padding: 0 6px }
+.trust-banner { display: flex; gap: 12px; align-items: center; background: var(--accent-soft); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin: 14px 0 0; font-size: 14.5px }
+.trust-banner > div { flex: 1; min-width: 0 }
+.trust-banner .ic { flex: none; color: var(--accent) }
+.admin-only-note { display: none; margin: 0 0 6px }
+body.not-admin .admin-only-note { display: block }
+body.not-admin #teamAdd, body.not-admin [data-mdel] { display: none }
+.team-extra { display: grid; gap: 12px; margin-top: 18px }
+.team-extra .row { margin: 0 }
+.sharedcode { display: grid; gap: 6px; border-top: 1px solid var(--line); padding-top: 10px }
+.sharedcode h4 { margin: 0; font-size: 15px }
+.hist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14px }
+.hist li { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 2px 10px }
+.hist li span:last-child { grid-column: 2 }
+.hist-when { color: var(--muted); font-size: 13px; grid-row: span 2 }
+@media (max-width: 560px) { .hist li { grid-template-columns: 1fr } .hist li span:last-child { grid-column: 1 } .hist-when { grid-row: auto } }
+/* Trust view */
+.trust-wrap { max-width: 1400px }
+.trust-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin: 18px 0 }
+.trust-tiles .stat { display: flex; gap: 10px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px }
+.trust-tiles .stat b { display: block; font: 700 24px "Lexend", sans-serif }
+.trust-tiles .stat span { font-size: 13px; color: var(--muted) }
+.trust-table, .trust-detail { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin-top: 14px; display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr) }
+.trust-table h2, .trust-detail h2 { margin: 0; font-size: 19px }
+.trust-grid { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 900px }
+.trust-grid th, .trust-grid td { text-align: left; vertical-align: top; padding: 7px 8px; border-bottom: 1px solid var(--line) }
+.trust-grid thead th { font-size: 12px; color: var(--muted); font-weight: 700 }
+.trust-grid .sub { display: block; font-size: 12px; color: var(--muted); font-weight: 400 }
+.trust-grid tr.sel { background: var(--accent-soft) }
+.trust-grid .linkbtn { font-size: 14.5px; padding: 0; min-height: 0; text-align: left; color: var(--accent) }
+.trust-grid .warn { color: var(--no) }
+.trust-grid td.pct { font-weight: 700; text-align: center; border-radius: 6px }
+.b-hi { background: var(--met-soft); color: var(--met) } .b-mid { background: var(--part-soft); color: var(--part) } .b-lo { background: var(--no-soft); color: var(--no) } .b-none { color: var(--muted) }
+.trust-new { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 }
+.trust-new input, .tform input, .tform select { font: inherit; font-size: 14px; padding: 7px 9px; min-height: 40px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink) }
+.trust-new input { flex: 1 1 240px }
+.trust-card { border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-top: 10px; display: grid; gap: 10px }
+.trust-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.trust-top h3 { margin: 0; font-size: 17px }
+.trust-top .spacer { flex: 1 }
+.trust-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px }
+.trust-cols h4 { margin: 0 0 6px; font-size: 14px }
+.tlist { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 6px; font-size: 14px }
+.tform { display: flex; flex-wrap: wrap; gap: 6px }

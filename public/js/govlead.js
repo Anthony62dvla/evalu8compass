@@ -33,11 +33,13 @@
     const list = chals().slice().sort((a, b) => (a.status === "open" ? 0 : 1) - (b.status === "open" ? 0 : 1) || String(b.createdAt).localeCompare(String(a.createdAt)));
     const shown = showAll ? list : list.filter(c => c.status !== "closed").slice(0, 12);
     const areas = H.view(), areaName = id => (areas.find(a => a.id === id) || {}).name || "";
+    const ro = root.HWWD.canAdmin === false;
     box.innerHTML = `<h2 class="gov-h">${I("building-community", 22)}Governors and trustees</h2>
     <div class="gov-grid">
       <section class="gov-card" aria-labelledby="gRepH">
         <h3 id="gRepH">${I("file-text", 18)}Termly report: ${esc(tm.name)}</h3>
-        ${thisTerm && !draft ? `<p class="small">Issued ${esc(nice(thisTerm.issuedAt))}${thisTerm.sentAt ? ", emailed " + esc(nice(thisTerm.sentAt)) : ""}. Governors can read it in their view.</p>
+        ${ro ? `<p class="small">${thisTerm ? `Issued ${esc(nice(thisTerm.issuedAt))}. ` : "Not issued yet this term. "}The headteacher writes and issues this report.</p>${thisTerm ? `<div class="row"><button class="btn" type="button" data-gview="${thisTerm.id}">${I("eye", 16)}Read it</button></div>` : ""}`
+        : thisTerm && !draft ? `<p class="small">Issued ${esc(nice(thisTerm.issuedAt))}${thisTerm.sentAt ? ", emailed " + esc(nice(thisTerm.sentAt)) : ""}. Governors can read it in their view.</p>
           <div class="row"><button class="btn" type="button" data-gview="${thisTerm.id}">${I("eye", 16)}Read it</button><button class="btn" type="button" data-gsend="${thisTerm.id}"${govCount() ? "" : " disabled"}>${I("mail", 16)}Email to governors</button><button class="btn" type="button" data-gredraft="1">${I("refresh", 16)}Write an updated report</button></div>`
         : `<p class="small">Written for you from the self-evaluation, plan, monitoring and leaders' figures, with no information about individual pupils. Add your commentary, check it, then issue it: governors see the issued copy, which doesn't change.</p>
           <div class="field"><label for="gCom">From the headteacher</label><textarea id="gCom" rows="5" data-gcom="1" placeholder="The headlines this term: what's going well, what isn't yet, and what you need from the board.">${esc(draft ? draft.commentary : "")}</textarea></div>
@@ -47,7 +49,7 @@
         ${issued().length > (thisTerm ? 1 : 0) ? `<details class="past"><summary>Earlier reports (${issued().length - (thisTerm ? 1 : 0)})</summary><ul class="gov-past">${issued().filter(r => r !== thisTerm).map(r => `<li><button class="linkbtn" type="button" data-gview="${r.id}">${esc(r.doc.title)}</button> <span class="small">issued ${esc(nice(r.issuedAt))}</span></li>`).join("")}</ul></details>` : ""}
       </section>
 
-      <section class="gov-card" aria-labelledby="gAccH">
+      ${ro ? "" : `<section class="gov-card" aria-labelledby="gAccH">
         <h3 id="gAccH">${I("key", 18)}Governors' access</h3>
         ${access === null ? `<p class="small">Checking…</p>` : access.on ? `<p class="small">On since ${esc(nice(access.at))}. Governors and trustees sign in with their own code to read issued reports, see the school today and ask questions. They can't change anything.</p>`
           : `<p class="small">Give governors and trustees their own read-only code. They can read issued reports, see where the school stands today and ask questions; they can't change anything.</p>`}
@@ -56,7 +58,7 @@
         <div class="row"><button class="btn${access.on ? "" : " primary"}" type="button" data-gcode="new">${I("key", 16)}${access.on ? "Replace the code" : "Create a governors' code"}</button>
           ${access.on ? `<button class="btn" type="button" data-gcode="off">${I("lock", 16)}Switch off</button>` : ""}
           <a class="btn" href="governors.html">${I("eye", 16)}See what governors see</a></div>` : ""}
-      </section>
+      </section>`}
     </div>
 
     <section class="gov-card gov-chal" aria-labelledby="gChH">

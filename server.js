@@ -32,6 +32,10 @@ const alerts = require("./lib/alerts");
 const governors = require("./lib/governors");
 const botcheck = require("./lib/botcheck");
 access.setAdminCheck(req => admin.who(req));
+const logins = require("./lib/logins");
+const trusts = require("./lib/trusts");
+const history = require("./lib/history");
+access.setUserCheck(logins.userCheck);
 
 const PORT = Number(process.env.PORT || 3000);
 const SCHOOL_RETENTION_DAYS = Number(process.env.SCHOOL_RETENTION_DAYS || 365); // saved work is deleted this long after a school's access ends
@@ -78,6 +82,8 @@ const server = http.createServer(async (req, res) => {
       const isAI = p === "/api/inspector" || /\/(report|themes|plan)$/.test(p);
       if (limited(req, isAI ? "ai" : "api")) return json(res, 429, { code: "rate_limited", error: "Too many requests. Wait a minute and try again." });
       if (p === "/api/access") return accessRoute(req, res);
+      if (p === "/api/login/email" || p === "/api/login/code") return loginRoute(req, res, p);
+      if (p.startsWith("/api/trust/")) return trustRoute(req, res, p);
       if (p === "/api/form-token" && req.method === "GET") return json(res, 200, { t: botcheck.token() });
       if (p === "/api/pricing" || p.startsWith("/api/signup") || p.startsWith("/api/subscribe")) return billingRoute(req, res, p);
       if (p.startsWith("/api/consultants")) return consultantRoute(req, res, p);
@@ -105,6 +111,7 @@ const server = http.createServer(async (req, res) => {
     if (/^\/join\/[A-Za-z0-9]{6}$/.test(p)) { res.writeHead(302, { location: "/workshop.html?code=" + p.slice(6).toUpperCase() }); return res.end(); }
     // The consultant register is only ever for signed-in schools, even when access codes are switched off
     if (p === "/consultants.html") { const w = access.who(req); if (!w || !(w.id || w.admin)) { res.writeHead(302, { location: w ? "/index.html" : "/enter.html?next=%2Fconsultants.html" }); return res.end(); } }
+    if (p === "/trust.html" && !trusts.who(req) && !admin.who(req)) { res.writeHead(302, { location: "/enter.html?next=%2Ftrust.html" }); return res.end(); }
     if (p === "/governors.html") { const w = access.who(req); if (!(w && w.id && !w.admin) && !access.govWho(req)) { res.writeHead(302, { location: "/enter.html?next=%2Fgovernors.html" }); return res.end(); } }
     if (PROTECTED_PAGES.has(p) && !access.who(req)) {
       res.writeHead(302, { location: "/enter.html?next=" + encodeURIComponent(p + url.search) }); return res.end();
@@ -180,7 +187,11 @@ async function accessRoute(req, res) {
     if (st && entry) st.topup = billing.topupInfo(entry, st);
     const g = !w ? access.govWho(req) : null;
     if (g) return json(res, 200, { required: access.required(), ok: false, governor: true, school: g.name });
-    return json(res, 200, { required: access.required(), ok: !!w, school: w && w.name && !w.admin ? w.name : "", ai: st, plan: billing.forSchool(entry), mail: w ? require("./lib/mail").configured() : undefined, gov: entry ? { on: !!entry.govCodeAt, at: entry.govCodeAt || null } : undefined });
+    const tw = !w ? trusts.who(req) : null;
+    if (tw) return json(res, 200, { required: access.required(), ok: false, trust: true, trustName: tw.trust.name, user: { name: tw.member.name } });
+    return json(res, 200, { required: access.required(), ok: !!w, school: w && w.name && !w.admin ? w.name : "", ai: st, plan: billing.forSchool(entry), mail: w ? require("./lib/mail").configured() : undefined, gov: entry ? { on: !!entry.govCodeAt, at: entry.govCodeAt || null } : undefined,
+      user: w && w.user ? { name: w.user.name, role: w.user.role, admin: !!w.user.admin } : undefined, canAdmin: w ? logins.canAdmin(w) : undefined, codeOff: entry ? !!entry.codeOff : undefined,
+      trust: entry ? trusts.forSchool(entry.id) : undefined });
   }
   if (req.method !== "POST") return json(res, 405, { error: "Method not allowed" });
   if (limited(req, "login")) return json(res, 429, { code: "rate_limited", error: "Too many attempts. Wait a minute and try again." });
@@ -197,8 +208,39 @@ async function accessRoute(req, res) {
     if (known && !known.revoked) return json(res, 403, { code: "expired", error: "This access code has expired. Email support@evalu8compass.app to renew it." });
     return json(res, 401, { code: "bad_code", error: "That access code isn't recognised. Check it and try again." });
   }
+  if (c.codeOff) return json(res, 403, { code: "use_email", error: `${c.name} now uses individual sign-ins. Sign in with your email address below.` });
   if (c.gov) { admin.audit("governor.signin", `${c.name} (${c.id})`, req); return json(res, 200, { ok: true, school: c.name, governor: true }); }
   return json(res, 200, { ok: true, school: c.name });
+}
+
+/* Individual sign-in with an emailed code (lib/logins.js) */
+async function loginRoute(req, res, p) {
+  if (req.method !== "POST") return json(res, 405, { error: "Method not allowed" });
+  if (!sameSite(req)) return json(res, 403, { error: "Cross-site request refused." });
+  if (limited(req, "login")) return json(res, 429, { error: "Too many attempts. Wait a minute and try again." });
+  let b; try { b = JSON.parse((await readBody(req, 4096)) || "{}"); } catch (e) { return json(res, 400, { error: "Invalid request" }); }
+  try {
+    if (p === "/api/login/email") return json(res, 200, await logins.start(b.email));
+    const r = logins.finish(req, res, b.email, b.code, b.choice);
+    if (r.ok) admin.audit(r.kind === "trust" ? "trust.signin" : "user.signin", `${r.name}: ${String(b.email || "").trim().toLowerCase()}`, req);
+    return json(res, 200, r);
+  } catch (e) { return json(res, e.status || 500, { error: e.message }); }
+}
+
+/* Trust leaders: a comparison of the schools that have agreed to share */
+async function trustRoute(req, res, p) {
+  const tw = trusts.who(req);
+  if (!tw) return json(res, 401, { code: "access_required", error: "Sign in with your email." });
+  try {
+    if (p === "/api/trust/view" && req.method === "GET") return json(res, 200, require("./lib/trustview").view(tw.trust, tw.member));
+    const sm = p.match(/^\/api\/trust\/school\/([a-f0-9]{8})$/);
+    if (sm && req.method === "GET") {
+      if (!tw.trust.schools.some(s => s.id === sm[1] && s.status === "linked")) return json(res, 404, { error: "That school isn't sharing with your trust." });
+      admin.audit("trust.view_school", `${tw.trust.name}: ${tw.member.name} viewed ${sm[1]}`, req);
+      return json(res, 200, require("./lib/trustview").school(sm[1]));
+    }
+    return json(res, 404, { error: "Not found" });
+  } catch (e) { return json(res, e.status || 500, { error: e.message }); }
 }
 
 /* Governors and trustees: read-only view and questions. Leaders signed in as the school can see it too. */
@@ -235,6 +277,10 @@ async function schoolRoute(req, res, p, url) {
     }
     if (p === "/api/school" && req.method === "PATCH") {
       const b = await body();
+      // Leaders who aren't the head or deputy can't change the team or the school's settings, or issue governors' reports
+      if (!logins.canAdmin(w) && b.patch && (b.patch.team || b.patch.govReports || Object.keys(b.patch.set || {}).some(k => k.startsWith("profile.")) || (b.patch.del || []).some(k => k.startsWith("profile."))))
+        return json(res, 403, { code: "not_allowed", error: "Only the headteacher or deputy can change the team, the school's settings or governors' reports." });
+      history.record(id, logins.byName(w), history.summarise(b.patch));
       const r = schools.patch(id, b.baseRev, b.patch);
       alerts.soon(id);
       return json(res, 200, r);
@@ -242,6 +288,8 @@ async function schoolRoute(req, res, p, url) {
     if (p === "/api/school" && req.method === "PUT") {
       const b = await body();
       if (!b.state || typeof b.state !== "object") return json(res, 400, { error: "Nothing to save" });
+      if (!logins.canAdmin(w)) { const cur = schools.get(id).state || {}; b.state = { ...b.state, team: cur.team, profile: cur.profile, govReports: cur.govReports }; }
+      history.record(id, logins.byName(w), { profile: 1 });
       const r = schools.replace(id, b.state);
       alerts.soon(id);
       return json(res, 200, r);
@@ -339,9 +387,50 @@ async function schoolRoute(req, res, p, url) {
       try { const sent = await require("./lib/meetings").sendSiams(w.name, schools.get(id).state || {}); admin.audit("siams.email", `${w.name} (${id}) to ${sent}`, req); return json(res, 200, { sent }); }
       catch (e) { return json(res, e.status || 502, { error: e.message }); }
     }
+    // Who changed what
+    if (p === "/api/school/history" && req.method === "GET") return json(res, 200, { history: history.recent(id, 40) });
+    // The shared school code: the head or deputy can switch it off once they sign in with their own email
+    if (p === "/api/school/sharedcode" && req.method === "POST") {
+      if (!w.id || w.admin) return json(res, 403, { error: "Sign in as a school first." });
+      if (!w.user || !w.user.admin) return json(res, 403, { error: "Only the headteacher or deputy, signed in with their own email, can change this." });
+      const b = (await body()) || {};
+      access.update(id, c => { if (b.on) delete c.codeOff; else c.codeOff = new Date().toISOString(); });
+      admin.audit(b.on ? "code.shared_on" : "code.shared_off", `${w.name} (${id}) by ${w.user.name}`, req);
+      return json(res, 200, { codeOff: !b.on });
+    }
+    // Email sign-in instructions to one or all of the team
+    if (p === "/api/school/team/invite" && req.method === "POST") {
+      if (!w.id || w.admin) return json(res, 403, { error: "Sign in as a school first." });
+      if (!logins.canAdmin(w)) return json(res, 403, { error: "Only the headteacher or deputy can do this." });
+      if (limited(req, "signup")) return json(res, 429, { error: "Too many emails. Wait a minute." });
+      const b = (await body()) || {}, st = schools.get(id).state || {}, mail = require("./lib/mail");
+      if (!mail.configured()) return json(res, 503, { error: "Emails aren't switched on for this service yet." });
+      const L = require("./public/js/leaders.js");
+      const to = (st.team || []).filter(m => (!b.member || m.id === b.member) && logins.CAN_SIGN_IN(m.role) && L.validEmail(m.email));
+      if (!to.length) return json(res, 400, { error: "Nobody to invite: add team members with email addresses first." });
+      const link = `${billing.site()}/enter.html`;
+      for (const m of to) {
+        await mail.send({ to: m.email, subject: `[${w.name}] Sign in to Evalu8 Compass with your email`,
+          text: [`Hello ${m.name || ""},`, "", `${w.name} uses Evalu8 Compass for school self-evaluation and improvement planning. You can now sign in with your own email address: no password needed.`, "", `Go to ${link}, choose "Sign in with your email", and type ${m.email}. We'll email you a 6-digit code.`, "", "Your changes are recorded with your name, so colleagues can see who did what."].join("\n"),
+          html: billing.wrap("Sign in with your email", billing.para(`Hello ${billing.esc(m.name || "")},`) + billing.para(`<b>${billing.esc(w.name)}</b> uses Evalu8 Compass for school self-evaluation and improvement planning. You can now sign in with your own email address: no password needed.`) + billing.para(`Choose <b>Sign in with your email</b> and type <b>${billing.esc(m.email)}</b>. We'll email you a 6-digit code.`) + billing.btn(link, "Sign in") + billing.para("Your changes are recorded with your name, so colleagues can see who did what.")) });
+      }
+      admin.audit("team.invite", `${w.name} (${id}): ${to.length}`, req);
+      return json(res, 200, { sent: to.length });
+    }
+    // The trust that has asked to see this school
+    if (p === "/api/school/trust" && req.method === "GET") return json(res, 200, { trust: w.id && !w.admin ? trusts.forSchool(id) : null });
+    const tr = p.match(/^\/api\/school\/trust\/(confirm|decline|leave)$/);
+    if (tr && req.method === "POST") {
+      if (!w.id || w.admin) return json(res, 403, { error: "Sign in as a school first." });
+      if (!logins.canAdmin(w)) return json(res, 403, { error: "Only the headteacher or deputy can decide this." });
+      await body();
+      try { const t = trusts.respond(id, tr[1], logins.byName(w)); admin.audit(`trust.${tr[1]}`, `${w.name} (${id}) ${tr[1]} ${t.name}`, req); return json(res, 200, { trust: trusts.forSchool(id) }); }
+      catch (e) { return json(res, e.status || 400, { error: e.message }); }
+    }
     // Governors' read-only code: create (replacing any old one, optionally emailing it) or switch off
     if (p === "/api/school/governors/code" && req.method === "POST") {
       if (!w.id || w.admin) return json(res, 403, { error: "Sign in as a school to manage governors' access." });
+      if (!logins.canAdmin(w)) return json(res, 403, { error: "Only the headteacher or deputy can manage governors' access." });
       if (limited(req, "signup")) return json(res, 429, { error: "Too many requests. Wait a minute." });
       const b = (await body()) || {};
       if (b.action === "off") { access.govOff(id); admin.audit("governor.code_off", `${w.name} (${id})`, req); return json(res, 200, { on: false }); }
@@ -376,6 +465,7 @@ async function schoolRoute(req, res, p, url) {
     // Send a test email to one member of the leadership team
     if (p === "/api/school/team/test" && req.method === "POST") {
       if (!w.id || w.admin) return json(res, 403, { error: "Sign in as a school to send test emails." });
+      if (!logins.canAdmin(w)) return json(res, 403, { error: "Only the headteacher or deputy can do this." });
       if (limited(req, "signup")) return json(res, 429, { error: "Too many test emails. Wait a minute." });
       const b = await body();
       const m = ((schools.get(id).state || {}).team || []).find(x => x.id === b.id);
@@ -608,6 +698,49 @@ async function adminRoute(req, res, p) {
   if (p.startsWith("/api/admin/evals")) return evalRoute(req, res, p);
   if (p === "/api/admin/billing" && req.method === "GET") return json(res, 200, billing.overview());
   if (p === "/api/admin/consultants" && req.method === "GET") return json(res, 200, consultants.adminList());
+  // Trusts and groups
+  if (p === "/api/admin/trusts" && req.method === "GET") {
+    const names = Object.fromEntries(access.list().map(c => [c.id, c.name]));
+    return json(res, 200, { trusts: trusts.list().map(t => ({ ...t, schools: t.schools.map(s => ({ ...s, name: names[s.id] || "(deleted school)" })) })), roles: trusts.ROLES, schools: access.list().filter(c => !c.revoked).map(c => ({ id: c.id, name: c.name })) });
+  }
+  if (p.startsWith("/api/admin/trusts") && req.method === "POST") {
+    const b = (await body()) || {};
+    try {
+      if (p === "/api/admin/trusts") { const t = trusts.create(b.name); admin.audit("trust.create", t.name, req); return json(res, 200, t); }
+      const tm = p.match(/^\/api\/admin\/trusts\/([a-f0-9]{8})\/(rename|delete|member|member-remove|school|school-remove)$/);
+      if (!tm) return json(res, 404, { error: "Not found" });
+      const [, tid, act] = tm, t = trusts.get(tid);
+      if (!t) return json(res, 404, { error: "No trust with that id." });
+      if (act === "rename") trusts.rename(tid, b.name);
+      if (act === "delete") trusts.remove(tid);
+      if (act === "member") {
+        trusts.addMember(tid, b);
+        // Tell them how to sign in
+        try {
+          const mail = require("./lib/mail"), link = `${billing.site()}/enter.html?next=%2Ftrust.html`;
+          if (mail.configured()) await mail.send({ to: String(b.email).trim().toLowerCase(), subject: `Your access to ${t.name}'s trust view in Evalu8 Compass`,
+            text: [`Hello ${b.name},`, "", `You've been given access to ${t.name}'s trust view in Evalu8 Compass: a live comparison of the trust's schools that have agreed to share their summary.`, "", `Sign in at ${link}: choose "Sign in with your email" and we'll email you a 6-digit code. No password needed.`].join("\n"),
+            html: billing.wrap("Your trust view", billing.para(`Hello ${billing.esc(b.name)},`) + billing.para(`You've been given access to <b>${billing.esc(t.name)}</b>'s trust view in Evalu8 Compass: a live comparison of the trust's schools that have agreed to share their summary.`) + billing.para("Choose <b>Sign in with your email</b> and we'll email you a 6-digit code. No password needed.") + billing.btn(link, "Sign in")) });
+        } catch (e) { console.error("Trust member email failed:", e.message); }
+      }
+      if (act === "member-remove") trusts.removeMember(tid, String(b.member || ""));
+      if (act === "school") {
+        trusts.requestSchool(tid, String(b.school || ""));
+        // Tell the school's head: they decide whether to share
+        try {
+          const st = schools.get(b.school).state || {}, L = require("./public/js/leaders.js"), mail = require("./lib/mail");
+          const heads = (st.team || []).filter(m => ["head", "deputy"].includes(m.role) && L.validEmail(m.email));
+          const c = access.list().find(x => x.id === b.school);
+          if (heads.length && mail.configured()) await mail.send({ to: heads.map(m => m.email), subject: `[${c.name}] ${t.name} has asked to see your school's summary`,
+            text: [`${t.name} has asked to see a summary of ${c.name}'s work in Evalu8 Compass: your self-evaluation scores, safeguarding checks completed, improvement plan progress, monitoring counts and governors' reports. Never evidence notes, monitoring findings or pupils' information.`, "", "Nothing is shared until the headteacher or deputy agrees. You can stop sharing at any time.", "", `Decide in Evalu8 Compass: ${billing.site()}/checklist.html#team`].join("\n"),
+            html: billing.wrap(`${t.name} has asked to see your school's summary`, billing.para(`<b>${billing.esc(t.name)}</b> has asked to see a summary of ${billing.esc(c.name)}'s work: your self-evaluation scores, safeguarding checks completed, improvement plan progress, monitoring counts and governors' reports. Never evidence notes, monitoring findings or pupils' information.`) + billing.para("Nothing is shared until the headteacher or deputy agrees. You can stop sharing at any time.") + billing.btn(`${billing.site()}/checklist.html#team`, "Decide in Evalu8 Compass")) });
+        } catch (e) { console.error("Trust request email failed:", e.message); }
+      }
+      if (act === "school-remove") trusts.unlink(tid, String(b.school || ""));
+      admin.audit(`trust.${act}`, `${t.name}${b.name ? ": " + b.name : ""}${b.email ? " " + b.email : ""}${b.school ? " " + b.school : ""}`, req);
+      return json(res, 200, { ok: true });
+    } catch (e) { return json(res, e.status || 400, { error: e.message }); }
+  }
   const ca = p.match(/^\/api\/admin\/consultants\/([a-f0-9]{10})\/([a-z-]+)$/);
   if (ca && req.method === "POST") {
     const b = (await body()) || {};

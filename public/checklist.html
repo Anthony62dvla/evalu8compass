@@ -20,6 +20,7 @@
       <a href="checklist.html" aria-current="page"><i data-icon="list-check"></i>Checklist</a>
       <a href="workshop.html" id="workshopLink"><i data-icon="users-group"></i>Staff workshop</a>
       <a href="consultants.html" id="consultLink"><i data-icon="user-heart"></i>Find a consultant</a>
+      <span class="whoami" id="whoAmI" hidden></span>
       <a href="#" id="signOut" hidden><i data-icon="logout"></i>Sign out</a>
     </nav>
   </div>
@@ -50,8 +51,10 @@
     <a class="btn primary" href="subscribe.html" id="planBtn"><i data-icon="circle-check"></i><span>Subscribe</span></a>
   </div>
 
+  <div class="trust-banner" id="trustBanner" role="status" hidden></div>
   <section class="setup" aria-labelledby="setupTitle">
     <div class="setup-head"><div class="tile"><i data-icon="building" data-size="24"></i></div><h2 id="setupTitle">Your school</h2><span class="stepnum">Step 1</span></div>
+    <p class="small admin-only-note">Only the headteacher or deputy can change the school's settings.</p>
     <div class="setup-grid">
       <div class="field"><label for="pName">School or trust name</label><input type="text" id="pName" placeholder="e.g. Athena School"></div>
       <div class="field"><label for="pBy">Completed by</label><input type="text" id="pBy" placeholder="Name and role"></div>
@@ -263,6 +266,7 @@
     <div id="teamList"></div>
     <div class="row" style="margin-top:12px"><button class="btn primary" type="button" id="teamAdd"><i data-icon="user"></i>Add a person</button></div>
     <p class="scope-note" style="margin-top:12px">In the action plan, set each action's Owner to a person's name or role (for example "DSL") and the right person gets the emails. Only add work email addresses, and tell your team they'll receive these emails.</p>
+    <div id="teamExtra" class="team-extra"></div>
   </section>
 
   <section id="progressView" class="hide" role="tabpanel" aria-labelledby="progressTab">
@@ -310,6 +314,7 @@
 <script src="js/leads.js"></script>
 <script src="js/monitor.js"></script>
 <script src="js/govlead.js"></script>
+<script src="js/people.js"></script>
 <script src="js/siams.js"></script>
 <script src="js/siamstab.js"></script>
 <script src="js/csi.js"></script>

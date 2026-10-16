@@ -27,7 +27,7 @@
   const busy = new Set();
   const save = () => Y.changed(state);
   const aiOn = () => state.profile.ai !== false;
-  const P = window.HWWD.plan, TM = window.HWWD.team, MT = window.HWWD.meetings, LD = window.HWWD.leads, MO = window.HWWD.monitor, GL = window.HWWD.govlead, SM = window.HWWD.siamstab, SI = window.HWWD.siams, CT = window.HWWD.csitab, CSI = window.HWWD.csi;
+  const P = window.HWWD.plan, TM = window.HWWD.team, MT = window.HWWD.meetings, LD = window.HWWD.leads, MO = window.HWWD.monitor, GL = window.HWWD.govlead, PE = window.HWWD.people, SM = window.HWWD.siamstab, SI = window.HWWD.siams, CT = window.HWWD.csitab, CSI = window.HWWD.csi;
   function applyAI() { document.body.classList.toggle("no-ai", !aiOn()); $("pAI").checked = aiOn(); }
   const ctx = () => ({ name: state.profile.name, type: state.profile.type, phases: state.profile.phases, special: state.profile.special });
 
@@ -38,6 +38,9 @@
     $("pBy").value = p.by || "";
     $("pDate").value = p.date || "";
     $("pSpecial").checked = !!p.special;
+    // Only the head or deputy (or the shared school code) can change the school's settings
+    const ro = window.HWWD.canAdmin === false;
+    document.querySelectorAll("section.setup input, section.setup select, #pLogoRemove").forEach(x => { if (!x.closest("#topup")) x.disabled = ro; });
     $("pChurchRow").classList.toggle("hide", p.type === "independent");
     $("pChurch").value = p.church || ""; $("pDesig").value = p.designation || ""; $("pDenom").checked = !!p.denomRE;
     $("pDesigRow").classList.toggle("hide", !p.church || p.church === "catholic"); $("pChurchNote").classList.toggle("hide", !p.church || p.church === "catholic");
@@ -56,6 +59,7 @@
     applyAI();
     $("types").innerHTML = C.SCHOOL_TYPES.map(t => `<button class="opt" data-type="${t.id}" aria-pressed="${p.type === t.id}">${I(TYPE_ICON[t.id], 24)}<span>${esc(t.label)}<small>${esc(t.hint)}</small></span></button>`).join("");
     renderBrand();
+    if (window.HWWD.canAdmin === false) setTimeout(() => document.querySelectorAll("#types button, #phases button").forEach(x => { x.disabled = true; }));
     $("phases").innerHTML = C.PHASES.map(ph => `<button class="opt" data-phase="${ph.id}" aria-pressed="${p.phases.includes(ph.id)}" title="${esc(ph.hint)}">${esc(ph.label)}</button>`).join("");
   }
   function renderBrand() {
@@ -420,7 +424,7 @@
     document.querySelectorAll("[data-view]").forEach(b => { b.setAttribute("aria-selected", b.dataset.view === id); b.tabIndex = b.dataset.view === id ? 0 : -1; });
     if (id === "planView") P.render();
     if (id === "progressView") renderProgress();
-    if (id === "teamView") TM.render();
+    if (id === "teamView") { TM.render(); PE.shown(); }
     if (id === "meetView") { MT.reset(); MT.render(); }
     if (id === "leadView") { LD.render(); GL.render(); }
     if (id === "monView") MO.render();
@@ -702,6 +706,7 @@
     state: () => state, save, view: () => view, ctx, toast, undo, aiOn, icon: I, esc,
     ai: (task, data) => AI.ask(task, data), errorText: e => AI.errorText(e),
   });
+  PE.init({ toast, icon: I, esc, showTeam: () => showView("teamView"), changed: () => { renderSetup(); TM.render(); if (!$("leadView").classList.contains("hide")) GL.render(); } });
   TM.init({ state: () => state, save, toast, undo, icon: I, esc, flush: () => Y.flush() });
   CT.init({ state: () => state, save, toast, undo, icon: I, esc, flush: () => Y.flush(), view: () => view, plan: P, renderDoc: d => LD.renderDoc(d) });
   SM.init({ state: () => state, save, toast, undo, icon: I, esc, flush: () => Y.flush(), view: () => view, plan: P, renderDoc: d => LD.renderDoc(d) });
@@ -783,6 +788,7 @@
       if (a.ai) showAllowance(a.ai);
       if (a.plan) showPlan(a.plan);
       if (typeof a.mail === "boolean") TM.setMail(a.mail);
+      PE.apply(a);
       if (a.required && a.ok) {
         const so = $("signOut"); so.hidden = false;
         so.onclick = e => { e.preventDefault(); fetch("api/access/logout", { method: "POST" }).finally(() => { location.href = "index.html"; }); };
