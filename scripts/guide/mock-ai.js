@@ -78,7 +78,20 @@ const plan = {
   staffMessage: "Thank you for the time and honesty you gave to our workshop. You told us that behaviour and pastoral care are real strengths, and that support for pupils with SEND still varies from class to class. Ofsted said the same. This term we will focus on four things: adapting lessons precisely for pupils with SEND, checking understanding, giving teaching assistants time to plan with teachers, and supporting pupils who miss too much school. Your views shaped every part of this plan, and I'll update you on progress before Christmas.",
 };
 
+const siamsReading = {
+  inspectionDate: "2022-03-09", outcome: "J1", earlierGrades: [], vision: "Let your light shine (Matthew 5:16)",
+  summary: "St Mary's is a warm, inclusive school where the vision of letting each person's light shine is known and lived. Pupils speak confidently about how it shapes their friendships and choices. Leaders have a clear understanding of the school's context.",
+  strengths: ["Pupils and adults can explain how the vision shapes daily life", "Strong partnership with the parish church enriches worship"],
+  areas: ["Deepen pupils' understanding of spirituality so that worship enables spiritual flourishing for all", "Ensure RE assessment is accurate and used consistently across key stages"],
+  findings: [
+    { iq: "iq1", type: "strength", finding: "The vision is known by pupils and shapes relationships across the school." },
+    { iq: "iq3", type: "development", finding: "Older pupils are less sure what spirituality means for them." },
+    { iq: "iq3", type: "strength", finding: "Worship planned with the parish is inclusive and invitational." },
+    { iq: "iq6", type: "development", finding: "Assessment in RE is not yet used consistently to plan next steps." },
+  ],
+};
 function answer(prompt) {
+  if (/SIAMS INSPECTION QUESTIONS/.test(prompt)) return siamsReading;
   if (/STAFF WORKSHOP RESULTS/.test(prompt)) return plan;
   if (/ANONYMOUS STAFF COMMENTS/.test(prompt)) return themes;
   if (/CHECKLIST LINES/.test(prompt)) return reading;

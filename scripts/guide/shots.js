@@ -31,13 +31,13 @@ module.exports = async function shots(outDir) {
   await new Promise(r => setTimeout(r, 800));
   const browser = await chromium.launch();
   const made = [];
-  let schoolId, wcode;
+  let schoolId, wcode, churchId;
   const snap = async (page, name, sel, opts = {}) => {
     const file = path.join(outDir, name + ".jpg");
     const el = sel ? page.locator(sel).first() : null;
     if (el) await el.scrollIntoViewIfNeeded();
     await page.waitForTimeout(250);
-    const q = { type: "jpeg", quality: 74 };
+    const q = { type: "jpeg", quality: 64 };
     if (el) {
       // Element shots, cut to a sensible height for the page
       const box = await el.evaluate(e => { const r = e.getBoundingClientRect(); return { x: r.x + scrollX, y: r.y + scrollY, width: r.width, height: r.height }; });
@@ -208,6 +208,45 @@ module.exports = async function shots(outDir) {
     await p.fill("textarea[data-cres]", "SEND profiles are now part of every department's planning check. The SENCo will sample books again in December and report to the next full governing board.");
     await snap(p, "challenge", ".gov-chal", { maxH: 1000 });
 
+    /* ---------- a Church school: SIAMS ---------- */
+    {
+      const out2 = execFileSync(process.execPath, [path.join(APP, "scripts", "access.js"), "add", "St Mary's CE Primary"]).toString();
+      const code2 = out2.match(/[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}/)[0];
+      churchId = JSON.parse(fs.readFileSync(path.join(DATA, "access.json"), "utf8")).codes.find(c => c.name === "St Mary's CE Primary").id;
+      const cctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, deviceScaleFactor: 2 });
+      const c = await cctx.newPage(); c.on("dialog", d => d.accept());
+      await c.goto(BASE + "/enter.html?next=/checklist.html"); await c.fill("#code", code2); await c.click("#go");
+      await c.waitForURL(/checklist/); await c.waitForSelector(".item", { state: "attached" });
+      await c.addStyleTag({ content: ".summary, .brandbar { position: static !important } .toast { display: none !important }" });
+      await c.fill("#pName", "St Mary's CE Primary");
+      await c.click('[data-type="maintained"]');
+      for (const ph of ["ks1", "ks2"]) if ((await c.getAttribute(`[data-phase="${ph}"]`, "aria-pressed")) !== "true") await c.click(`[data-phase="${ph}"]`);
+      for (const ph of ["ks3", "ks4"]) if ((await c.getAttribute(`[data-phase="${ph}"]`, "aria-pressed")) === "true") await c.click(`[data-phase="${ph}"]`);
+      if (await c.isChecked("#pSpecial")) await c.click("#pSpecial");
+      await c.selectOption("#pChurch", "cofe"); await c.selectOption("#pDesig", "va");
+      await c.waitForTimeout(300);
+      await snap(c, "church-setup", "#pChurchRow");
+      await c.click("#siamsTab"); await c.waitForSelector(".si-read");
+      await c.click(".si-read details summary"); await c.fill("#srText", "St Mary's CE Primary SIAMS inspection report. ".repeat(10));
+      await c.click("[data-srread]"); await c.waitForSelector(".si-read.done", { timeout: 15000 });
+      await c.click("[data-srvision]"); await c.waitForTimeout(300);
+      await c.fill("#siRoll", "208");
+      await c.fill("#si1-pupils", "A village school serving a growing and increasingly diverse community; 18% of pupils are disadvantaged and 14% have SEND.");
+      await c.fill("#si2-theology", "Jesus calls his followers to be light for the world. We believe each child is made in God's image with gifts to share, so we help every child discover and use them for others.");
+      await c.fill("#sie-iq1", "Pupils use the language of the vision when they talk about friendships and choices. Staff survey: 94% say the vision shapes how we treat one another.");
+      await c.check('[data-sij="iq1"][value="yes"]'); await c.waitForTimeout(150);
+      await c.fill("#sie-iq3", "Worship is planned with the parish and led by pupils twice a week. Younger pupils speak confidently about reflection.");
+      await c.fill("#sin-iq3", "Help older pupils explore what spirituality means for them. Create reflection spaces in each Key Stage 2 class.");
+      await c.check('[data-sij="iq3"][value="partly"]'); await c.waitForTimeout(150);
+      await c.check('[data-sij="iq4"][value="yes"]'); await c.check('[data-sij="iq5"][value="yes"]'); await c.waitForTimeout(400);
+      await c.locator(".si-stand").scrollIntoViewIfNeeded(); await c.waitForTimeout(700);
+      await snap(c, "siams-stand", ".si-stand", { maxH: 1300 });
+      await snap(c, "siams-iq", "#si-iq3", { maxH: 1100 });
+      await c.click("[data-sidoc]"); await c.waitForTimeout(400);
+      await snap(c, "siams-sef", "#siDoc", { maxH: 1200 });
+      await cctx.close();
+    }
+
     /* ---------- report ---------- */
     await p.goto(BASE + "/report.html"); await p.waitForSelector(".paper h1");
     await p.setViewportSize({ width: 1180, height: 1200 });
@@ -277,6 +316,7 @@ module.exports = async function shots(outDir) {
     await browser.close(); srv.kill(); mock.close();
     await new Promise(r => setTimeout(r, 400));
     if (schoolId) fs.rmSync(path.join(DATA, "schools", schoolId), { recursive: true, force: true });
+    if (churchId) fs.rmSync(path.join(DATA, "schools", churchId), { recursive: true, force: true });
     if (wcode) fs.rmSync(path.join(DATA, "sessions", wcode + ".json"), { force: true });
     KEEP.forEach((f, i) => (backup[i] ? fs.writeFileSync(f, backup[i]) : fs.rmSync(f, { force: true })));
   }
